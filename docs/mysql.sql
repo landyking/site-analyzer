@@ -5,6 +5,8 @@ USE site_analyzer;
 -- User table
 CREATE TABLE IF NOT EXISTS t_user (
     id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT 'Unique user identifier',
+    provider VARCHAR(100) NOT NULL COMMENT 'OIDC provider name (e.g., cognito, keycloak)',
+    sub VARCHAR(255) NOT NULL COMMENT 'OIDC subject identifier',
     email VARCHAR(100) NOT NULL UNIQUE COMMENT 'User email address',
     password_hash VARCHAR(255) NOT NULL COMMENT 'Hashed password',
     role TINYINT NOT NULL DEFAULT 2 COMMENT 'User role. 1:ADMIN. 2:USER.',
@@ -13,6 +15,7 @@ CREATE TABLE IF NOT EXISTS t_user (
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT 'Account creation timestamp',
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Modification timestamp'
 );
+CREATE UNIQUE INDEX user_provider_sub_idx ON t_user(provider, sub);
 
 -- MapTask table
 CREATE TABLE IF NOT EXISTS t_map_task (

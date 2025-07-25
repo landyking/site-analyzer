@@ -10,17 +10,20 @@ This document describes the database for the `Solar Power Site Suitability Analy
 ### `User` schema
 
 **Table Name: `t_user`**
+**Composite unique index: (provider, sub)**
 
-| Column Name   | Data Type    | Constraints                                           | Description                         |
-| ------------- | ------------ | ----------------------------------------------------- | ----------------------------------- |
-| id            | BIGINT       | PRIMARY KEY, AUTO_INCREMENT                           | Unique user identifier              |
-| email         | VARCHAR(100) | NOT NULL, UNIQUE                                      | User's email address                |
-| password_hash | VARCHAR(255) | NOT NULL                                              | Hashed password                     |
-| role          | TINYINT      | NOT NULL, DEFAULT 2                                   | User role. 1:ADMIN. 2:USER.         |
-| status        | TINYINT      | NOT NULL, DEFAULT 1                                   | Account status. 1:ACTIVE. 2:LOCKED. |
-| last_login    | DATETIME     | NULL                                                  | Last login timestamp                |
-| created_at    | DATETIME     | DEFAULT CURRENT_TIMESTAMP                             | Account creation timestamp          |
-| updated_at    | DATETIME     | DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP | Modification timestamp              |
+| Column Name   | Data Type    | Constraints                                           | Description                                      |
+| ------------- | ------------ | ----------------------------------------------------- | ------------------------------------------------ |
+| id            | BIGINT       | PRIMARY KEY, AUTO_INCREMENT                           | Unique user identifier                           |
+| provider      | VARCHAR(100) | NOT NULL                                              | OIDC provider name (e.g., 'cognito', 'keycloak') |
+| sub           | VARCHAR(255) | NOT NULL                                              | OIDC subject identifier                          |
+| email         | VARCHAR(100) | NOT NULL, UNIQUE                                      | User's email address                             |
+| password_hash | VARCHAR(255) | NOT NULL                                              | Hashed password                                  |
+| role          | TINYINT      | NOT NULL, DEFAULT 2                                   | User role. 1:ADMIN. 2:USER.                      |
+| status        | TINYINT      | NOT NULL, DEFAULT 1                                   | Account status. 1:ACTIVE. 2:LOCKED.              |
+| last_login    | DATETIME     | NULL                                                  | Last login timestamp                             |
+| created_at    | DATETIME     | DEFAULT CURRENT_TIMESTAMP                             | Account creation timestamp                       |
+| updated_at    | DATETIME     | DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP | Modification timestamp                           |
 
 ### `MapTask` schema
 
