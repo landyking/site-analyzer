@@ -1,0 +1,76 @@
+openapi: 3.0.3
+info:
+  title: "OpenAPI for Site Analyzer"
+  version: "1.0.0"
+servers:
+  - url: "http://localhost:3000"
+    description: "Development server"
+paths:
+  /v1/login:
+    get:
+      summary: "Login with OIDC"
+      description: "Redirects to OIDC provider for authentication and returns user information."
+      responses:
+        '302':
+          description: Redirect to another URL
+          headers:
+            Location:
+              description: The URL to redirect to
+              schema:
+                type: string
+      security: []
+    post:
+      summary: "Login with Local Users"
+      description: "Logs in a user with local credentials."
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  format: email
+                  minLength: 5
+                password:
+                  type: string
+                  minLength: 8
+              required:
+                - email
+                - password
+      responses:
+        '200':
+          description: Successful login
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PostLoginResp'
+        '400':
+          description: Bad request, invalid input
+
+
+components:
+  schemas:
+    BaseResp:
+      type: object
+      properties:
+        error:
+          type: integer
+          description: 0 for success, other values for business errors
+    PostLoginResp:
+      allOf:
+              - $ref: '#/components/schemas/BaseResp'
+              - type: object
+                properties:
+                  token:
+                    type: string
+                    description: JWT token for authenticated requests            
+            
+  securitySchemes:
+    OIDC:
+      type: openIdConnect
+      openIdConnectUrl: https://accounts.google.com/.well-known/openid-configuration
+security:
+  - OIDC: [user]
