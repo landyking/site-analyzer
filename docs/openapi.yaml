@@ -7,20 +7,10 @@ servers:
     description: "Development server"
 paths:
   /v1/user-login:
-    get:
-      summary: "Login with OIDC"
-      description: "Redirects to OIDC provider for authentication and returns user information."
-      responses:
-        "302":
-          description: Redirect to another URL
-          headers:
-            Location:
-              description: The URL to redirect to
-              schema:
-                type: string
-      security: []
     post:
       summary: "Login with Local Users"
+      tags:
+        - Auth
       description: "Logs in a user with local credentials."
       security: []
       requestBody:
@@ -52,6 +42,8 @@ paths:
   /v1/user-register:
     post:
       summary: "Register a new user"
+      tags:
+        - Auth
       description: "Creates a new user account with the provided email and password."
       security: []
       requestBody:
@@ -84,7 +76,79 @@ paths:
                 $ref: "#/components/schemas/BaseResp"
         "400":
           description: Bad request, invalid input
-
+  /v1/oidc-info:
+    get:
+      summary: "Get OIDC Information"
+      tags:
+        - Auth
+      responses:
+        "200":
+          description: Successful retrieval of OIDC information
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  login_url:
+                    type: string
+                    description: The OIDC login URL
+      security: []
+  /v1/oidc-token:
+    post:
+      tags:
+        - Auth
+      summary: "Use code to get OIDC token"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                code:
+                  type: string
+                  description: The OIDC authorization code received after login
+              required:
+                - code
+      responses:
+        "200":
+          description: Successful retrieval of OIDC token
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PostLoginResp"
+      security: []
+  /v1/user/token-refresh:
+    post:
+      summary: "Refresh user token"
+      tags:
+        - User
+      responses:
+        "200":
+          description: Successful retrieval of user token
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PostLoginResp"
+  /v1/user/my-map-tasks:
+    get:
+      summary: "Get user's map tasks"
+      tags:
+        - User
+      parameters:
+        - name: completed
+          in: query
+          description: "Filter for completed map tasks"
+          required: false
+          schema:
+            type: boolean
+      responses:
+        "200":
+          description: Successful retrieval of user's map tasks
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MyMapTaskResp"
 components:
   schemas:
     BaseResp:
@@ -93,14 +157,64 @@ components:
         error:
           type: integer
           description: 0 for success, other values for business errors
+    LoginResult:
+      type: object
+      properties:
+        access_token:
+          type: string
+          description: The OIDC access token
+        expires_in:
+          type: integer
+          description: The number of seconds until the token expires
+        refresh_token:
+          type: string
+          description: The OIDC refresh token
+        token_type:
+          type: string
+          description: The type of the token
     PostLoginResp:
+      allOf:
+        - $ref: "#/components/schemas/BaseResp"
+        - $ref: "#/components/schemas/LoginResult"
+    MapTask:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: The unique identifier for the map task
+        name:
+          type: string
+          description: The name of the map task
+        status:
+          type: integer
+          description: |
+            The status of the map task.
+            1: Created
+            2: Processing
+            3: Success
+            4: Failure
+            5: Cancelled
+          enum: [1,2,3,4,5]
+        started_at:
+          type: string
+          format: date-time
+        ended_at:
+          type: string
+          format: date-time
+        created_at:
+          type: string
+          format: date-time
+          description: The creation time of the map task
+    MyMapTaskResp:
       allOf:
         - $ref: "#/components/schemas/BaseResp"
         - type: object
           properties:
-            token:
-              type: string
-              description: JWT token for authenticated requests
+            list:
+              type: array
+              items:
+                $ref: "#/components/schemas/MapTask"
 
   securitySchemes:
     OIDC:
