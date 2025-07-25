@@ -6,12 +6,12 @@ servers:
   - url: "http://localhost:3000"
     description: "Development server"
 paths:
-  /v1/login:
+  /v1/user-login:
     get:
       summary: "Login with OIDC"
       description: "Redirects to OIDC provider for authentication and returns user information."
       responses:
-        '302':
+        "302":
           description: Redirect to another URL
           headers:
             Location:
@@ -41,15 +41,49 @@ paths:
                 - email
                 - password
       responses:
-        '200':
+        "200":
           description: Successful login
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PostLoginResp'
-        '400':
+                $ref: "#/components/schemas/PostLoginResp"
+        "400":
           description: Bad request, invalid input
-
+  /v1/user-register:
+    post:
+      summary: "Register a new user"
+      description: "Creates a new user account with the provided email and password."
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  format: email
+                  minLength: 5
+                password:
+                  type: string
+                  minLength: 8
+                password2:
+                  type: string
+                  minLength: 8
+              required:
+                - email
+                - password
+                - password2
+      responses:
+        "200":
+          description: Successful registration
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BaseResp"
+        "400":
+          description: Bad request, invalid input
 
 components:
   schemas:
@@ -61,13 +95,13 @@ components:
           description: 0 for success, other values for business errors
     PostLoginResp:
       allOf:
-              - $ref: '#/components/schemas/BaseResp'
-              - type: object
-                properties:
-                  token:
-                    type: string
-                    description: JWT token for authenticated requests            
-            
+        - $ref: "#/components/schemas/BaseResp"
+        - type: object
+          properties:
+            token:
+              type: string
+              description: JWT token for authenticated requests
+
   securitySchemes:
     OIDC:
       type: openIdConnect
