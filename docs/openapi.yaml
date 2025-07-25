@@ -9,6 +9,7 @@ paths:
   /v1/user-login:
     post:
       summary: "Login with Local Users"
+      operationId: "userLogin"
       tags:
         - Auth
       description: "Logs in a user with local credentials."
@@ -42,6 +43,7 @@ paths:
   /v1/user-register:
     post:
       summary: "Register a new user"
+      operationId: "userRegister"
       tags:
         - Auth
       description: "Creates a new user account with the provided email and password."
@@ -79,6 +81,7 @@ paths:
   /v1/oidc-info:
     get:
       summary: "Get OIDC Information"
+      operationId: "getOidcInfo"
       tags:
         - Auth
       responses:
@@ -98,6 +101,7 @@ paths:
       tags:
         - Auth
       summary: "Use code to get OIDC token"
+      operationId: "getOidcToken"
       requestBody:
         required: true
         content:
@@ -121,6 +125,7 @@ paths:
   /v1/user/token-refresh:
     post:
       summary: "Refresh user token"
+      operationId: "userTokenRefresh"
       tags:
         - Auth
       responses:
@@ -133,6 +138,7 @@ paths:
   /v1/user/logout:
     post:
       summary: "Logout user"
+      operationId: "userLogout"
       tags:
         - Auth
       responses:
@@ -145,6 +151,7 @@ paths:
   /v1/user/my-map-tasks:
     get:
       summary: "Get user's map tasks"
+      operationId: "userGetMyMapTasks"
       tags:
         - User
       parameters:
@@ -163,6 +170,7 @@ paths:
                 $ref: "#/components/schemas/MyMapTaskListResp"
     post:
       summary: "Create a new map task"
+      operationId: "userCreateMapTask"
       tags:
         - User
       requestBody:
@@ -181,6 +189,7 @@ paths:
   /v1/user/my-map-tasks/{taskId}:
     get:
       summary: "Get user's map tasks"
+      operationId: "userGetMapTask"
       tags:
         - User
       parameters:
@@ -201,6 +210,7 @@ paths:
   /v1/user/my-map-tasks/{taskId}/cancel:
     post:
       summary: "Cancel a map task"
+      operationId: "userCancelMapTask"
       tags:
         - User
       parameters:
@@ -218,7 +228,148 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/BaseResp"
+  /v1/admin/users:
+    get:
+      summary: "Get user list for admin"
+      operationId: "adminGetUserList"
+      security: [OIDC: [admin]]
+      tags:
+        - Admin
+      parameters:
+        - $ref: "#/components/parameters/queryPageSize"
+        - $ref: "#/components/parameters/queryCurrentPage"
+        - $ref: "#/components/parameters/queryKeyword"
+        - name: status
+          in: query
+          description: "Filter users by status"
+          required: false
+          schema:
+            type: integer
+            description: "1: Active, 2: Locked"
+      responses:
+        "200":
+          description: Successful cancellation of map task
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User4AdminPageData"
+  /v1/admin/user-status:
+    post:
+      summary: "Update user status for admin"
+      operationId: "adminUpdateUserStatus"
+      security: [OIDC: [admin]]
+      tags:
+        - Admin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                user_id:
+                  type: integer
+                  format: int64
+                  description: "The ID of the user to update"
+                status:
+                  type: integer
+                  description: "1 for Active, 2 for Locked"
+              required:
+                - id
+                - status
+      responses:
+        "200":
+          description: Successful update of user status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BaseResp"
+  /v1/admin/map-tasks:
+    get:
+      summary: "Get map tasks for admin"
+      operationId: "adminGetMapTasks"
+      security: [OIDC: [admin]]
+      tags:
+        - Admin
+      parameters:
+        - $ref: "#/components/parameters/queryPageSize"
+        - $ref: "#/components/parameters/queryCurrentPage"
+        - name: name
+          in: query
+          description: "Filter map tasks by name"
+          required: false
+          schema:
+            type: string
+            description: "Name of the map task"
+        - name: user_id
+          in: query
+          description: "Filter map tasks by user ID"
+          required: false
+          schema:
+            type: integer
+            format: int64
+            description: "ID of the user who created the map task"
+        - name: status
+          in: query
+          description: "Filter map tasks by status"
+          required: false
+          schema:
+            type: integer
+            description: "1: Created, 2: Processing, 3: Success, 4: Failure, 5: Cancelled"
+      responses:
+        "200":
+          description: Successful retrieval of map tasks
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MapTask4AdminPageData"
+  /v1/admin/map-tasks/{taskId}:
+    get:
+      summary: "Get map task details for admin"
+      operationId: "AdminGetMapTask"
+      tags:
+        - Admin
+      security: [OIDC: [admin]]
+      parameters:
+        - name: taskId
+          in: path
+          required: true
+          description: "The ID of the map task"
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "200":
+          description: Successful retrieval of map task details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminMapTaskResp"
 components:
+  parameters:
+    queryKeyword:
+      name: keyword
+      in: query
+      description: "Search keyword for filtering results"
+      required: false
+      schema:
+        type: string
+    queryPageSize:
+      name: page_size
+      in: query
+      description: "Number of items per page"
+      required: false
+      schema:
+        type: integer
+        default: 20
+    queryCurrentPage:
+      name: current_page
+      in: query
+      description: "Page number for pagination"
+      required: false
+      schema:
+        type: integer
+        default: 1 
   schemas:
     BaseResp:
       type: object
@@ -226,6 +377,23 @@ components:
         error:
           type: integer
           description: 0 for success, other values for business errors
+    PageData:
+      allOf:
+        - $ref: "#/components/schemas/BaseResp"
+        - type: object
+          properties:
+            total:
+              type: integer
+              format: int64
+              description: Total number of items
+            current_page:
+              type: integer
+              format: int64
+              description: Current page number
+            page_size:
+              type: integer
+              format: int64
+              description: Number of items per page
     LoginResult:
       type: object
       properties:
@@ -393,6 +561,13 @@ components:
           properties:
             data:
               $ref: "#/components/schemas/MapTaskDetails"
+    AdminMapTaskResp:
+      allOf:
+        - $ref: "#/components/schemas/BaseResp"
+        - type: object
+          properties:
+            data:
+              $ref: "#/components/schemas/MapTaskDetails"
     CreateMapTaskReq:
       type: object
       properties:
@@ -417,7 +592,55 @@ components:
         - district_code
         - constraint_factors
         - suitability_factors
-                
+    User4Admin:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: The unique identifier for the user
+        provider:
+          type: string
+          description: The OIDC provider name (e.g., 'cognito', 'keycloak')
+        sub:
+          type: string
+          description: The OIDC subject identifier
+        email:
+          type: string
+          format: email
+          description: The user's email address
+        role:
+          type: integer
+          description: The user's role (1 for ADMIN, 2 for USER)
+        status:
+          type: integer
+          description: User status (1 for Active, 2 for Locked)
+        created_at:
+          type: string
+          format: date-time
+          description: The creation time of the user account
+        last_login:
+          type: string
+          format: date-time
+          description: The last login time of the user
+    User4AdminPageData:
+      allOf:
+        - $ref: "#/components/schemas/PageData"
+        - type: object
+          properties:
+            list:
+              type: array
+              items:
+                $ref: "#/components/schemas/User4Admin"
+    MapTask4AdminPageData:
+      allOf:
+        - $ref: "#/components/schemas/PageData"
+        - type: object
+          properties:
+            list:
+              type: array
+              items:
+                $ref: "#/components/schemas/MapTask"
 
   securitySchemes:
     OIDC:
