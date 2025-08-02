@@ -1,0 +1,3 @@
+test-data/*
+output-data/*
+.DS_Store
