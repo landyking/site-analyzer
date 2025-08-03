@@ -1,4 +1,7 @@
 import geopandas as gpd
+import rasterio
+from rasterio.mask import mask
+import pandas as pd
 
 def RPL_Select_analysis(input_shp, output_shp, conditions_expression):
     """
@@ -66,3 +69,36 @@ def RPL_Union_analysis(inputs, output):
     gs_all = gpd.GeoSeries(pd.concat(gds_list, ignore_index=True), crs=gds_list[0].crs)
     unioned =  gs_all.union_all()
     unioned.to_file(output)
+
+def RPL_ExtractByMask(input_raster, mask_shapefile, output_raster):
+    """
+    Extract the cells of a raster that fall within the area defined by a shapefile mask, setting other cells to nodata.
+    
+    Parameters:
+    - input_raster: Path to the input raster file.
+    - mask_shapefile: Path to the shapefile defining the mask.
+    - output_raster: Path to save the masked raster file.
+    Returns:
+    - None
+    """
+    mask_gdf = gpd.read_file(mask_shapefile)
+    mask_geoms = mask_gdf.geometry.values
+
+    # Open the raster file
+    with rasterio.open(input_raster) as src:
+        # Mask the raster with the shapefile geometry
+        out_image, out_transform = mask(src, mask_geoms, crop=True)
+
+        # Copy the metadata
+        out_meta = src.meta.copy()
+        out_meta.update({
+            "driver": "GTiff",
+            "height": out_image.shape[1],
+            "width": out_image.shape[2],
+            "transform": out_transform,
+            "nodata": src.nodata  # Ensure nodata is preserved
+        })
+
+    # Save the masked raster to file
+    with rasterio.open(output_raster, "w", **out_meta) as dest:
+        dest.write(out_image)
