@@ -1,7 +1,9 @@
 import geopandas as gpd
 import rasterio
 from rasterio.mask import mask
+from scipy.ndimage import distance_transform_edt
 import pandas as pd
+import numpy as np
 
 def RPL_Select_analysis(input_shp, output_shp, conditions_expression):
     """
@@ -96,7 +98,8 @@ def RPL_ExtractByMask(input_raster, mask_shapefile, output_raster):
             "height": out_image.shape[1],
             "width": out_image.shape[2],
             "transform": out_transform,
-            "nodata": src.nodata  # Ensure nodata is preserved
+            # "nodata": src.nodata,
+            "nodata": None
         })
 
     # Save the masked raster to file
@@ -148,3 +151,41 @@ def RPL_PolygonToRaster_conversion(input_shp, output_raster, template_raster):
         transform=transform
     ) as dst:
         dst.write(rasterized, 1)
+
+def RPL_DistanceAccumulation(input_raster,output_raster):
+    """
+    Perform euclidean distance accumulation on a binary raster, where 1 represents target areas and 0 represents other areas.
+    The output raster will contain the distance from each cell to the nearest target area.
+
+    Parameters:
+    - input_raster: Path to the input binary raster file.
+    - output_raster: Path to save the output raster file with distance accumulation.
+    
+    Returns:
+    - None
+    """
+    with rasterio.open(input_raster) as src:
+        raster_data = src.read(1)
+        raster_nodata = src.nodata
+
+        if raster_nodata is not None:
+            nodata_mask = (raster_data == raster_nodata)
+        else:
+            nodata_mask = np.zeros_like(raster_data, dtype=bool)
+
+        inverse_mask = (raster_data != 1)
+
+        # Calculate the distance transform
+        distance = distance_transform_edt(inverse_mask)
+
+        # Convert distance to meters if the pixel size is known
+        pixel_size = src.transform.a
+        distance_in_meters = distance * pixel_size
+
+        # Set the nodata values in the distance raster
+        distance_in_meters[nodata_mask] = np.nan
+
+        # Save the result to a new raster file
+        with rasterio.open(output_raster, 'w', driver='GTiff', height=src.height, width=src.width,
+                           count=1, dtype='float32', crs=src.crs, transform=src.transform) as dst:
+            dst.write(distance_in_meters.astype('float32'), 1)
