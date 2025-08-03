@@ -1,0 +1,543 @@
+import os
+import numpy as np
+import pandas as pd
+import rasterio
+import geopandas as gpd
+from rasterio.features import rasterize
+import matplotlib.pyplot as plt
+from .functions import (
+    RPL_Select_analysis,
+    RPL_Clip_analysis,
+    RPL_Buffer_analysis,
+    RPL_Union_analysis,
+    RPL_ExtractByMask,
+    RPL_PolygonToRaster_conversion,
+    RPL_DistanceAccumulation,
+    RPL_Reclassify
+)
+
+class SiteSuitabilityEngine:
+    def __init__(self, data_dir, output_dir):
+        """
+        Initialize the Site Suitability Engine.
+        
+        Parameters:
+        - data_dir: Directory containing input data
+        - output_dir: Directory to store output data
+        """
+        self.data_dir = data_dir
+        self.output_dir = output_dir
+        
+        # Ensure output directories exist
+        os.makedirs(output_dir, exist_ok=True)
+        self.restrict_dir = os.path.join(output_dir, "restrict")
+        self.clip_dir = os.path.join(output_dir, "clip")
+        self.score_dir = os.path.join(output_dir, "score")
+        
+        os.makedirs(self.restrict_dir, exist_ok=True)
+        os.makedirs(self.clip_dir, exist_ok=True)
+        os.makedirs(self.score_dir, exist_ok=True)
+        
+        # Default input paths
+        self.in_territorial_authority = os.path.join(data_dir, "statsnz-territorial-authority-2025-clipped-SHP/territorial-authority-2025-clipped.shp")
+        self.in_lake_polygons = os.path.join(data_dir, "lds-nz-lake-polygons-topo-150k-SHP/nz-lake-polygons-topo-150k.shp")
+        self.in_river_centerlines = os.path.join(data_dir, "lds-nz-river-centrelines-topo-150k-SHP/nz-river-centrelines-topo-150k.shp")
+        self.in_coastline = os.path.join(data_dir, "lds-nz-coastlines-topo-150k-SHP/nz-coastlines-topo-150k.shp")
+        self.in_residential_area = os.path.join(data_dir, "lds-nz-residential-area-polygons-topo-150k-SHP/nz-residential-area-polygons-topo-150k.shp")
+        self.in_road_centerlines = os.path.join(data_dir, "lds-nz-road-centrelines-topo-150k-SHP/nz-road-centrelines-topo-150k.shp")
+        self.in_powerline_centerlines = os.path.join(data_dir, "lds-nz-powerline-centrelines-topo-150k-SHP/nz-powerline-centrelines-topo-150k.shp")
+        self.in_solar_radiation = os.path.join(data_dir, "lris-lenz-mean-annual-solar-radiation-GTiff/00000001.tif")
+        self.in_temperature = os.path.join(data_dir, "lris-lenz-mean-annual-temperature-GTiff/00000001.tif")
+        self.in_slope = os.path.join(data_dir, "lris-lenz-slope-GTiff/00000001.tif")
+        
+        # Template raster for raster operations
+        self.template_raster = self.in_slope
+        
+        # Initialize factors list
+        self.factors = []
+        self._initialize_factors()
+        
+        # Districts to process
+        self.districts = [
+            ("001", "Far_North_District"),
+            ("002", "Whangarei_District"),
+            ("003", "Kaipara_District"),
+            ("011", "Thames_Coromandel_District"),
+            ("022", "Western_Bay_of_Plenty_District"),
+            ("024", "Rotorua_District"),
+            ("025", "Whakatane_District"),
+            ("028", "Gisborne_District"),
+            ("051", "Tasman_District"),
+            ("053", "Marlborough_District")
+        ]
+    
+    def _initialize_factors(self):
+        """Initialize the list of factors for site suitability analysis."""
+        self.factors = [
+            {
+                "name": "rivers",
+                "dataset": self.in_river_centerlines,
+                "method_prepare": self._clip_data,
+                "buffer_distance": 500,
+                "method_restricted_zone": self._create_restricted_area,
+                "method_evaluate": lambda *args: None,
+            },
+            {
+                "name": "lakes",
+                "dataset": self.in_lake_polygons,
+                "method_prepare": self._clip_data,
+                "buffer_distance": 500,
+                "method_restricted_zone": self._create_restricted_area,
+                "method_evaluate": lambda *args: None,
+            },
+            {
+                "name": "coastlines",
+                "dataset": self.in_coastline,
+                "method_prepare": self._clip_data,
+                "buffer_distance": 500,
+                "method_restricted_zone": self._create_restricted_area,
+                "method_evaluate": lambda *args: None,
+            },
+            {
+                "name": "residential",
+                "dataset": self.in_residential_area,
+                "method_prepare": self._clip_data,
+                "buffer_distance": 1000,
+                "method_restricted_zone": self._create_restricted_area,
+                "method_evaluate": lambda *args: None,
+            },
+            {
+                "name": "slope",
+                "dataset": self.in_slope,
+                "method_prepare": self._clip_data,
+                "method_restricted_zone": lambda *args: None,
+                "score_weight": 1.5,
+                "method_evaluate": self._evaluate_slope,
+            },
+            {
+                "name": "roads",
+                "dataset": self.in_road_centerlines,
+                "method_prepare": self._clip_data,
+                "method_restricted_zone": lambda *args: None,
+                "score_weight": 1.5,
+                "method_evaluate": self._evaluate_distance_vector,
+            },
+            {
+                "name": "powerlines",
+                "dataset": self.in_powerline_centerlines,
+                "method_prepare": self._clip_data,
+                "method_restricted_zone": lambda *args: None,
+                "score_weight": 2.0,
+                "method_evaluate": self._evaluate_distance_vector,
+            },
+            {
+                "name": "radiation",
+                "dataset": self.in_solar_radiation,
+                "method_prepare": self._clip_data,
+                "method_restricted_zone": lambda *args: None,
+                "score_weight": 4.0,
+                "method_evaluate": self._evaluate_radiation,
+            },
+            {
+                "name": "temperature",
+                "dataset": self.in_temperature,
+                "method_prepare": self._clip_data,
+                "method_restricted_zone": lambda *args: None,
+                "score_weight": 1.0,
+                "method_evaluate": self._evaluate_temperature,
+            }
+        ]
+    
+    def _clip_data(self, factor, prepared_data, district_name, district_boundary_shp):
+        """
+        Clips the data to the district boundary.
+        
+        Parameters:
+        - factor: Factor dictionary containing dataset and name
+        - prepared_data: Dictionary of already prepared data
+        - district_name: Name of the district
+        - district_boundary_shp: Path to the district boundary shapefile
+        
+        Returns:
+        - Path to the clipped data
+        """
+        key = factor['name']
+        dataset = factor['dataset']
+        
+        print(f"{district_name} # Clipping {key} data")
+        out_path = os.path.join(self.clip_dir, f"clip_{key}_{district_name}")
+        
+        if dataset.endswith(".shp"):
+            out_path += ".shp"
+            RPL_Clip_analysis(out_path, dataset, district_boundary_shp)
+        elif dataset.endswith(".tif"):
+            out_path += ".tif"
+            RPL_ExtractByMask(dataset, district_boundary_shp, out_path)
+        
+        return out_path
+    
+    def _create_restricted_area(self, factor, prepared_data, district_name, district_boundary_shp):
+        """
+        Creates a buffer around the feature and clips it to the district boundary.
+        
+        Parameters:
+        - factor: Factor dictionary containing buffer_distance and name
+        - prepared_data: Dictionary of already prepared data
+        - district_name: Name of the district
+        - district_boundary_shp: Path to the district boundary shapefile
+        
+        Returns:
+        - Path to the clipped buffered data
+        """
+        feature = factor['name']
+        distance = factor["buffer_distance"]
+        
+        print(f"{district_name} # Creating buffer for {feature}...")
+        buffer_output = os.path.join(self.restrict_dir, f"buffer_{feature}_{district_name}.shp")
+        RPL_Buffer_analysis(prepared_data[feature], buffer_output, distance)
+        
+        buffer_clipped_output = os.path.join(self.restrict_dir, f"buffer_clipped_{feature}_{district_name}.shp")
+        RPL_Clip_analysis(buffer_clipped_output, buffer_output, district_boundary_shp)
+        
+        return buffer_clipped_output
+    
+    def _evaluate_distance_vector(self, factor, prepared_data, district_name, district_boundary):
+        """
+        Evaluates distance to vector features and creates a score raster.
+        
+        Parameters:
+        - factor: Factor dictionary
+        - prepared_data: Dictionary of already prepared data
+        - district_name: Name of the district
+        - district_boundary: Path to the district boundary
+        
+        Returns:
+        - Path to the score raster
+        """
+        vector_path = prepared_data[factor['name']]
+        template_raster = prepared_data["slope"]
+        
+        # Create a binary raster from the vector
+        binary_raster = os.path.join(self.score_dir, f"binary_{factor['name']}_{district_name}.tif")
+        RPL_PolygonToRaster_conversion(vector_path, binary_raster, template_raster)
+        
+        # Calculate distance
+        dist_raster = os.path.join(self.score_dir, f"distance_{factor['name']}_{district_name}.tif")
+        RPL_DistanceAccumulation(binary_raster, dist_raster)
+        
+        # Reclassify distance to score
+        score_raster = os.path.join(self.score_dir, f"score_{factor['name']}_{district_name}.tif")
+        RPL_Reclassify(dist_raster, score_raster, [
+            [0, 1000, 10],
+            [1000, 2000, 8],
+            [2000, 3000, 5],
+            [3000, float('inf'), 2]
+        ])
+        
+        return score_raster
+    
+    def _evaluate_slope(self, factor, prepared_data, district_name, district_boundary):
+        """
+        Evaluates slope and creates a score raster.
+        
+        Parameters:
+        - factor: Factor dictionary
+        - prepared_data: Dictionary of already prepared data
+        - district_name: Name of the district
+        - district_boundary: Path to the district boundary
+        
+        Returns:
+        - Path to the score raster
+        """
+        slope_raster = prepared_data[factor['name']]
+        score_raster = os.path.join(self.score_dir, f"score_{factor['name']}_{district_name}.tif")
+        
+        RPL_Reclassify(slope_raster, score_raster, [
+            [0, 5, 10],
+            [5, 10, 8],
+            [10, 15, 5],
+            [15, 90, 2]
+        ])
+        
+        return score_raster
+    
+    def _evaluate_radiation(self, factor, prepared_data, district_name, district_boundary):
+        """
+        Evaluates solar radiation and creates a score raster.
+        
+        Parameters:
+        - factor: Factor dictionary
+        - prepared_data: Dictionary of already prepared data
+        - district_name: Name of the district
+        - district_boundary: Path to the district boundary
+        
+        Returns:
+        - Path to the score raster
+        """
+        radiation_raster = prepared_data[factor['name']]
+        score_raster = os.path.join(self.score_dir, f"score_{factor['name']}_{district_name}.tif")
+        
+        RPL_Reclassify(radiation_raster, score_raster, [
+            [115, 125, 2],
+            [125, 135, 4],
+            [135, 140, 6],
+            [140, 145, 8],
+            [145, 150, 9],
+            [150, 155, 10]
+        ])
+        
+        return score_raster
+    
+    def _evaluate_temperature(self, factor, prepared_data, district_name, district_boundary):
+        """
+        Evaluates temperature and creates a score raster.
+        
+        Parameters:
+        - factor: Factor dictionary
+        - prepared_data: Dictionary of already prepared data
+        - district_name: Name of the district
+        - district_boundary: Path to the district boundary
+        
+        Returns:
+        - Path to the score raster
+        """
+        temperature_raster = prepared_data[factor['name']]
+        score_raster = os.path.join(self.score_dir, f"score_{factor['name']}_{district_name}.tif")
+        
+        RPL_Reclassify(temperature_raster, score_raster, [
+            [-70, 0, 2],
+            [0, 50, 5],
+            [50, 120, 10],
+            [120, 140, 7],
+            [140, 165, 3]
+        ])
+        
+        return score_raster
+    
+    def _combine_rasters(self, raster_paths, weights, output_path):
+        """
+        Combines multiple rasters with weights and saves the result.
+        
+        Parameters:
+        - raster_paths: List of paths to rasters
+        - weights: List of weights for each raster
+        - output_path: Path to save the combined raster
+        
+        Returns:
+        - None
+        """
+        combined_data = None
+        reference_meta = None
+        
+        for i, path in enumerate(raster_paths):
+            with rasterio.open(path) as src:
+                if combined_data is None:
+                    combined_data = src.read(1).astype(np.float32) * weights[i]
+                    reference_meta = src.meta.copy()
+                else:
+                    data = src.read(1).astype(np.float32) * weights[i]
+                    combined_data += data
+        
+        # Save the combined raster
+        reference_meta.update(dtype=rasterio.float32)
+        with rasterio.open(output_path, 'w', **reference_meta) as dst:
+            dst.write(combined_data.astype(rasterio.float32), 1)
+    
+    def _apply_mask(self, value_raster, mask_raster, output_path):
+        """
+        Applies a mask to a value raster. Values inside the mask are kept, values outside are set to 0.
+        
+        Parameters:
+        - value_raster: Path to the raster with values
+        - mask_raster: Path to the mask raster (0 for mask, 1 for non-mask)
+        - output_path: Path to save the masked raster
+        
+        Returns:
+        - None
+        """
+        with rasterio.open(value_raster) as src_value, rasterio.open(mask_raster) as src_mask:
+            value_data = src_value.read(1)
+            mask_data = src_mask.read(1)
+            
+            # Apply mask: where mask is 0 (restricted), set value to 0
+            masked_data = np.where(mask_data == 0, value_data, 0)
+            
+            # Save the result
+            out_meta = src_value.meta.copy()
+            with rasterio.open(output_path, 'w', **out_meta) as dst:
+                dst.write(masked_data, 1)
+    
+    def process_district(self, district_code, district_name):
+        """
+        Processes a single district for site suitability analysis.
+        
+        Parameters:
+        - district_code: Code for the district
+        - district_name: Name of the district
+        
+        Returns:
+        - Path to the final suitability raster
+        """
+        print(f"Start processing {district_name}")
+        
+        # Select the district boundary
+        district_boundary_shp = os.path.join(self.output_dir, f"district_boundary_{district_name}.shp")
+        RPL_Select_analysis(
+            self.in_territorial_authority, 
+            district_boundary_shp, 
+            f"TA2025_V1_ == '{district_code}'"
+        )
+        
+        # Prepare data for each factor
+        prepared_data = {}
+        for factor in self.factors:
+            prepared_data[factor["name"]] = factor["method_prepare"](
+                factor, prepared_data, district_name, district_boundary_shp
+            )
+        
+        # Create restricted zones for each factor
+        restricted_zones = []
+        for factor in self.factors:
+            zone = factor["method_restricted_zone"](
+                factor, prepared_data, district_name, district_boundary_shp
+            )
+            if zone is not None:
+                restricted_zones.append(zone)
+        
+        # Union all restricted zones
+        if restricted_zones:
+            restricted_union = os.path.join(self.restrict_dir, f"restricted_union_{district_name}.shp")
+            RPL_Union_analysis(restricted_zones, restricted_union)
+            
+            # Convert the union to a raster mask
+            restricted_mask_raster = os.path.join(self.output_dir, f"zone_restricted_{district_name}.tif")
+            RPL_PolygonToRaster_conversion(restricted_union, restricted_mask_raster, self.template_raster)
+        else:
+            print(f"Warning: No restricted zones for {district_name}")
+            # Create an empty mask if no restricted zones
+            restricted_mask_raster = None
+        
+        # Evaluate and score each factor
+        score_rasters = {}
+        for factor in self.factors:
+            if "method_evaluate" in factor and factor["method_evaluate"] is not None:
+                print(f"{district_name} # Evaluating {factor['name']}...")
+                score_raster = factor["method_evaluate"](
+                    factor, prepared_data, district_name, district_boundary_shp
+                )
+                if score_raster is not None:
+                    score_rasters[factor["name"]] = score_raster
+        
+        # Combine scores with weights
+        if score_rasters:
+            weighted_raster_paths = []
+            weights = []
+            
+            for factor in self.factors:
+                if factor["name"] in score_rasters and "score_weight" in factor:
+                    weighted_raster_paths.append(score_rasters[factor["name"]])
+                    weights.append(factor["score_weight"])
+            
+            weighted_sum_raster = os.path.join(self.output_dir, f"zone_weighted_{district_name}.tif")
+            if weighted_raster_paths:
+                self._combine_rasters(weighted_raster_paths, weights, weighted_sum_raster)
+                
+                # Apply the restricted mask
+                if restricted_mask_raster:
+                    final_zone_raster = os.path.join(self.output_dir, f"zone_masked_{district_name}.tif")
+                    self._apply_mask(weighted_sum_raster, restricted_mask_raster, final_zone_raster)
+                    return final_zone_raster
+                else:
+                    return weighted_sum_raster
+            else:
+                print(f"Warning: No weighted rasters for {district_name}")
+                return None
+        else:
+            print(f"Warning: No score rasters for {district_name}")
+            return None
+    
+    def run(self, selected_districts=None):
+        """
+        Run the site suitability analysis for all districts or selected districts.
+        
+        Parameters:
+        - selected_districts: List of district codes to process. If None, process all districts.
+        
+        Returns:
+        - Dictionary mapping district names to their final suitability raster paths
+        """
+        results = {}
+        
+        districts_to_process = self.districts
+        if selected_districts:
+            districts_to_process = [d for d in self.districts if d[0] in selected_districts]
+        
+        for district_code, district_name in districts_to_process:
+            result_path = self.process_district(district_code, district_name)
+            results[district_name] = result_path
+            print(f"Finished processing {district_name}")
+        
+        print("All selected districts processed successfully.")
+        return results
+    
+    def show_shapefile_plot(self, shapefile_path):
+        """
+        Visualizes a shapefile on a plot using GeoPandas.
+        
+        Parameters:
+        - shapefile_path: Path to the shapefile to visualize
+        
+        Returns:
+        - None
+        """
+        gdf = gpd.read_file(shapefile_path)
+        fig, ax = plt.subplots(figsize=(5, 10))
+        gdf.plot(ax=ax, color='blue')
+        ax.set_xticks([])
+        ax.set_yticks([])
+        plt.show()
+    
+    def show_raster_plot(self, raster_path, cmap='viridis', title=None):
+        """
+        Visualizes a raster on a plot using Rasterio and Matplotlib.
+        
+        Parameters:
+        - raster_path: Path to the raster to visualize
+        - cmap: Colormap to use for visualization
+        - title: Title for the plot
+        
+        Returns:
+        - None
+        """
+        with rasterio.open(raster_path) as src:
+            data = src.read(1)
+            
+            fig, ax = plt.subplots(figsize=(10, 8))
+            im = ax.imshow(data, cmap=cmap)
+            
+            if title:
+                ax.set_title(title)
+            
+            plt.colorbar(im, ax=ax)
+            plt.show()
+
+
+# Example usage
+# if __name__ == "__main__":
+#     # Set your data directory and output directory
+#     data_dir = "path/to/your/test-data"
+#     output_dir = "path/to/your/output-data"
+    
+#     # Initialize the engine
+#     engine = SiteSuitabilityEngine(data_dir, output_dir)
+    
+#     # Run the analysis for all districts
+#     results = engine.run()
+    
+#     # Or run for specific districts
+#     # results = engine.run(selected_districts=["001", "002"])
+    
+#     # Visualize results
+#     for district_name, result_path in results.items():
+#         if result_path:
+#             engine.show_raster_plot(result_path, title=f"Suitability for {district_name}")
