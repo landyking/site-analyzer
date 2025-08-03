@@ -79,7 +79,7 @@ def RPL_ExtractByMask(input_raster, mask_shapefile, output_raster):
     Parameters:
     - input_raster: Path to the input raster file.
     - mask_shapefile: Path to the shapefile defining the mask.
-    - output_raster: Path to save the masked raster file.
+    
     Returns:
     - None
     """
@@ -88,9 +88,9 @@ def RPL_ExtractByMask(input_raster, mask_shapefile, output_raster):
 
     # Open the raster file
     with rasterio.open(input_raster) as src:
+        
         # Mask the raster with the shapefile geometry
         out_image, out_transform = mask(src, mask_geoms, crop=True)
-
         # Copy the metadata
         out_meta = src.meta.copy()
         out_meta.update({
@@ -98,8 +98,7 @@ def RPL_ExtractByMask(input_raster, mask_shapefile, output_raster):
             "height": out_image.shape[1],
             "width": out_image.shape[2],
             "transform": out_transform,
-            # "nodata": src.nodata,
-            "nodata": None
+            "nodata": src.nodata,  # Ensure nodata is preserved
         })
 
     # Save the masked raster to file
@@ -189,3 +188,37 @@ def RPL_DistanceAccumulation(input_raster,output_raster):
         with rasterio.open(output_raster, 'w', driver='GTiff', height=src.height, width=src.width,
                            count=1, dtype='float32', crs=src.crs, transform=src.transform) as dst:
             dst.write(distance_in_meters.astype('float32'), 1)
+
+def RPL_Reclassify(input_raster, output_raster, remap_range):
+    """
+    Reclassify a raster based on a given range mapping.
+
+    Parameters:
+    - input_raster: Path to the input raster file.
+    - output_raster: Path to save the reclassified raster file.
+    - remap_range: List of [min, max, new_value] for reclassification.
+      Example: [
+          [0, 5, 10],
+          [5, 10, 8],
+          [10, 15, 5],
+          [15, 90, 2]
+      ] means: values from 0 (inclusive) to 5 (exclusive) become 10, etc.
+
+    Returns:
+    - None
+    """
+    with rasterio.open(input_raster) as src:
+        data = src.read(1)
+        # Create a copy of the data to reclassify
+        reclassified_data = np.copy(data)
+
+        # Apply the reclassification
+        for min_val, max_val, new_val in remap_range:
+            mask = (data >= min_val) & (data < max_val)
+            reclassified_data[mask] = new_val
+
+        # Save the reclassified raster
+        with rasterio.open(output_raster, 'w', driver='GTiff', height=src.height, width=src.width,
+                           nodata = src.nodata,
+                           count=1, dtype=reclassified_data.dtype, crs=src.crs, transform=src.transform) as dst:
+            dst.write(reclassified_data, 1)
