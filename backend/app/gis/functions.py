@@ -50,3 +50,19 @@ def RPL_Buffer_analysis(input, output, buffer_distance):
     gdf = gpd.read_file(input)
     buffered_gdf = gdf.buffer(distance=buffer_distance)
     buffered_gdf.to_file(output)
+
+def RPL_Union_analysis(inputs, output):
+    """
+    Unions multiple shapefiles into a single shapefile, merging geometries and discarding attributes.
+    
+    Parameters:
+    - inputs: List of paths to input shapefiles.
+    - output: Path to save the unioned shapefile.
+    
+    Returns:
+    - None
+    """
+    gds_list = [gpd.read_file(input).geometry for input in inputs]
+    gs_all = gpd.GeoSeries(pd.concat(gds_list, ignore_index=True), crs=gds_list[0].crs)
+    unioned =  gs_all.union_all()
+    unioned.to_file(output)
