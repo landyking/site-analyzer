@@ -1,8 +1,16 @@
 from fastapi import FastAPI
 
 from .utils import consts
+from .task import task_router
 
-app = FastAPI()
+app = FastAPI(
+    title="Site Analyzer API",
+    description="APIs for Site Analyzer application",
+    version="1.0.0"
+)
+
+# Include routers
+app.include_router(task_router)
 
 
 @app.get("/")
