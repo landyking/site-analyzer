@@ -13,6 +13,9 @@ from .models import (
     CreateMapTaskReq
 )
 
+# Import the GIS processor
+from ..gis.processor import start_map_task_processing, cancel_task_processing
+
 # Mock database - this would be replaced with actual database interaction
 _mock_tasks = {}
 _next_id = 1
@@ -44,13 +47,25 @@ def get_map_task(user_id: int, task_id: int) -> Optional[MapTaskDetails]:
     """
     task = _mock_tasks.get(task_id)
     if task and task.user_id == user_id:
-        # Convert to MapTaskDetails with additional fields
+        # In a real implementation, we would fetch the latest task details from the database
+        # For our mock implementation, we need to return the task with any updated fields
+        
+        # This is a simplified approach - in a real system, task data would be consistently 
+        # updated in the database
+        if hasattr(task, '_task_details'):
+            return task._task_details
+            
+        # If no detailed version exists yet, create one
         task_details = MapTaskDetails(
             **task.dict(),
             files=[],  # In a real implementation, fetch associated files
             constraint_factors=[],  # In a real implementation, fetch constraint factors
             suitability_factors=[]  # In a real implementation, fetch suitability factors
         )
+        
+        # Store for future reference
+        task._task_details = task_details
+        
         return task_details
     return None
 
@@ -88,6 +103,9 @@ def create_map_task(user_id: int, user_email: EmailStr, req: CreateMapTaskReq) -
         suitability_factors=req.suitability_factors
     )
     
+    # Start processing the task in the background
+    start_map_task_processing(task_details)
+    
     return task_details
 
 
@@ -101,6 +119,10 @@ def cancel_map_task(user_id: int, task_id: int) -> bool:
     
     # Only tasks that are CREATED or PROCESSING can be cancelled
     if task.status in [TaskStatus.CREATED, TaskStatus.PROCESSING]:
+        # Try to cancel the task processing
+        cancelled = cancel_task_processing(task_id)
+        
+        # Update task status
         task.status = TaskStatus.CANCELLED
         task.ended_at = datetime.now()
         return True
