@@ -102,3 +102,49 @@ def RPL_ExtractByMask(input_raster, mask_shapefile, output_raster):
     # Save the masked raster to file
     with rasterio.open(output_raster, "w", **out_meta) as dest:
         dest.write(out_image)
+
+def RPL_PolygonToRaster_conversion(input_shp, output_raster, template_raster):
+    """
+    Convert a polygon shapefile to a raster format according to a template raster. 
+    Cells in polygons will be set to 1, others to 0.
+
+    Parameters:
+    - input_shp: Path to the input polygon shapefile.
+    - output_raster: Path to save the output raster file.
+    - template_raster: Path to the template raster file for alignment.
+
+    Returns:
+    - None
+    """
+    transform = None
+    out_shape = None
+    crs = None
+    with rasterio.open(template_raster) as src:
+        transform = src.transform
+        out_shape = (src.height, src.width)
+        crs = src.crs
+    
+    gdf = gpd.read_file(input_shp)
+    shapes = [(geom, 1) for geom in gdf.geometry]
+
+    rasterized = rasterio.features.rasterize(
+            shapes=shapes,
+            out_shape=out_shape,
+            transform=transform,
+            fill=0,
+            dtype='uint8',
+            # all_touched=True,
+        )
+
+    with rasterio.open(
+        output_raster,
+        'w',
+        driver='GTiff',
+        height=out_shape[0],
+        width=out_shape[1],
+        count=1,
+        dtype='uint8',
+        crs=crs,
+        transform=transform
+    ) as dst:
+        dst.write(rasterized, 1)
