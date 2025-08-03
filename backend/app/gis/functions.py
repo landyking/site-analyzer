@@ -69,7 +69,8 @@ def RPL_Union_analysis(inputs, output):
     """
     gds_list = [gpd.read_file(input).geometry for input in inputs]
     gs_all = gpd.GeoSeries(pd.concat(gds_list, ignore_index=True), crs=gds_list[0].crs)
-    unioned =  gs_all.union_all()
+
+    unioned = gpd.GeoSeries([gs_all.union_all()], crs=gds_list[0].crs)
     unioned.to_file(output)
 
 def RPL_ExtractByMask(input_raster, mask_shapefile, output_raster):
