@@ -5,7 +5,7 @@ import numpy as np
 import geopandas as gpd
 import os
 
-version = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+version = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
 def get_data_range(input_raster):
     """
@@ -94,6 +94,24 @@ def show_raster_plot(raster_path, cmap='viridis', title=None):
         plt.title(title)
     plt.axis('off')
     plt.show()
+
+def show_shapefile_plot(shapefile_path):
+    """
+    Visualizes a shapefile on a plot using GeoPandas.
+    
+    Parameters:
+    - shapefile_path: Path to the shapefile to visualize
+    
+    Returns:
+    - None
+    """
+    gdf = gpd.read_file(shapefile_path)
+    fig, ax = plt.subplots(figsize=(5, 10))
+    gdf.plot(ax=ax, color='blue')
+    ax.set_xticks([])
+    ax.set_yticks([])
+    plt.show()
+
 def show_file_info(file_path):
     """
     Displays basic information about a file. Determines if the file is a shapefile or raster based on its extension,

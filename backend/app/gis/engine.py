@@ -5,7 +5,8 @@ import rasterio
 import geopandas as gpd
 from rasterio.features import rasterize
 import matplotlib.pyplot as plt
-from .functions import (
+import tools
+from functions import (
     RPL_Select_analysis,
     RPL_Clip_analysis,
     RPL_Buffer_analysis,
@@ -13,7 +14,7 @@ from .functions import (
     RPL_ExtractByMask,
     RPL_PolygonToRaster_conversion,
     RPL_DistanceAccumulation,
-    RPL_Reclassify
+    RPL_Reclassify,
 )
 
 class SiteSuitabilityEngine:
@@ -46,12 +47,9 @@ class SiteSuitabilityEngine:
         self.in_residential_area = os.path.join(data_dir, "lds-nz-residential-area-polygons-topo-150k-SHP/nz-residential-area-polygons-topo-150k.shp")
         self.in_road_centerlines = os.path.join(data_dir, "lds-nz-road-centrelines-topo-150k-SHP/nz-road-centrelines-topo-150k.shp")
         self.in_powerline_centerlines = os.path.join(data_dir, "lds-nz-powerline-centrelines-topo-150k-SHP/nz-powerline-centrelines-topo-150k.shp")
-        self.in_solar_radiation = os.path.join(data_dir, "lris-lenz-mean-annual-solar-radiation-GTiff/00000001.tif")
-        self.in_temperature = os.path.join(data_dir, "lris-lenz-mean-annual-temperature-GTiff/00000001.tif")
-        self.in_slope = os.path.join(data_dir, "lris-lenz-slope-GTiff/00000001.tif")
-        
-        # Template raster for raster operations
-        self.template_raster = self.in_slope
+        self.in_solar_radiation = os.path.join(data_dir, "lris-lenz-mean-annual-solar-radiation-GTiff/solar_2193.tif")
+        self.in_temperature = os.path.join(data_dir, "lris-lenz-mean-annual-temperature-GTiff/temperature_2193.tif")
+        self.in_slope = os.path.join(data_dir, "lris-lenz-slope-GTiff/slope_2193.tif")
         
         # Initialize factors list
         self.factors = []
@@ -74,22 +72,22 @@ class SiteSuitabilityEngine:
     def _initialize_factors(self):
         """Initialize the list of factors for site suitability analysis."""
         self.factors = [
-            {
-                "name": "rivers",
-                "dataset": self.in_river_centerlines,
-                "method_prepare": self._clip_data,
-                "buffer_distance": 500,
-                "method_restricted_zone": self._create_restricted_area,
-                "method_evaluate": lambda *args: None,
-            },
-            {
-                "name": "lakes",
-                "dataset": self.in_lake_polygons,
-                "method_prepare": self._clip_data,
-                "buffer_distance": 500,
-                "method_restricted_zone": self._create_restricted_area,
-                "method_evaluate": lambda *args: None,
-            },
+            # {
+            #     "name": "rivers",
+            #     "dataset": self.in_river_centerlines,
+            #     "method_prepare": self._clip_data,
+            #     "buffer_distance": 500,
+            #     "method_restricted_zone": self._create_restricted_area,
+            #     "method_evaluate": lambda *args: None,
+            # },
+            # {
+            #     "name": "lakes",
+            #     "dataset": self.in_lake_polygons,
+            #     "method_prepare": self._clip_data,
+            #     "buffer_distance": 500,
+            #     "method_restricted_zone": self._create_restricted_area,
+            #     "method_evaluate": lambda *args: None,
+            # },
             {
                 "name": "coastlines",
                 "dataset": self.in_coastline,
@@ -114,14 +112,14 @@ class SiteSuitabilityEngine:
                 "score_weight": 1.5,
                 "method_evaluate": self._evaluate_slope,
             },
-            {
-                "name": "roads",
-                "dataset": self.in_road_centerlines,
-                "method_prepare": self._clip_data,
-                "method_restricted_zone": lambda *args: None,
-                "score_weight": 1.5,
-                "method_evaluate": self._evaluate_distance_vector,
-            },
+            # {
+            #     "name": "roads",
+            #     "dataset": self.in_road_centerlines,
+            #     "method_prepare": self._clip_data,
+            #     "method_restricted_zone": lambda *args: None,
+            #     "score_weight": 1.5,
+            #     "method_evaluate": self._evaluate_distance_vector,
+            # },
             {
                 "name": "powerlines",
                 "dataset": self.in_powerline_centerlines,
@@ -138,14 +136,14 @@ class SiteSuitabilityEngine:
                 "score_weight": 4.0,
                 "method_evaluate": self._evaluate_radiation,
             },
-            {
-                "name": "temperature",
-                "dataset": self.in_temperature,
-                "method_prepare": self._clip_data,
-                "method_restricted_zone": lambda *args: None,
-                "score_weight": 1.0,
-                "method_evaluate": self._evaluate_temperature,
-            }
+            # {
+            #     "name": "temperature",
+            #     "dataset": self.in_temperature,
+            #     "method_prepare": self._clip_data,
+            #     "method_restricted_zone": lambda *args: None,
+            #     "score_weight": 1.0,
+            #     "method_evaluate": self._evaluate_temperature,
+            # }
         ]
     
     def _clip_data(self, factor, prepared_data, district_name, district_boundary_shp):
@@ -172,8 +170,10 @@ class SiteSuitabilityEngine:
             RPL_Clip_analysis(out_path, dataset, district_boundary_shp)
         elif dataset.endswith(".tif"):
             out_path += ".tif"
+            print(f"range {dataset}: {tools.get_data_range(dataset)}")
             RPL_ExtractByMask(dataset, district_boundary_shp, out_path)
-        
+            print(f"range {out_path}: {tools.get_data_range(out_path)}")
+
         return out_path
     
     def _create_restricted_area(self, factor, prepared_data, district_name, district_boundary_shp):
@@ -220,11 +220,11 @@ class SiteSuitabilityEngine:
         # Create a binary raster from the vector
         binary_raster = os.path.join(self.score_dir, f"binary_{factor['name']}_{district_name}.tif")
         RPL_PolygonToRaster_conversion(vector_path, binary_raster, template_raster)
-        
+        print(f"range {binary_raster}: {tools.get_data_range(binary_raster)}")
         # Calculate distance
         dist_raster = os.path.join(self.score_dir, f"distance_{factor['name']}_{district_name}.tif")
         RPL_DistanceAccumulation(binary_raster, dist_raster)
-        
+        print(f"range {dist_raster}: {tools.get_data_range(dist_raster)}")
         # Reclassify distance to score
         score_raster = os.path.join(self.score_dir, f"score_{factor['name']}_{district_name}.tif")
         RPL_Reclassify(dist_raster, score_raster, [
@@ -233,7 +233,7 @@ class SiteSuitabilityEngine:
             [2000, 3000, 5],
             [3000, float('inf'), 2]
         ])
-        
+        print(f"range {score_raster}: {tools.get_data_range(score_raster)}")
         return score_raster
     
     def _evaluate_slope(self, factor, prepared_data, district_name, district_boundary):
@@ -251,14 +251,14 @@ class SiteSuitabilityEngine:
         """
         slope_raster = prepared_data[factor['name']]
         score_raster = os.path.join(self.score_dir, f"score_{factor['name']}_{district_name}.tif")
-        
+        print(f"range {slope_raster}: {tools.get_data_range(slope_raster)}")
         RPL_Reclassify(slope_raster, score_raster, [
             [0, 5, 10],
             [5, 10, 8],
             [10, 15, 5],
             [15, 90, 2]
         ])
-        
+        print(f"range {score_raster}: {tools.get_data_range(score_raster)}")
         return score_raster
     
     def _evaluate_radiation(self, factor, prepared_data, district_name, district_boundary):
@@ -276,7 +276,7 @@ class SiteSuitabilityEngine:
         """
         radiation_raster = prepared_data[factor['name']]
         score_raster = os.path.join(self.score_dir, f"score_{factor['name']}_{district_name}.tif")
-        
+        print(f"range {radiation_raster}: {tools.get_data_range(radiation_raster)}")
         RPL_Reclassify(radiation_raster, score_raster, [
             [115, 125, 2],
             [125, 135, 4],
@@ -285,7 +285,7 @@ class SiteSuitabilityEngine:
             [145, 150, 9],
             [150, 155, 10]
         ])
-        
+        print(f"range {score_raster}: {tools.get_data_range(score_raster)}")
         return score_raster
     
     def _evaluate_temperature(self, factor, prepared_data, district_name, district_boundary):
@@ -303,7 +303,7 @@ class SiteSuitabilityEngine:
         """
         temperature_raster = prepared_data[factor['name']]
         score_raster = os.path.join(self.score_dir, f"score_{factor['name']}_{district_name}.tif")
-        
+        print(f"range {temperature_raster}: {tools.get_data_range(temperature_raster)}")
         RPL_Reclassify(temperature_raster, score_raster, [
             [-70, 0, 2],
             [0, 50, 5],
@@ -311,7 +311,7 @@ class SiteSuitabilityEngine:
             [120, 140, 7],
             [140, 165, 3]
         ])
-        
+        print(f"range {score_raster}: {tools.get_data_range(score_raster)}")
         return score_raster
     
     def _combine_rasters(self, raster_paths, weights, output_path):
@@ -342,7 +342,8 @@ class SiteSuitabilityEngine:
         reference_meta.update(dtype=rasterio.float32)
         with rasterio.open(output_path, 'w', **reference_meta) as dst:
             dst.write(combined_data.astype(rasterio.float32), 1)
-    
+        print(f"range {output_path}: {tools.get_data_range(output_path)}")
+
     def _apply_mask(self, value_raster, mask_raster, output_path):
         """
         Applies a mask to a value raster. Values inside the mask are kept, values outside are set to 0.
@@ -366,7 +367,9 @@ class SiteSuitabilityEngine:
             out_meta = src_value.meta.copy()
             with rasterio.open(output_path, 'w', **out_meta) as dst:
                 dst.write(masked_data, 1)
-    
+
+        print(f"range {output_path}: {tools.get_data_range(output_path)}")
+
     def process_district(self, district_code, district_name):
         """
         Processes a single district for site suitability analysis.
@@ -379,6 +382,8 @@ class SiteSuitabilityEngine:
         - Path to the final suitability raster
         """
         print(f"Start processing {district_name}")
+
+        self.template_raster = None
         
         # Select the district boundary
         district_boundary_shp = os.path.join(self.output_dir, f"district_boundary_{district_name}.shp")
@@ -387,6 +392,8 @@ class SiteSuitabilityEngine:
             district_boundary_shp, 
             f"TA2025_V1_ == '{district_code}'"
         )
+        # show_shapefile_info(district_boundary_shp)
+
         
         # Prepare data for each factor
         prepared_data = {}
@@ -394,6 +401,13 @@ class SiteSuitabilityEngine:
             prepared_data[factor["name"]] = factor["method_prepare"](
                 factor, prepared_data, district_name, district_boundary_shp
             )
+
+        self.template_raster = prepared_data["slope"]  # Use slope as template for raster operations
+
+        # print(f"prepared_data: {prepared_data}")
+        # for k,v in prepared_data.items():
+            # print(f"{k}: {v}")
+            # show_file_info(v)
         
         # Create restricted zones for each factor
         restricted_zones = []
@@ -404,14 +418,20 @@ class SiteSuitabilityEngine:
             if zone is not None:
                 restricted_zones.append(zone)
         
+              # print(f"prepared_data: {prepared_data}")
+        # for v in restricted_zones:
+        #     print(f"{v}")
+        #     show_file_info(v)
+
         # Union all restricted zones
         if restricted_zones:
             restricted_union = os.path.join(self.restrict_dir, f"restricted_union_{district_name}.shp")
             RPL_Union_analysis(restricted_zones, restricted_union)
-            
+            tools.show_file_info(restricted_union)
             # Convert the union to a raster mask
             restricted_mask_raster = os.path.join(self.output_dir, f"zone_restricted_{district_name}.tif")
             RPL_PolygonToRaster_conversion(restricted_union, restricted_mask_raster, self.template_raster)
+            tools.show_file_info(restricted_mask_raster)
         else:
             print(f"Warning: No restricted zones for {district_name}")
             # Create an empty mask if no restricted zones
@@ -427,7 +447,10 @@ class SiteSuitabilityEngine:
                 )
                 if score_raster is not None:
                     score_rasters[factor["name"]] = score_raster
-        
+        # for k,v in score_rasters.items():
+        #     print(f"{k}: {v}")
+        #     show_file_info(v)
+        # return
         # Combine scores with weights
         if score_rasters:
             weighted_raster_paths = []
@@ -508,65 +531,24 @@ class SiteSuitabilityEngine:
         else:
             print(f"Failed to process district {district_name}")
             return None
-    
-    def show_shapefile_plot(self, shapefile_path):
-        """
-        Visualizes a shapefile on a plot using GeoPandas.
-        
-        Parameters:
-        - shapefile_path: Path to the shapefile to visualize
-        
-        Returns:
-        - None
-        """
-        gdf = gpd.read_file(shapefile_path)
-        fig, ax = plt.subplots(figsize=(5, 10))
-        gdf.plot(ax=ax, color='blue')
-        ax.set_xticks([])
-        ax.set_yticks([])
-        plt.show()
-    
-    def show_raster_plot(self, raster_path, cmap='viridis', title=None):
-        """
-        Visualizes a raster on a plot using Rasterio and Matplotlib.
-        
-        Parameters:
-        - raster_path: Path to the raster to visualize
-        - cmap: Colormap to use for visualization
-        - title: Title for the plot
-        
-        Returns:
-        - None
-        """
-        with rasterio.open(raster_path) as src:
-            data = src.read(1)
-            
-            fig, ax = plt.subplots(figsize=(10, 8))
-            im = ax.imshow(data, cmap=cmap)
-            
-            if title:
-                ax.set_title(title)
-            
-            plt.colorbar(im, ax=ax)
-            plt.show()
 
 
 # Example usage
-# if __name__ == "__main__":
-#     # Set your data directory and output directory
-#     data_dir = "path/to/your/test-data"
-#     output_dir = "path/to/your/output-data"
+if __name__ == "__main__":
+    # Set your data directory and output directory
+    data_dir = "/Users/landy/UoW/COMPX576/code/site-analyzer/test-data"
+    output_dir = "/Users/landy/UoW/COMPX576/code/site-analyzer/output-data/engine"
+
+    # Initialize the engine
+    engine = SiteSuitabilityEngine(data_dir, output_dir)
     
-#     # Initialize the engine
-#     engine = SiteSuitabilityEngine(data_dir, output_dir)
+    # Run the analysis for all districts
+    # results = engine.run()
     
-#     # Run the analysis for all districts
-#     results = engine.run()
+    # Or run for specific districts
+    results = engine.run(selected_districts=["001"])
     
-#     # Or run for specific districts
-#     # results = engine.run(selected_districts=["001", "002"])
-    
-#     # Visualize results
-#     for district_name, result_path in results.items():
-#         if result_path:
-#             engine.show_raster_plot(result_path, title=f"Suitability for {district_name}")
+    # Visualize results
+    for district_name, result_path in results.items():
+        if result_path:
+            tools.show_raster_plot(result_path, title=f"Suitability for {district_name}")
