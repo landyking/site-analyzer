@@ -1,10 +1,4 @@
 import os
-import numpy as np
-import pandas as pd
-import rasterio
-import geopandas as gpd
-from rasterio.features import rasterize
-import matplotlib.pyplot as plt
 import tools
 from functions import (
     RPL_Select_analysis,
@@ -15,6 +9,8 @@ from functions import (
     RPL_PolygonToRaster_conversion,
     RPL_DistanceAccumulation,
     RPL_Reclassify,
+    RPL_Combine_rasters,
+    RPL_Apply_mask,
 )
 
 class SiteSuitabilityEngine:
@@ -313,62 +309,7 @@ class SiteSuitabilityEngine:
         ])
         print(f"range {score_raster}: {tools.get_data_range(score_raster)}")
         return score_raster
-    
-    def _combine_rasters(self, raster_paths, weights, output_path):
-        """
-        Combines multiple rasters with weights and saves the result.
-        
-        Parameters:
-        - raster_paths: List of paths to rasters
-        - weights: List of weights for each raster
-        - output_path: Path to save the combined raster
-        
-        Returns:
-        - None
-        """
-        combined_data = None
-        reference_meta = None
-        
-        for i, path in enumerate(raster_paths):
-            with rasterio.open(path) as src:
-                if combined_data is None:
-                    combined_data = src.read(1).astype(np.float32) * weights[i]
-                    reference_meta = src.meta.copy()
-                else:
-                    data = src.read(1).astype(np.float32) * weights[i]
-                    combined_data += data
-        
-        # Save the combined raster
-        reference_meta.update(dtype=rasterio.float32)
-        with rasterio.open(output_path, 'w', **reference_meta) as dst:
-            dst.write(combined_data.astype(rasterio.float32), 1)
-        print(f"range {output_path}: {tools.get_data_range(output_path)}")
 
-    def _apply_mask(self, value_raster, mask_raster, output_path):
-        """
-        Applies a mask to a value raster. Values inside the mask are kept, values outside are set to 0.
-        
-        Parameters:
-        - value_raster: Path to the raster with values
-        - mask_raster: Path to the mask raster (0 for mask, 1 for non-mask)
-        - output_path: Path to save the masked raster
-        
-        Returns:
-        - None
-        """
-        with rasterio.open(value_raster) as src_value, rasterio.open(mask_raster) as src_mask:
-            value_data = src_value.read(1)
-            mask_data = src_mask.read(1)
-            
-            # Apply mask: where mask is 0 (restricted), set value to 0
-            masked_data = np.where(mask_data == 0, value_data, 0)
-            
-            # Save the result
-            out_meta = src_value.meta.copy()
-            with rasterio.open(output_path, 'w', **out_meta) as dst:
-                dst.write(masked_data, 1)
-
-        print(f"range {output_path}: {tools.get_data_range(output_path)}")
 
     def process_district(self, district_code, district_name):
         """
@@ -453,22 +394,20 @@ class SiteSuitabilityEngine:
         # return
         # Combine scores with weights
         if score_rasters:
-            weighted_raster_paths = []
-            weights = []
+            weighted_rasters = []
             
             for factor in self.factors:
                 if factor["name"] in score_rasters and "score_weight" in factor:
-                    weighted_raster_paths.append(score_rasters[factor["name"]])
-                    weights.append(factor["score_weight"])
-            
+                    weighted_rasters.append((score_rasters[factor["name"]], factor["score_weight"]))
+
             weighted_sum_raster = os.path.join(self.output_dir, f"zone_weighted_{district_name}.tif")
-            if weighted_raster_paths:
-                self._combine_rasters(weighted_raster_paths, weights, weighted_sum_raster)
+            if weighted_rasters:
+                RPL_Combine_rasters(weighted_rasters, weighted_sum_raster)
                 
                 # Apply the restricted mask
                 if restricted_mask_raster:
                     final_zone_raster = os.path.join(self.output_dir, f"zone_masked_{district_name}.tif")
-                    self._apply_mask(weighted_sum_raster, restricted_mask_raster, final_zone_raster)
+                    RPL_Apply_mask(weighted_sum_raster, restricted_mask_raster, final_zone_raster)
                     return final_zone_raster
                 else:
                     return weighted_sum_raster

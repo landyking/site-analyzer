@@ -235,3 +235,71 @@ def RPL_Reclassify(input_raster, output_raster, remap_range):
                            compress='lzw',
                            count=1, dtype=reclassified_data.dtype, crs=src.crs, transform=src.transform) as dst:
             dst.write(reclassified_data, 1)
+
+def RPL_Combine_rasters(inputs, output_raster):
+    """
+    Combine multiple raster files into a single raster by computing the weighted sum of their values.
+
+    Parameters:
+    - inputs: List of tuples (raster file path, weight).
+    - output_raster: Path to save the combined raster.
+
+    Returns:
+    - None
+    """
+    first_file, first_weight = inputs[0]
+    with rasterio.open(first_file) as src:
+        out_meta = src.meta.copy()
+        out_meta.update({
+            "driver": "GTiff",
+            "count": 1,
+            "dtype": "float32",
+            "compress": "lzw"
+        })
+        first_data = src.read(1)
+        raster_nodata = src.nodata
+        nodata_mask = None
+        if raster_nodata is not None:
+            nodata_mask = (first_data == src.nodata)
+        weighted_sum = first_data.astype(np.float32) * first_weight
+        for file, weight in inputs[1:]:
+            with rasterio.open(file) as src:
+                data = src.read(1)
+                weighted_sum += data.astype(np.float32) * weight
+        
+        if nodata_mask is not None:
+            weighted_sum[nodata_mask] = np.nan
+            out_meta['nodata'] = np.nan
+        
+        with rasterio.open(output_raster, 'w', **out_meta) as dest:
+            dest.write(weighted_sum, 1)
+
+def RPL_Apply_mask(value_raster, mask_raster, output_path):
+    """
+    Applies a binary mask to a raster file, setting values to zero where the mask is 1, and writes the result to an output file.
+    Parameters:
+        value_raster (str): Path to the input raster file containing the values to be masked.
+        mask_raster (str): Path to the binary mask raster file. Pixels with value 1 will be masked (set to zero in the output).
+        output_path (str): Path where the masked raster will be saved.
+    Returns:
+        None
+    Raises:
+        ValueError: If the input rasters do not have the same shape or CRS.
+    """
+    with rasterio.open(value_raster) as src_value, rasterio.open(mask_raster) as src_mask:
+        if src_value.shape != src_mask.shape:
+            raise ValueError("Input rasters must have the same shape.")
+        if src_value.crs != src_mask.crs:
+            raise ValueError("Input rasters must have the same CRS.")
+        value_data = src_value.read(1)
+        mask_data = src_mask.read(1)
+        
+        masked_data = value_data.copy()
+        masked_data[mask_data == 1] = 0
+    
+        out_meta = src_value.meta.copy()
+        out_meta.update({
+            "compress": "lzw",
+        })
+        with rasterio.open(output_path, 'w', **out_meta) as dst:
+            dst.write(masked_data, 1)
