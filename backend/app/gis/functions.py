@@ -210,10 +210,10 @@ def RPL_Reclassify(input_raster, output_raster, remap_range):
     - output_raster: Path to save the reclassified raster file.
     - remap_range: List of [min, max, new_value] for reclassification.
       Example: [
-          [0, 5, 10],
-          [5, 10, 8],
-          [10, 15, 5],
-          [15, 90, 2]
+          (0, 5, 10),
+          (5, 10, 8),
+          (10, 15, 5),
+          (15, 90, 2)
       ] means: values from 0 (inclusive) to 5 (exclusive) become 10, etc.
 
     Returns:

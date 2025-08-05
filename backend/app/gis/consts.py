@@ -1,0 +1,10 @@
+districts = [("001", "Far_North_District"),
+            ("002", "Whangarei_District"),
+            ("003", "Kaipara_District"),
+            ("011", "Thames_Coromandel_District"),
+            ("022", "Western_Bay_of_Plenty_District"),
+            ("024", "Rotorua_District"),
+            ("025", "Whakatane_District"),
+            ("028", "Gisborne_District"),
+            ("051", "Tasman_District"),
+            ("053", "Marlborough_District")]

@@ -1,5 +1,11 @@
 import os
 import tools
+import consts
+from engine_models import (
+    EngineConfigs,
+    RestrictedFactor, 
+    SuitabilityFactor
+)
 from functions import (
     RPL_Select_analysis,
     RPL_Clip_analysis,
@@ -14,13 +20,14 @@ from functions import (
 )
 
 class SiteSuitabilityEngine:
-    def __init__(self, data_dir, output_dir):
+    def __init__(self, data_dir, output_dir, configs: EngineConfigs):
         """
         Initialize the Site Suitability Engine.
         
         Parameters:
         - data_dir: Directory containing input data
         - output_dir: Directory to store output data
+        - configs: Configuration settings for the engine
         """
         self.data_dir = data_dir
         self.output_dir = output_dir
@@ -49,41 +56,27 @@ class SiteSuitabilityEngine:
         
         # Initialize factors list
         self.factors = []
-        self._initialize_factors()
-        
-        # Districts to process
-        self.districts = [
-            ("001", "Far_North_District"),
-            ("002", "Whangarei_District"),
-            ("003", "Kaipara_District"),
-            ("011", "Thames_Coromandel_District"),
-            ("022", "Western_Bay_of_Plenty_District"),
-            ("024", "Rotorua_District"),
-            ("025", "Whakatane_District"),
-            ("028", "Gisborne_District"),
-            ("051", "Tasman_District"),
-            ("053", "Marlborough_District")
-        ]
-    
-    def _initialize_factors(self):
+        self._initialize_factors(configs)
+
+    def _initialize_factors(self, configs: EngineConfigs):
         """Initialize the list of factors for site suitability analysis."""
-        self.factors = [
-            # {
-            #     "name": "rivers",
-            #     "dataset": self.in_river_centerlines,
-            #     "method_prepare": self._clip_data,
-            #     "buffer_distance": 500,
-            #     "method_restricted_zone": self._create_restricted_area,
-            #     "method_evaluate": lambda *args: None,
-            # },
-            # {
-            #     "name": "lakes",
-            #     "dataset": self.in_lake_polygons,
-            #     "method_prepare": self._clip_data,
-            #     "buffer_distance": 500,
-            #     "method_restricted_zone": self._create_restricted_area,
-            #     "method_evaluate": lambda *args: None,
-            # },
+        all_factors = [
+            {
+                "name": "rivers",
+                "dataset": self.in_river_centerlines,
+                "method_prepare": self._clip_data,
+                "buffer_distance": 500,
+                "method_restricted_zone": self._create_restricted_area,
+                "method_evaluate": lambda *args: None,
+            },
+            {
+                "name": "lakes",
+                "dataset": self.in_lake_polygons,
+                "method_prepare": self._clip_data,
+                "buffer_distance": 500,
+                "method_restricted_zone": self._create_restricted_area,
+                "method_evaluate": lambda *args: None,
+            },
             {
                 "name": "coastlines",
                 "dataset": self.in_coastline,
@@ -106,22 +99,40 @@ class SiteSuitabilityEngine:
                 "method_prepare": self._clip_data,
                 "method_restricted_zone": lambda *args: None,
                 "score_weight": 1.5,
+                "evaluate_rules": [
+                    (0, 5, 10),
+                    (5, 10, 8),
+                    (10, 15, 5),
+                    (15, 90, 2)
+                ],
                 "method_evaluate": self._evaluate_slope,
             },
-            # {
-            #     "name": "roads",
-            #     "dataset": self.in_road_centerlines,
-            #     "method_prepare": self._clip_data,
-            #     "method_restricted_zone": lambda *args: None,
-            #     "score_weight": 1.5,
-            #     "method_evaluate": self._evaluate_distance_vector,
-            # },
+            {
+                "name": "roads",
+                "dataset": self.in_road_centerlines,
+                "method_prepare": self._clip_data,
+                "method_restricted_zone": lambda *args: None,
+                "score_weight": 1.5,
+                "evaluate_rules": [
+                    (0, 1000, 10),
+                    (1000, 2000, 8),
+                    (2000, 3000, 5),
+                    (3000, float('inf'), 2)
+                ],
+                "method_evaluate": self._evaluate_distance_vector,
+            },
             {
                 "name": "powerlines",
                 "dataset": self.in_powerline_centerlines,
                 "method_prepare": self._clip_data,
                 "method_restricted_zone": lambda *args: None,
                 "score_weight": 2.0,
+                "evaluate_rules": [
+                    (0, 1000, 10),
+                    (1000, 2000, 8),
+                    (2000, 3000, 5),
+                    (3000, float('inf'), 2)
+                ],
                 "method_evaluate": self._evaluate_distance_vector,
             },
             {
@@ -130,17 +141,49 @@ class SiteSuitabilityEngine:
                 "method_prepare": self._clip_data,
                 "method_restricted_zone": lambda *args: None,
                 "score_weight": 4.0,
+                "evaluate_rules": [
+                    (115, 125, 2),
+                    (125, 135, 4),
+                    (135, 140, 6),
+                    (140, 145, 8),
+                    (145, 150, 9),
+                    (150, 155, 10)
+                ],
                 "method_evaluate": self._evaluate_radiation,
             },
-            # {
-            #     "name": "temperature",
-            #     "dataset": self.in_temperature,
-            #     "method_prepare": self._clip_data,
-            #     "method_restricted_zone": lambda *args: None,
-            #     "score_weight": 1.0,
-            #     "method_evaluate": self._evaluate_temperature,
-            # }
+            {
+                "name": "temperature",
+                "dataset": self.in_temperature,
+                "method_prepare": self._clip_data,
+                "method_restricted_zone": lambda *args: None,
+                "score_weight": 1.0,
+                "evaluate_rules": [
+                    (-70, 0, 2),
+                    (0, 50, 5),
+                    (50, 120, 10),
+                    (120, 140, 7),
+                    (140, 165, 3)
+                ],
+                "method_evaluate": self._evaluate_temperature,
+            }
         ]
+        apply_factors = []
+        
+        for rfactor in configs.restricted_factors:
+            config = next((f for f in all_factors if f['name'] == rfactor.kind), None)
+            if config:
+                config['buffer_distance'] = rfactor.buffer_distance
+                apply_factors.append(config)
+
+        for sfactor in configs.suitability_factors:
+            config = next((f for f in all_factors if f['name'] == sfactor.kind), None)
+            if config:
+                config['score_weight'] = sfactor.weight
+                if sfactor.ranges:
+                    config['evaluate_rules'] = sfactor.ranges
+                apply_factors.append(config)
+        
+        self.factors = apply_factors
     
     def _clip_data(self, factor, prepared_data, district_name, district_boundary_shp):
         """
@@ -223,12 +266,7 @@ class SiteSuitabilityEngine:
         print(f"range {dist_raster}: {tools.get_data_range(dist_raster)}")
         # Reclassify distance to score
         score_raster = os.path.join(self.score_dir, f"score_{factor['name']}_{district_name}.tif")
-        RPL_Reclassify(dist_raster, score_raster, [
-            [0, 1000, 10],
-            [1000, 2000, 8],
-            [2000, 3000, 5],
-            [3000, float('inf'), 2]
-        ])
+        RPL_Reclassify(dist_raster, score_raster, factor["evaluate_rules"])
         print(f"range {score_raster}: {tools.get_data_range(score_raster)}")
         return score_raster
     
@@ -248,12 +286,7 @@ class SiteSuitabilityEngine:
         slope_raster = prepared_data[factor['name']]
         score_raster = os.path.join(self.score_dir, f"score_{factor['name']}_{district_name}.tif")
         print(f"range {slope_raster}: {tools.get_data_range(slope_raster)}")
-        RPL_Reclassify(slope_raster, score_raster, [
-            [0, 5, 10],
-            [5, 10, 8],
-            [10, 15, 5],
-            [15, 90, 2]
-        ])
+        RPL_Reclassify(slope_raster, score_raster, factor["evaluate_rules"])
         print(f"range {score_raster}: {tools.get_data_range(score_raster)}")
         return score_raster
     
@@ -273,14 +306,7 @@ class SiteSuitabilityEngine:
         radiation_raster = prepared_data[factor['name']]
         score_raster = os.path.join(self.score_dir, f"score_{factor['name']}_{district_name}.tif")
         print(f"range {radiation_raster}: {tools.get_data_range(radiation_raster)}")
-        RPL_Reclassify(radiation_raster, score_raster, [
-            [115, 125, 2],
-            [125, 135, 4],
-            [135, 140, 6],
-            [140, 145, 8],
-            [145, 150, 9],
-            [150, 155, 10]
-        ])
+        RPL_Reclassify(radiation_raster, score_raster, factor["evaluate_rules"])
         print(f"range {score_raster}: {tools.get_data_range(score_raster)}")
         return score_raster
     
@@ -300,13 +326,7 @@ class SiteSuitabilityEngine:
         temperature_raster = prepared_data[factor['name']]
         score_raster = os.path.join(self.score_dir, f"score_{factor['name']}_{district_name}.tif")
         print(f"range {temperature_raster}: {tools.get_data_range(temperature_raster)}")
-        RPL_Reclassify(temperature_raster, score_raster, [
-            [-70, 0, 2],
-            [0, 50, 5],
-            [50, 120, 10],
-            [120, 140, 7],
-            [140, 165, 3]
-        ])
+        RPL_Reclassify(temperature_raster, score_raster, factor["evaluate_rules"])
         print(f"range {score_raster}: {tools.get_data_range(score_raster)}")
         return score_raster
 
@@ -430,10 +450,13 @@ class SiteSuitabilityEngine:
         """
         results = {}
         
-        districts_to_process = self.districts
+        districts_to_process = []
         if selected_districts:
-            districts_to_process = [d for d in self.districts if d[0] in selected_districts]
-        
+            districts_to_process = [d for d in consts.districts if d[0] in selected_districts]
+
+        if not districts_to_process:
+            raise Exception(f"No districts found for the provided codes: {selected_districts}")
+
         for district_code, district_name in districts_to_process:
             result_path = self.process_district(district_code, district_name)
             results[district_name] = result_path
@@ -450,8 +473,19 @@ if __name__ == "__main__":
     output_dir = "/Users/landy/UoW/COMPX576/code/site-analyzer/output-data/engine"
 
     # Initialize the engine
-    engine = SiteSuitabilityEngine(data_dir, output_dir)
-    
+    engine = SiteSuitabilityEngine(data_dir, output_dir, EngineConfigs(
+        restricted_factors=[RestrictedFactor(
+            kind="coastlines",
+            buffer_distance=500),RestrictedFactor(
+            kind="residential",
+            buffer_distance=3000)],
+        suitability_factors=[SuitabilityFactor(
+            kind="slope",
+            weight=1.5,
+            ranges=None
+        )]
+    ))
+
     # Run the analysis for all districts
     # results = engine.run()
     
