@@ -40,7 +40,20 @@ site-analyzer/
 ├── backend/      # API service and core logic
 ├── frontend/     # Web application
 ├── docs/         # Documentation
+├── test-data/    # Test datasets
+├── output-data/  # Analysis outputs
 └── README.md     # Project overview
+```
+
+## 🧰 Data Preparation
+
+When working with geospatial data, it is often necessary to ensure that the coordinate reference systems (CRS) of different datasets are consistent. This is particularly important when performing operations like rasterization or distance calculations.
+
+If the raster data's coordinate reference system (CRS) is not consistent with the shapefile, we can reproject the raster data using GDAL's `gdalwarp` command. This command allows us to specify the target CRS and apply compression options to optimize the output file size.
+
+```bash
+gdalwarp -t_srs EPSG:2193 -co COMPRESS=DEFLATE -co PREDICTOR=2 -co ZLEVEL=9 input.tif output_compressed.tif
+# gdalwarp -t_srs EPSG:2193 -co COMPRESS=LZW input.tif output_compressed.tif
 ```
 
 ## 📄 License
