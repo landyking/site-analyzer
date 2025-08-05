@@ -99,6 +99,7 @@ def RPL_ExtractByMask(input_raster, mask_shapefile, output_raster):
             "height": out_image.shape[1],
             "width": out_image.shape[2],
             "transform": out_transform,
+            "compress": "lzw",
             "nodata": src.nodata,  # Ensure nodata is preserved
         })
 
@@ -122,10 +123,12 @@ def RPL_PolygonToRaster_conversion(input_shp, output_raster, template_raster):
     transform = None
     out_shape = None
     crs = None
+    template_data = None
     with rasterio.open(template_raster) as src:
         transform = src.transform
         out_shape = (src.height, src.width)
         crs = src.crs
+        template_data = src.read(1)
     
     gdf = gpd.read_file(input_shp)
     shapes = [(geom, 1) for geom in gdf.geometry]
@@ -135,9 +138,13 @@ def RPL_PolygonToRaster_conversion(input_shp, output_raster, template_raster):
             out_shape=out_shape,
             transform=transform,
             fill=0,
+            nodata=src.nodata,
             dtype='uint8',
-            # all_touched=True,
+            all_touched=True,
         )
+    
+    # Set nodata in the output raster where the template raster has nodata values
+    rasterized[template_data == src.nodata] = src.nodata
 
     with rasterio.open(
         output_raster,
@@ -148,7 +155,9 @@ def RPL_PolygonToRaster_conversion(input_shp, output_raster, template_raster):
         count=1,
         dtype='uint8',
         crs=crs,
-        transform=transform
+        transform=transform,
+        nodata=src.nodata,
+        compress='lzw',
     ) as dst:
         dst.write(rasterized, 1)
 
@@ -187,7 +196,9 @@ def RPL_DistanceAccumulation(input_raster,output_raster):
 
         # Save the result to a new raster file
         with rasterio.open(output_raster, 'w', driver='GTiff', height=src.height, width=src.width,
-                           count=1, dtype='float32', crs=src.crs, transform=src.transform) as dst:
+                           count=1, dtype='float32', crs=src.crs, transform=src.transform,
+                            nodata=np.nan,compress='lzw',
+                           ) as dst:
             dst.write(distance_in_meters.astype('float32'), 1)
 
 def RPL_Reclassify(input_raster, output_raster, remap_range):
@@ -220,6 +231,7 @@ def RPL_Reclassify(input_raster, output_raster, remap_range):
 
         # Save the reclassified raster
         with rasterio.open(output_raster, 'w', driver='GTiff', height=src.height, width=src.width,
-                           nodata = src.nodata,
+                           nodata=src.nodata,
+                           compress='lzw',
                            count=1, dtype=reclassified_data.dtype, crs=src.crs, transform=src.transform) as dst:
             dst.write(reclassified_data, 1)
