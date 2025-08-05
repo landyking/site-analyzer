@@ -441,35 +441,6 @@ class SiteSuitabilityEngine:
         
         print("All selected districts processed successfully.")
         return results
-        
-    def run_single_district(self, district_code):
-        """
-        Run the site suitability analysis for a single district specified by its code.
-        
-        Parameters:
-        - district_code: The code of the district to process
-        
-        Returns:
-        - Tuple of (district_name, result_path) or None if district not found
-        """
-        # Find the district by code
-        district_info = next((d for d in self.districts if d[0] == district_code), None)
-        if not district_info:
-            print(f"District with code {district_code} not found")
-            return None
-            
-        district_code, district_name = district_info
-        
-        # Process the district
-        print(f"Starting processing for district {district_name} (code: {district_code})")
-        result_path = self.process_district(district_code, district_name)
-        
-        if result_path:
-            print(f"Successfully processed district {district_name}")
-            return (district_name, result_path)
-        else:
-            print(f"Failed to process district {district_name}")
-            return None
 
 
 # Example usage
@@ -486,7 +457,7 @@ if __name__ == "__main__":
     
     # Or run for specific districts
     results = engine.run(selected_districts=["001"])
-    
+
     # Visualize results
     for district_name, result_path in results.items():
         if result_path:
