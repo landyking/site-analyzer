@@ -44,6 +44,8 @@ pip install -r requirements.txt
 Start the FastAPI development server:
 
 ```bash
+fastapi dev app/main.py
+# or
 uvicorn app.main:app --reload
 ```
 
