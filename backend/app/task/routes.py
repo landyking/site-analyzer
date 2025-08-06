@@ -1,13 +1,13 @@
 from fastapi import APIRouter, Depends, HTTPException, Path, Query
 from typing import Optional
 
-from .models import (
+from app.task.models import (
     MyMapTaskListResp,
     MyMapTaskResp,
     BaseResp,
     CreateMapTaskReq
 )
-from .service import (
+from app.task.service import (
     get_user_map_tasks,
     get_map_task,
     create_map_task,

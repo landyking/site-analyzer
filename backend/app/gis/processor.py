@@ -3,7 +3,7 @@ import threading
 from datetime import datetime
 from typing import Dict, Optional, List, Tuple
 
-from ..task.models import (
+from app.task.models import (
     MapTask,
     MapTaskDetails,
     TaskStatus,
@@ -11,7 +11,7 @@ from ..task.models import (
     SuitabilityFactor,
     MapTaskFile
 )
-from .engine import SiteSuitabilityEngine
+from app.gis.engine import SiteSuitabilityEngine
 
 # Global dictionary to track running tasks
 _running_tasks: Dict[int, threading.Thread] = {}

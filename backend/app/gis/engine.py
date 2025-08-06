@@ -1,12 +1,12 @@
 import os
-import tools
-import consts
-from engine_models import (
+import app.gis.tools as tools
+import app.gis.consts as consts
+from app.gis.engine_models import (
     EngineConfigs,
     RestrictedFactor, 
     SuitabilityFactor
 )
-from functions import (
+from app.gis.functions import (
     RPL_Select_analysis,
     RPL_Clip_analysis,
     RPL_Buffer_analysis,
@@ -467,10 +467,12 @@ class SiteSuitabilityEngine:
 
 
 # Example usage
+# Run this script by `cd backend && python -m app.gis.engine`
 if __name__ == "__main__":
     # Set your data directory and output directory
-    data_dir = "/Users/landy/UoW/COMPX576/code/site-analyzer/test-data"
-    output_dir = "/Users/landy/UoW/COMPX576/code/site-analyzer/output-data/engine"
+    root_dir = os.path.abspath('../')
+    data_dir = os.path.join(root_dir, "test-data")
+    output_dir = os.path.join(root_dir, "output-data", "engine")
 
     # Initialize the engine
     engine = SiteSuitabilityEngine(data_dir, output_dir, EngineConfigs(

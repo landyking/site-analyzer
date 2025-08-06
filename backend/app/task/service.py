@@ -3,7 +3,7 @@ from datetime import datetime
 import random
 from pydantic import EmailStr
 
-from .models import (
+from app.task.models import (
     MapTask,
     MapTaskDetails,
     TaskStatus,

@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 
-from .utils import consts
-from .task import task_router
+from app.utils import consts
+from app.task.routes import router as task_router
 
 app = FastAPI(
     title="Site Analyzer API",
