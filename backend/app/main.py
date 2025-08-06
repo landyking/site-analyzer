@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 
-from app.utils import consts
+from app.api.main import api_router
 from app.task.routes import router as task_router
 
 app = FastAPI(
@@ -11,8 +11,4 @@ app = FastAPI(
 
 # Include routers
 app.include_router(task_router)
-
-
-@app.get("/")
-async def root():
-    return {"message": consts.test_content}
+app.include_router(api_router)
