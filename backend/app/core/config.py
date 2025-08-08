@@ -7,7 +7,6 @@ from pydantic import (
     BeforeValidator,
     EmailStr,
     HttpUrl,
-    PostgresDsn,
     MySQLDsn,
     computed_field,
     model_validator,

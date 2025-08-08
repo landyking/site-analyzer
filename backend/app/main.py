@@ -1,24 +1,32 @@
 from fastapi import FastAPI
-from sqlmodel import SQLModel
 
-from app.db import engine
-from app import models as _models  # ensure models are imported and tables registered
-
+from fastapi.routing import APIRoute
+from starlette.middleware.cors import CORSMiddleware
 from app.api.main import api_router
-from app.task.routes import router as task_router
+from app.core.config import settings
+from app import initial_data
+
+def custom_generate_unique_id(route: APIRoute) -> str:
+    return f"{route.tags[0]}-{route.name}"
 
 app = FastAPI(
-    title="Site Analyzer API",
-    description="APIs for Site Analyzer application",
-    version="1.0.0"
+    title=settings.PROJECT_NAME,
+    openapi_url=f"{settings.API_V1_STR}/openapi.json",
+    generate_unique_id_function=custom_generate_unique_id,
 )
 
-# Include routers
-# app.include_router(task_router)
-app.include_router(api_router)
+# Set all CORS enabled origins
+if settings.all_cors_origins:
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=settings.all_cors_origins,
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
 
+app.include_router(api_router, prefix=settings.API_V1_STR)
 
 @app.on_event("startup")
 def on_startup() -> None:
-    # Ensure tables exist (no-op if already created in MySQL)
-    SQLModel.metadata.create_all(engine)
+  initial_data.main()

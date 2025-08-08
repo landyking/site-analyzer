@@ -1,12 +1,13 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import List, Optional
+from typing import List, Optional, Annotated
 
 from pydantic import BaseModel, EmailStr
 from sqlmodel import Field, Relationship, SQLModel
 from sqlalchemy import Column, DateTime, Index, BigInteger
 from sqlalchemy.sql import func
+from enum import Enum, IntEnum
 
 
 # ----------------------
@@ -35,9 +36,8 @@ class LoginRequest(BaseModel):
 
 
 class RegisterRequest(BaseModel):
-    email: EmailStr
-    password: str
-    password2: str
+    email: Annotated[EmailStr, Field(max_length=255)]
+    password: Annotated[str, Field(min_length=8, max_length=40)]
 
 
 class OidcInfoResp(BaseModel):
@@ -158,51 +158,38 @@ class AdminUpdateUserStatusRequest(BaseModel):
     user_id: int
     status: int
 
+class UserRole(IntEnum):
+    ADMIN = 1
+    USER = 2
+
+class UserStatus(IntEnum):
+    ACTIVE = 1
+    LOCKED = 2
+    
+class UserBase(SQLModel):
+    email: Annotated[str,Field(unique=True, index=True, max_length=255)] 
+    role: int = UserRole.USER
+    status: int = UserStatus.ACTIVE
+    provider: Annotated[str,Field(index=True, max_length=100)]
+    sub: Annotated[str,Field(index=True, max_length=255)]
+
+class UserCreate(UserBase):
+    password: Annotated[str, Field(min_length=8, max_length=40)]
 
 # ----------------------
 # SQLModel ORM Tables (MySQL)
 # ----------------------
 
 
-class UserDB(SQLModel, table=True):
+class UserDB(UserBase, table=True):
     """ORM model for t_user"""
-
     __tablename__ = "t_user"
 
-    id: Optional[int] = Field(
-        default=None,
-        sa_column=Column(BigInteger, primary_key=True, autoincrement=True),
-    )
-    provider: str = Field(index=True, max_length=100)
-    sub: str = Field(index=True, max_length=255)
-    email: str = Field(index=True, max_length=100)
-    password_hash: str = Field(max_length=255)
-    # role: 1 ADMIN, 2 USER
-    role: int = Field(default=2)
-    # status: 1 ACTIVE, 2 LOCKED
-    status: int = Field(default=1)
-    last_login: Optional[datetime] = Field(
-        default=None,
-        sa_column=Column(DateTime),
-    )
-    created_at: Optional[datetime] = Field(
-        default=None,
-        sa_column=Column(DateTime, server_default=func.now()),
-    )
-    updated_at: Optional[datetime] = Field(
-        default=None,
-        sa_column=Column(DateTime, server_default=func.now(), onupdate=func.now()),
-    )
-
-    # relationships
-    # tasks: List["MapTaskDB"] = Relationship(back_populates="user")
-    # files: List["MapTaskFileDB"] = Relationship(back_populates="user")
-
-    # indexes and constraints
-    __table_args__ = (
-        Index("user_provider_sub_idx", "provider", "sub", unique=True),
-        Index("ix_t_user_email_unique", "email", unique=True),
-    )
+    id: Annotated[int, Field(sa_column=Column(BigInteger, primary_key=True, autoincrement=True))] = None
+    password_hash: Annotated[str, Field(max_length=255)]
+    last_login: Annotated[datetime | None, Field(sa_column=Column(DateTime))] = None
+    created_at: Annotated[datetime | None, Field(sa_column=Column(DateTime, server_default=func.now()))] = None
+    updated_at: Annotated[datetime | None, Field(sa_column=Column(DateTime, server_default=func.now(), onupdate=func.now()))] = None
 
 
 class MapTaskDB(SQLModel, table=True):
