@@ -10,7 +10,7 @@ from app.models import (
     BaseResp,
 )
 
-router = APIRouter(prefix="/v1", tags=["Admin"])
+router = APIRouter( tags=["Admin"])
 
 
 @router.get("/admin/users", response_model=User4AdminPageData, summary="Get user list for admin")

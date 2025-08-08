@@ -167,15 +167,27 @@ class UserStatus(IntEnum):
     LOCKED = 2
     
 class UserBase(SQLModel):
-    email: Annotated[str,Field(unique=True, index=True, max_length=255)] 
-    role: int = UserRole.USER
-    status: int = UserStatus.ACTIVE
-    provider: Annotated[str,Field(index=True, max_length=100)]
-    sub: Annotated[str,Field(index=True, max_length=255)]
+    email: str = Field(unique=True, index=True, max_length=255) 
+    role: int = Field(default=UserRole.USER)
+    status: int = Field(default=UserStatus.ACTIVE)
+    provider: str = Field(index=True, max_length=100)
+    sub: str = Field(index=True, max_length=255)
 
 class UserCreate(UserBase):
-    password: Annotated[str, Field(min_length=8, max_length=40)]
+    password: str = Field(min_length=8, max_length=40)
 
+class UserPublic(UserBase):
+    id: int
+
+class Token(SQLModel):
+    access_token: str
+    token_type: str = "bearer"
+
+
+# Contents of JWT token
+class TokenPayload(SQLModel):
+    sub: str
+    admin: bool = False
 # ----------------------
 # SQLModel ORM Tables (MySQL)
 # ----------------------
@@ -184,12 +196,11 @@ class UserCreate(UserBase):
 class UserDB(UserBase, table=True):
     """ORM model for t_user"""
     __tablename__ = "t_user"
-
-    id: Annotated[int, Field(sa_column=Column(BigInteger, primary_key=True, autoincrement=True))] = None
-    password_hash: Annotated[str, Field(max_length=255)]
-    last_login: Annotated[datetime | None, Field(sa_column=Column(DateTime))] = None
-    created_at: Annotated[datetime | None, Field(sa_column=Column(DateTime, server_default=func.now()))] = None
-    updated_at: Annotated[datetime | None, Field(sa_column=Column(DateTime, server_default=func.now(), onupdate=func.now()))] = None
+    id: int | None = Field(default=None, sa_column=Column(BigInteger, primary_key=True, autoincrement=True))
+    password_hash: str = Field(max_length=255)
+    last_login: datetime | None = Field(default=None, sa_column=Column(DateTime))
+    created_at: datetime | None = Field(default=None, sa_column=Column(DateTime, server_default=func.now()))
+    updated_at: datetime | None = Field(default=None, sa_column=Column(DateTime, server_default=func.now(), onupdate=func.now()))
 
 
 class MapTaskDB(SQLModel, table=True):

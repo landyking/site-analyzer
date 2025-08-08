@@ -9,7 +9,7 @@ from app.models import (
     BaseResp,
 )
 
-router = APIRouter(prefix="/v1", tags=["User"])
+router = APIRouter(tags=["User"])
 
 
 @router.get("/user/my-map-tasks", response_model=MyMapTaskListResp, summary="Get user's map tasks")

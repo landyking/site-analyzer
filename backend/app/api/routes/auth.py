@@ -1,5 +1,9 @@
+from datetime import timedelta
+from typing import Annotated, Any
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import OAuth2PasswordRequestForm
+from app.core.config import settings
+from app.core import security
 
 from app.models import (
     LoginRequest,
@@ -8,17 +12,39 @@ from app.models import (
     OidcTokenRequest,
     PostLoginResp,
     BaseResp,
+    Token,
+    UserRole,
+    UserStatus,
+    UserPublic
 )
+from app import crud
+from app.api.deps import CurrentUser, SessionDep
 
-router = APIRouter(prefix="/v1", tags=["Auth"])
+router = APIRouter(tags=["Auth"])
 
 
-@router.post("/user-login", response_model=PostLoginResp, summary="Login with Local Users")
-async def user_login(payload: LoginRequest) -> PostLoginResp:
-    # Placeholder logic; replace with real authentication
-    if not payload.email or not payload.password:
-        raise HTTPException(status_code=400, detail="Invalid credentials")
-    return PostLoginResp(access_token="dummy", refresh_token="dummy", token_type="bearer", expires_in=3600, error=0)
+@router.post("/user-login", response_model=Token, summary="Login with Local Users")
+async def user_login(session: SessionDep, form_data: Annotated[OAuth2PasswordRequestForm, Depends()]) -> Token:
+    """
+    OAuth2 compatible token login, get an access token for future requests
+    """
+    user = crud.authenticate(
+        session=session, email=form_data.username, password=form_data.password
+    )
+    if not user:
+        raise HTTPException(status_code=400, detail="Incorrect email or password")
+    elif not user.status == UserStatus.ACTIVE:
+        raise HTTPException(status_code=400, detail="Inactive user")
+    access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+    return Token(
+        access_token=security.create_access_token(
+            user.id, user.role == UserRole.ADMIN, expires_delta=access_token_expires
+        )
+    )
+
+@router.post("/test-token", response_model=UserPublic, summary="Test access token")
+def test_token(current_user: CurrentUser) -> Any:
+    return current_user
 
 
 @router.post("/user-register", response_model=BaseResp, summary="Register a new user")
