@@ -12,24 +12,24 @@ paths:
       operationId: "userLogin"
       tags:
         - Auth
-      description: "Logs in a user with local credentials."
+      description: "OAuth2 compatible token login, get an access token for future requests"
       security: []
       requestBody:
         required: true
         content:
-          application/json:
+          application/x-www-form-urlencoded:
             schema:
               type: object
               properties:
-                email:
+                username:
                   type: string
+                  description: "User's email address"
                   format: email
-                  minLength: 5
                 password:
                   type: string
-                  minLength: 8
+                  format: password
               required:
-                - email
+                - username
                 - password
       responses:
         "200":
@@ -37,9 +37,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/PostLoginResp"
+                $ref: "#/components/schemas/Token"
         "400":
-          description: Bad request, invalid input
+          description: Bad request, incorrect email or password, or inactive user
   /v1/user-register:
     post:
       summary: "Register a new user"
@@ -53,31 +53,31 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                email:
-                  type: string
-                  format: email
-                  minLength: 5
-                password:
-                  type: string
-                  minLength: 8
-                password2:
-                  type: string
-                  minLength: 8
-              required:
-                - email
-                - password
-                - password2
+              $ref: "#/components/schemas/RegisterRequest"
       responses:
         "200":
           description: Successful registration
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/BaseResp"
+                $ref: "#/components/schemas/UserPublic"
         "400":
-          description: Bad request, invalid input
+          description: Bad request, invalid input or user with email already exists
+  /v1/test-token:
+    post:
+      summary: "Test access token"
+      operationId: "testToken"
+      tags:
+        - Auth
+      responses:
+        "200":
+          description: Successful token validation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserPublic"
+        "401":
+          description: Unauthorized, invalid token
   /v1/oidc-info:
     get:
       summary: "Get OIDC Information"
@@ -409,6 +409,18 @@ components:
         token_type:
           type: string
           description: The type of the token
+    Token:
+      type: object
+      properties:
+        access_token:
+          type: string
+          description: Access token for authentication
+        token_type:
+          type: string
+          description: Type of the token, default is "bearer"
+          default: "bearer"
+      required:
+        - access_token
     PostLoginResp:
       allOf:
         - $ref: "#/components/schemas/BaseResp"
@@ -641,6 +653,52 @@ components:
               type: array
               items:
                 $ref: "#/components/schemas/MapTask"
+    RegisterRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+          maxLength: 255
+        password:
+          type: string
+          minLength: 8
+          maxLength: 40
+      required:
+        - email
+        - password
+    UserRole:
+      type: integer
+      enum: [1, 2]
+      description: "1: ADMIN, 2: USER"
+    UserStatus:
+      type: integer
+      enum: [1, 2]
+      description: "1: ACTIVE, 2: LOCKED"
+    UserPublic:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        email:
+          type: string
+          format: email
+        role:
+          $ref: "#/components/schemas/UserRole"
+        status:
+          $ref: "#/components/schemas/UserStatus"
+        provider:
+          type: string
+        sub:
+          type: string
+      required:
+        - id
+        - email
+        - role
+        - status
+        - provider
+        - sub
 
   securitySchemes:
     OIDC:
