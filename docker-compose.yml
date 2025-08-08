@@ -5,9 +5,9 @@ services:
       - "3306:3306"
     environment:
       TZ: Pacific/Auckland
-      MYSQL_ROOT_PASSWORD: 2x8#@33!9mdn
+      MYSQL_ROOT_PASSWORD: 2x8#339mdn
       MYSQL_DATABASE: site_analyzer
       MYSQL_USER: site_analyzer
-      MYSQL_PASSWORD: 2x8#@21!9mdn
+      MYSQL_PASSWORD: 2x8#219mdn
     volumes:
       - "./docs/mysql.sql:/docker-entrypoint-initdb.d/init.sql"
