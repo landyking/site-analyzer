@@ -6,7 +6,7 @@ import SiteAnalyzerHero from './components/SiteAnalyzerHero';
 import SiteAnalyzerFeatures from './components/SiteAnalyzerFeatures';
 import SiteAnalyzerHighlights from './components/SiteAnalyzerHighlights';
 import SiteAnalyzerFAQ from './components/SiteAnalyzerFAQ';
-import Footer from './components/Footer';
+import SiteAnalyzerFooter from './components/SiteAnalyzerFooter';
 
 export default function SiteAnalyzerHomePage(props: { disableCustomTheme?: boolean }) {
   return (
@@ -22,7 +22,7 @@ export default function SiteAnalyzerHomePage(props: { disableCustomTheme?: boole
         <Divider />
         <SiteAnalyzerFAQ />
         <Divider />
-        <Footer />
+        <SiteAnalyzerFooter />
       </div>
     </AppTheme>
   );
