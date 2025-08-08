@@ -10,5 +10,5 @@ app = FastAPI(
 )
 
 # Include routers
-app.include_router(task_router)
+# app.include_router(task_router)
 app.include_router(api_router)
