@@ -4,6 +4,9 @@ from datetime import datetime
 from typing import List, Optional
 
 from pydantic import BaseModel, EmailStr
+from sqlmodel import Field, Relationship, SQLModel
+from sqlalchemy import Column, DateTime, Index, BigInteger
+from sqlalchemy.sql import func
 
 
 # ----------------------
@@ -154,3 +157,111 @@ class MapTask4AdminPageData(BaseResp, PageData):
 class AdminUpdateUserStatusRequest(BaseModel):
     user_id: int
     status: int
+
+
+# ----------------------
+# SQLModel ORM Tables (MySQL)
+# ----------------------
+
+
+class UserDB(SQLModel, table=True):
+    """ORM model for t_user"""
+
+    __tablename__ = "t_user"
+
+    id: Optional[int] = Field(
+        default=None,
+        sa_column=Column(BigInteger, primary_key=True, autoincrement=True),
+    )
+    provider: str = Field(index=True, max_length=100)
+    sub: str = Field(index=True, max_length=255)
+    email: str = Field(index=True, max_length=100)
+    password_hash: str = Field(max_length=255)
+    # role: 1 ADMIN, 2 USER
+    role: int = Field(default=2)
+    # status: 1 ACTIVE, 2 LOCKED
+    status: int = Field(default=1)
+    last_login: Optional[datetime] = Field(
+        default=None,
+        sa_column=Column(DateTime),
+    )
+    created_at: Optional[datetime] = Field(
+        default=None,
+        sa_column=Column(DateTime, server_default=func.now()),
+    )
+    updated_at: Optional[datetime] = Field(
+        default=None,
+        sa_column=Column(DateTime, server_default=func.now(), onupdate=func.now()),
+    )
+
+    # relationships
+    # tasks: List["MapTaskDB"] = Relationship(back_populates="user")
+    # files: List["MapTaskFileDB"] = Relationship(back_populates="user")
+
+    # indexes and constraints
+    __table_args__ = (
+        Index("user_provider_sub_idx", "provider", "sub", unique=True),
+        Index("ix_t_user_email_unique", "email", unique=True),
+    )
+
+
+class MapTaskDB(SQLModel, table=True):
+    """ORM model for t_map_task"""
+
+    __tablename__ = "t_map_task"
+
+    id: Optional[int] = Field(
+        default=None,
+        sa_column=Column(BigInteger, primary_key=True, autoincrement=True),
+    )
+    user_id: int = Field(foreign_key="t_user.id", sa_type=BigInteger)
+    name: str = Field(max_length=150)
+    district: str = Field(max_length=10)
+    # status: 1 Pending, 2 Processing, 3 Success, 4 Failure, 5 Cancelled
+    status: int = Field(default=1)
+    error_msg: Optional[str] = Field(default=None, max_length=255)
+    # Stored as JSON string in TEXT column
+    constraint_factors: str = Field(default="[]")
+    suitability_factors: str = Field(default="[]")
+    started_at: Optional[datetime] = Field(default=None, sa_column=Column(DateTime))
+    ended_at: Optional[datetime] = Field(default=None, sa_column=Column(DateTime))
+    created_at: Optional[datetime] = Field(
+        default=None,
+        sa_column=Column(DateTime, server_default=func.now()),
+    )
+    updated_at: Optional[datetime] = Field(
+        default=None,
+        sa_column=Column(DateTime, server_default=func.now(), onupdate=func.now()),
+    )
+
+    # relationships
+    # user: Optional["UserDB"] = Relationship(back_populates="tasks")
+    # files: List["MapTaskFileDB"] = Relationship(back_populates="map_task")
+
+
+class MapTaskFileDB(SQLModel, table=True):
+    """ORM model for t_map_task_files"""
+
+    __tablename__ = "t_map_task_files"
+
+    id: Optional[int] = Field(
+        default=None,
+        sa_column=Column(BigInteger, primary_key=True, autoincrement=True),
+    )
+    user_id: int = Field(foreign_key="t_user.id", sa_type=BigInteger)
+    map_task_id: int = Field(foreign_key="t_map_task.id", sa_type=BigInteger)
+    file_type: str = Field(max_length=15)
+    file_path: str = Field(max_length=255)
+    created_at: Optional[datetime] = Field(
+        default=None,
+        sa_column=Column(DateTime, server_default=func.now()),
+    )
+    updated_at: Optional[datetime] = Field(
+        default=None,
+        sa_column=Column(DateTime, server_default=func.now(), onupdate=func.now()),
+    )
+
+    # relationships
+    # user: Optional["UserDB"] = Relationship(back_populates="files")
+    # map_task: Optional["MapTaskDB"] = Relationship(back_populates="files")
+
