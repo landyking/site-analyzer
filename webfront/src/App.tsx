@@ -1,11 +1,11 @@
-import * as React from 'react';
 // import { useState } from 'react'
 // import Button from '@mui/material/Button';
 // import reactLogo from './assets/react.svg'
 // import viteLogo from '/vite.svg'
 // import './App.css'
 // import MarketingPage from './marketing-page/MarketingPage';
-import CrudDashboard from './crud-dashboard/CrudDashboard';
+import SiteAnalyzerHomePage from './marketing-page/SiteAnalyzerHomePage';
+// import CrudDashboard from './crud-dashboard/CrudDashboard';
 
 function App() {
   // const [count, setCount] = useState(0)
@@ -35,8 +35,9 @@ function App() {
   //     <Button variant="contained">Hello world</Button>
   //   </>
   // )
+  return <SiteAnalyzerHomePage />
   // return <MarketingPage />
-  return <CrudDashboard />
+  // return <CrudDashboard />
 }
 
 export default App
