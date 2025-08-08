@@ -97,89 +97,94 @@ const StyledTypography = styled(Typography)({
 export default function SiteAnalyzerFeatures() {
   return (
     <Container id="features" sx={{ py: { xs: 8, sm: 16 } }}>
-      <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 6 }}>
-        <Box sx={{ flex: 1 }}>
-          <div>
-            <Typography
-              component="h2"
-              variant="h4"
-              gutterBottom
-              sx={{ color: 'text.primary' }}
-            >
-              Comprehensive Solar Site Analysis
-            </Typography>
-            <Typography
-              variant="body1"
-              sx={{ color: 'text.secondary', mb: { xs: 2, sm: 4 } }}
-            >
-              Our platform combines cutting-edge GIS technology with solar industry expertise 
-              to provide comprehensive site suitability analysis. From terrain evaluation to 
-              regulatory compliance, we help you make informed decisions for solar installations.
-            </Typography>
-            <Stack
-              direction={{ xs: 'column', sm: 'row' }}
-              spacing={2}
-              sx={{ mt: 3 }}
-            >
-              <Button
-                variant="contained"
-                color="primary"
-                size="large"
-                startIcon={<AssessmentIcon />}
-              >
-                Start New Analysis
-              </Button>
-              <Button
-                variant="outlined"
-                color="primary"
-                size="large"
-                startIcon={<MapIcon />}
-              >
-                View Sample Results
-              </Button>
-            </Stack>
-          </div>
-        </Box>
-        <Box sx={{ flex: 1 }}>
-          <Box 
-            sx={{ 
-              display: 'grid', 
-              gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, 
-              gap: 2.5 
-            }}
+      <Box sx={{ mb: 6, textAlign: 'center' }}>
+        <Typography
+          component="h2"
+          variant="h4"
+          gutterBottom
+          sx={{ color: 'text.primary', mb: 2 }}
+        >
+          Comprehensive Solar Site Analysis
+        </Typography>
+        <Typography
+          variant="body1"
+          sx={{ 
+            color: 'text.secondary', 
+            maxWidth: 800, 
+            mx: 'auto',
+            mb: 4 
+          }}
+        >
+          Our platform combines cutting-edge GIS technology with solar industry expertise 
+          to provide comprehensive site suitability analysis. From terrain evaluation to 
+          regulatory compliance, we help you make informed decisions for solar installations.
+        </Typography>
+        <Stack
+          direction={{ xs: 'column', sm: 'row' }}
+          spacing={2}
+          sx={{ justifyContent: 'center' }}
+        >
+          <Button
+            variant="contained"
+            color="primary"
+            size="large"
+            startIcon={<AssessmentIcon />}
           >
-            {items.map((item, index) => (
-              <StyledCard variant="outlined" key={index}>
-                <StyledCardContent>
-                  <Box
-                    sx={{
-                      color: 'primary.main',
-                      mb: 1,
-                    }}
-                  >
-                    {item.icon}
-                  </Box>
-                  <div>
-                    <Typography
-                      gutterBottom
-                      sx={{ fontWeight: 'medium' }}
-                      component="h3"
-                      variant="h6"
-                    >
-                      {item.title}
-                    </Typography>
-                    <StyledTypography
-                      variant="body2"
-                      sx={{ color: 'text.secondary' }}
-                    >
-                      {item.description}
-                    </StyledTypography>
-                  </div>
-                </StyledCardContent>
-              </StyledCard>
-            ))}
-          </Box>
-        </Box>
+            Start New Analysis
+          </Button>
+          <Button
+            variant="outlined"
+            color="primary"
+            size="large"
+            startIcon={<MapIcon />}
+          >
+            View Sample Results
+          </Button>
+        </Stack>
+      </Box>
+      
+      <Box 
+        sx={{ 
+          display: 'grid', 
+          gridTemplateColumns: { 
+            xs: '1fr', 
+            sm: '1fr 1fr', 
+            md: '1fr 1fr 1fr' 
+          }, 
+          gap: 3,
+          mt: 6
+        }}
+      >
+        {items.map((item, index) => (
+          <StyledCard variant="outlined" key={index}>
+            <StyledCardContent>
+              <Box
+                sx={{
+                  color: 'primary.main',
+                  mb: 1,
+                }}
+              >
+                {item.icon}
+              </Box>
+              <div>
+                <Typography
+                  gutterBottom
+                  sx={{ fontWeight: 'medium' }}
+                  component="h3"
+                  variant="h6"
+                >
+                  {item.title}
+                </Typography>
+                <StyledTypography
+                  variant="body2"
+                  sx={{ color: 'text.secondary' }}
+                >
+                  {item.description}
+                </StyledTypography>
+              </div>
+            </StyledCardContent>
+          </StyledCard>
+        ))}
       </Box>
     </Container>
   );
