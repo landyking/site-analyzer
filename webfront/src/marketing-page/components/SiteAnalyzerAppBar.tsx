@@ -112,11 +112,23 @@ export default function SiteAnalyzerAppBar() {
               alignItems: 'center',
             }}
           >
-            <Button color="primary" variant="text" size="small">
+            <Button 
+              color="primary" 
+              variant="outlined" 
+              size="small"
+              sx={{
+                borderRadius: 2,
+                px: 2,
+                py: 0.5,
+                fontWeight: 500,
+                textTransform: 'none',
+                '&:hover': {
+                  backgroundColor: 'primary.main',
+                  color: 'primary.contrastText',
+                },
+              }}
+            >
               Sign in
-            </Button>
-            <Button color="primary" variant="contained" size="small">
-              Get Started
             </Button>
             <ColorModeIconDropdown />
           </Box>
@@ -193,12 +205,21 @@ export default function SiteAnalyzerAppBar() {
                 </MenuItem>
                 <Divider sx={{ my: 3 }} />
                 <MenuItem>
-                  <Button color="primary" variant="contained" fullWidth>
-                    Get Started
-                  </Button>
-                </MenuItem>
-                <MenuItem>
-                  <Button color="primary" variant="outlined" fullWidth>
+                  <Button 
+                    color="primary" 
+                    variant="outlined" 
+                    fullWidth
+                    sx={{
+                      borderRadius: 2,
+                      py: 1,
+                      fontWeight: 500,
+                      textTransform: 'none',
+                      '&:hover': {
+                        backgroundColor: 'primary.main',
+                        color: 'primary.contrastText',
+                      },
+                    }}
+                  >
                     Sign in
                   </Button>
                 </MenuItem>

@@ -3,7 +3,6 @@
 // import reactLogo from './assets/react.svg'
 // import viteLogo from '/vite.svg'
 // import './App.css'
-// import MarketingPage from './marketing-page/MarketingPage';
 import SiteAnalyzerHomePage from './marketing-page/SiteAnalyzerHomePage';
 // import CrudDashboard from './crud-dashboard/CrudDashboard';
 
@@ -36,7 +35,6 @@ function App() {
   //   </>
   // )
   return <SiteAnalyzerHomePage />
-  // return <MarketingPage />
   // return <CrudDashboard />
 }
 
