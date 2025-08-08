@@ -13,6 +13,7 @@ from app.models import (
     PostLoginResp,
     BaseResp,
     Token,
+    UserCreate,
     UserRole,
     UserStatus,
     UserPublic
@@ -47,11 +48,17 @@ def test_token(current_user: CurrentUser) -> Any:
     return current_user
 
 
-@router.post("/user-register", response_model=BaseResp, summary="Register a new user")
-async def user_register(payload: RegisterRequest):
-    if payload.password != payload.password2:
-        raise HTTPException(status_code=400, detail="Passwords do not match")
-    return BaseResp(error=0)
+@router.post("/user-register", response_model=UserPublic, summary="Register a new user")
+async def user_register(session: SessionDep,user_in: RegisterRequest):
+    user = crud.get_user_by_email(session=session, email=user_in.email)
+    if user:
+        raise HTTPException(
+            status_code=400,
+            detail="The user with this email already exists in the system",
+        )
+    user_create = UserCreate(**user_in.model_dump(),provider="local", sub=user_in.email)
+    user = crud.create_user(session=session, user_create=user_create)
+    return user
 
 
 @router.get("/oidc-info", response_model=OidcInfoResp, summary="Get OIDC Information")
