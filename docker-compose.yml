@@ -1,0 +1,13 @@
+services:
+  db:
+    image: mysql:5.7
+    ports:
+      - "3306:3306"
+    environment:
+      TZ: Pacific/Auckland
+      MYSQL_ROOT_PASSWORD: 2x8#@33!9mdn
+      MYSQL_DATABASE: site_analyzer
+      MYSQL_USER: site_analyzer
+      MYSQL_PASSWORD: 2x8#@21!9mdn
+    volumes:
+      - "./docs/mysql.sql:/docker-entrypoint-initdb.d/init.sql"
