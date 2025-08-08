@@ -53,23 +53,14 @@ export default function AppAppBar() {
           <Box sx={{ flexGrow: 1, display: 'flex', alignItems: 'center', px: 0 }}>
             <Sitemark />
             <Box sx={{ display: { xs: 'none', md: 'flex' } }}>
-              <Button variant="text" color="info" size="small">
+              <Button variant="text" color="info" size="small" href="#features">
                 Features
               </Button>
-              <Button variant="text" color="info" size="small">
-                Testimonials
+              <Button variant="text" color="info" size="small" href="#highlights">
+                How it Works
               </Button>
-              <Button variant="text" color="info" size="small">
-                Highlights
-              </Button>
-              <Button variant="text" color="info" size="small">
-                Pricing
-              </Button>
-              <Button variant="text" color="info" size="small" sx={{ minWidth: 0 }}>
+              <Button variant="text" color="info" size="small" href="#faq">
                 FAQ
-              </Button>
-              <Button variant="text" color="info" size="small" sx={{ minWidth: 0 }}>
-                Blog
               </Button>
             </Box>
           </Box>
@@ -84,7 +75,7 @@ export default function AppAppBar() {
               Sign in
             </Button>
             <Button color="primary" variant="contained" size="small">
-              Sign up
+              Get Started
             </Button>
             <ColorModeIconDropdown />
           </Box>
@@ -115,16 +106,25 @@ export default function AppAppBar() {
                   </IconButton>
                 </Box>
 
-                <MenuItem>Features</MenuItem>
-                <MenuItem>Testimonials</MenuItem>
-                <MenuItem>Highlights</MenuItem>
-                <MenuItem>Pricing</MenuItem>
-                <MenuItem>FAQ</MenuItem>
-                <MenuItem>Blog</MenuItem>
+                <MenuItem>
+                  <Button variant="text" color="info" fullWidth href="#features">
+                    Features
+                  </Button>
+                </MenuItem>
+                <MenuItem>
+                  <Button variant="text" color="info" fullWidth href="#highlights">
+                    How it Works
+                  </Button>
+                </MenuItem>
+                <MenuItem>
+                  <Button variant="text" color="info" fullWidth href="#faq">
+                    FAQ
+                  </Button>
+                </MenuItem>
                 <Divider sx={{ my: 3 }} />
                 <MenuItem>
                   <Button color="primary" variant="contained" fullWidth>
-                    Sign up
+                    Get Started
                   </Button>
                 </MenuItem>
                 <MenuItem>

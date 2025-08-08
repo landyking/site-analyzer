@@ -38,6 +38,18 @@ export default function SiteAnalyzerAppBar() {
     setOpen(newOpen);
   };
 
+  const scrollToSection = (sectionId: string) => {
+    const element = document.getElementById(sectionId);
+    if (element) {
+      element.scrollIntoView({ 
+        behavior: 'smooth',
+        block: 'start'
+      });
+    }
+    // Close mobile menu if open
+    setOpen(false);
+  };
+
   return (
     <AppBar
       position="fixed"
@@ -67,17 +79,29 @@ export default function SiteAnalyzerAppBar() {
               </Typography>
             </Box>
             <Box sx={{ display: { xs: 'none', md: 'flex' }, gap: 1, ml: 4 }}>
-              <Button variant="text" color="info" size="small">
+              <Button 
+                variant="text" 
+                color="info" 
+                size="small" 
+                onClick={() => scrollToSection('features')}
+              >
                 Features
               </Button>
-              <Button variant="text" color="info" size="small">
-                Analysis
+              <Button 
+                variant="text" 
+                color="info" 
+                size="small" 
+                onClick={() => scrollToSection('highlights')}
+              >
+                How it Works
               </Button>
-              <Button variant="text" color="info" size="small">
-                Documentation
-              </Button>
-              <Button variant="text" color="info" size="small">
-                About
+              <Button 
+                variant="text" 
+                color="info" 
+                size="small" 
+                onClick={() => scrollToSection('faq')}
+              >
+                FAQ
               </Button>
             </Box>
           </Box>
@@ -137,10 +161,36 @@ export default function SiteAnalyzerAppBar() {
                   </IconButton>
                 </Box>
                 <Divider sx={{ my: 3 }} />
-                <MenuItem>Features</MenuItem>
-                <MenuItem>Analysis</MenuItem>
-                <MenuItem>Documentation</MenuItem>
-                <MenuItem>About</MenuItem>
+                <MenuItem>
+                  <Button 
+                    variant="text" 
+                    color="info" 
+                    fullWidth 
+                    onClick={() => scrollToSection('features')}
+                  >
+                    Features
+                  </Button>
+                </MenuItem>
+                <MenuItem>
+                  <Button 
+                    variant="text" 
+                    color="info" 
+                    fullWidth 
+                    onClick={() => scrollToSection('highlights')}
+                  >
+                    How it Works
+                  </Button>
+                </MenuItem>
+                <MenuItem>
+                  <Button 
+                    variant="text" 
+                    color="info" 
+                    fullWidth 
+                    onClick={() => scrollToSection('faq')}
+                  >
+                    FAQ
+                  </Button>
+                </MenuItem>
                 <Divider sx={{ my: 3 }} />
                 <MenuItem>
                   <Button color="primary" variant="contained" fullWidth>

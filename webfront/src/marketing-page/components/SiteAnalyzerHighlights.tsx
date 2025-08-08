@@ -14,9 +14,11 @@ import GetAppIcon from '@mui/icons-material/GetApp';
 const items = [
   {
     icon: <UploadFileIcon fontSize="large" />,
-    title: 'Upload Data',
+    title: 'Prepare Data',
     description:
-      'Upload your geospatial datasets including district boundaries, terrain data, and constraint layers.',
+      'Built-in geospatial datasets ready for analysis.',
+    upcomingFeature: 'Custom data upload support coming soon',
+    hasUpcoming: true,
   },
   {
     icon: <SettingsIcon fontSize="large" />,
@@ -154,7 +156,11 @@ export default function SiteAnalyzerHighlights() {
                 </Box>
                 <Typography
                   gutterBottom
-                  sx={{ fontWeight: 'medium', fontSize: '1.1rem' }}
+                  sx={{ 
+                    fontWeight: 'medium', 
+                    fontSize: '1.1rem',
+                    color: 'text.primary',
+                  }}
                   component="h3"
                   variant="h6"
                 >
@@ -168,6 +174,27 @@ export default function SiteAnalyzerHighlights() {
                   }}
                 >
                   {item.description}
+                  {item.hasUpcoming && item.upcomingFeature && (
+                    <Typography
+                      component="span"
+                      variant="body2"
+                      sx={{
+                        display: 'block',
+                        mt: 1.5,
+                        color: 'primary.main',
+                        fontWeight: 'medium',
+                        fontSize: '0.9rem',
+                        fontStyle: 'italic',
+                        position: 'relative',
+                        '&::before': {
+                          content: '"✨"',
+                          mr: 0.5,
+                        }
+                      }}
+                    >
+                      {item.upcomingFeature}
+                    </Typography>
+                  )}
                 </Typography>
               </StyledCardContent>
             </StyledCard>

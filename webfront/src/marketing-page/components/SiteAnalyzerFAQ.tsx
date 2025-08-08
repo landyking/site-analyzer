@@ -6,6 +6,7 @@ import Box from '@mui/material/Box';
 import Container from '@mui/material/Container';
 import Link from '@mui/material/Link';
 import Typography from '@mui/material/Typography';
+import Chip from '@mui/material/Chip';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 
 const faqData = [
@@ -37,7 +38,8 @@ const faqData = [
   {
     id: 'panel6',
     question: 'Can multiple users collaborate on analysis projects?',
-    answer: 'Yes, Site Analyzer supports user authentication and project management. Team members can share analysis tasks, review results, and collaborate on site selection decisions. User permissions can be configured to control access to sensitive data and analysis results.',
+    answer: 'Multi-user collaboration and project sharing features are planned for future releases. Currently, Site Analyzer focuses on individual analysis workflows. The upcoming collaboration features will include user authentication, project management, shared analysis tasks, team review capabilities, and configurable user permissions for data access control.',
+    isPlanned: true,
   },
 ];
 
@@ -122,20 +124,35 @@ export default function SiteAnalyzerFAQ() {
                 },
               }}
             >
-              <Typography 
-                component="h3" 
-                variant="subtitle2"
-                sx={{ 
-                  fontWeight: 'medium',
-                  color: 'text.primary',
-                }}
-              >
-                {item.question}
-              </Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, width: '100%' }}>
+                <Typography 
+                  component="h3" 
+                  variant="subtitle2"
+                  sx={{ 
+                    fontWeight: 'medium',
+                    color: 'text.primary',
+                    flex: 1,
+                  }}
+                >
+                  {item.question}
+                </Typography>
+                {item.isPlanned && (
+                  <Chip
+                    label="Planned"
+                    size="small"
+                    color="info"
+                    variant="outlined"
+                    sx={{
+                      fontSize: '0.75rem',
+                      height: '20px',
+                    }}
+                  />
+                )}
+              </Box>
             </AccordionSummary>
             <AccordionDetails
               sx={{
-                backgroundColor: 'background.default',
+                backgroundColor: item.isPlanned ? 'action.hover' : 'background.default',
                 borderRadius: '0 0 4px 4px',
               }}
             >
@@ -146,10 +163,27 @@ export default function SiteAnalyzerFAQ() {
                   maxWidth: { sm: '100%', md: '70%' },
                   color: 'text.secondary',
                   lineHeight: 1.6,
+                  fontStyle: item.isPlanned ? 'italic' : 'normal',
                 }}
               >
                 {item.answer}
               </Typography>
+              {item.isPlanned && (
+                <Typography
+                  variant="body2"
+                  sx={{
+                    mt: 2,
+                    color: 'info.main',
+                    fontWeight: 'medium',
+                    fontSize: '0.85rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 1,
+                  }}
+                >
+                  🚀 This feature is currently in development and will be available in future releases.
+                </Typography>
+              )}
             </AccordionDetails>
           </Accordion>
         ))}
