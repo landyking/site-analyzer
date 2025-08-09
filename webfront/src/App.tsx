@@ -4,7 +4,8 @@
 // import viteLogo from '/vite.svg'
 // import './App.css'
 // import SiteAnalyzerHomePage from './marketing-page/SiteAnalyzerHomePage';
-import SignIn from './sign-in/SignIn';
+// import SignIn from './sign-in/SignIn';
+import SignUp from './sign-up/SignUp';
 // import CrudDashboard from './crud-dashboard/CrudDashboard';
 
 function App() {
@@ -37,7 +38,8 @@ function App() {
   // )
   // return <SiteAnalyzerHomePage />
   // return <CrudDashboard />
-  return <SignIn />
+  // return <SignIn />
+  return <SignUp />
 }
 
 export default App
