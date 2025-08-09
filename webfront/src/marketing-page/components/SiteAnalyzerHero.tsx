@@ -7,6 +7,7 @@ import { styled } from '@mui/material/styles';
 import SolarPowerIcon from '@mui/icons-material/SolarPower';
 import MapIcon from '@mui/icons-material/Map';
 import AnalyticsIcon from '@mui/icons-material/Analytics';
+import { Link as RouterLink } from '@tanstack/react-router';
 
 const StyledBox = styled('div')(({ theme }) => ({
   alignSelf: 'center',
@@ -152,11 +153,13 @@ export default function SiteAnalyzerHero() {
             sx={{ pt: 3, width: { xs: '100%', sm: 'auto' } }}
           >
             <Button
+              component={RouterLink}
+              to="/sign-in"
               variant="contained"
               color="primary"
               size="large"
               startIcon={<AnalyticsIcon />}
-              sx={{ 
+              sx={{
                 minWidth: 'fit-content',
                 px: 4,
                 py: 1.5,
@@ -166,11 +169,13 @@ export default function SiteAnalyzerHero() {
               Start Analysis
             </Button>
             <Button
+              component={RouterLink}
+              to="/"
               variant="outlined"
               color="primary"
               size="large"
               startIcon={<MapIcon />}
-              sx={{ 
+              sx={{
                 minWidth: 'fit-content',
                 px: 4,
                 py: 1.5,

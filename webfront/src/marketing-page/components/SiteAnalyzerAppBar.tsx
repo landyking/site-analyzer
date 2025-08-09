@@ -14,6 +14,7 @@ import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import SolarPowerIcon from '@mui/icons-material/SolarPower';
 import ColorModeIconDropdown from '../../shared-theme/ColorModeIconDropdown';
 import Typography from '@mui/material/Typography';
+import { Link as RouterLink, useNavigate } from '@tanstack/react-router';
 
 const StyledToolbar = styled(Toolbar)(({ theme }) => ({
   display: 'flex',
@@ -33,6 +34,7 @@ const StyledToolbar = styled(Toolbar)(({ theme }) => ({
 
 export default function SiteAnalyzerAppBar() {
   const [open, setOpen] = React.useState(false);
+  const navigate = useNavigate();
 
   const toggleDrawer = (newOpen: boolean) => () => {
     setOpen(newOpen);
@@ -64,7 +66,11 @@ export default function SiteAnalyzerAppBar() {
       <Container maxWidth="lg">
         <StyledToolbar variant="dense" disableGutters>
           <Box sx={{ flexGrow: 1, display: 'flex', alignItems: 'center', px: 0 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Box
+              component={RouterLink}
+              to="/"
+              sx={{ display: 'flex', alignItems: 'center', gap: 1, textDecoration: 'none' }}
+            >
               <SolarPowerIcon sx={{ color: 'primary.main', fontSize: 32 }} />
               <Typography
                 variant="h6"
@@ -112,9 +118,9 @@ export default function SiteAnalyzerAppBar() {
               alignItems: 'center',
             }}
           >
-            <Button 
-              color="primary" 
-              variant="outlined" 
+            <Button
+              color="primary"
+              variant="outlined"
               size="small"
               sx={{
                 borderRadius: 2,
@@ -127,6 +133,7 @@ export default function SiteAnalyzerAppBar() {
                   color: 'primary.contrastText',
                 },
               }}
+              onClick={() => navigate({ to: '/sign-in' })}
             >
               Sign in
             </Button>
@@ -205,9 +212,9 @@ export default function SiteAnalyzerAppBar() {
                 </MenuItem>
                 <Divider sx={{ my: 3 }} />
                 <MenuItem>
-                  <Button 
-                    color="primary" 
-                    variant="outlined" 
+                  <Button
+                    color="primary"
+                    variant="outlined"
                     fullWidth
                     sx={{
                       borderRadius: 2,
@@ -218,6 +225,10 @@ export default function SiteAnalyzerAppBar() {
                         backgroundColor: 'primary.main',
                         color: 'primary.contrastText',
                       },
+                    }}
+                    onClick={() => {
+                      navigate({ to: '/sign-in' });
+                      setOpen(false);
                     }}
                   >
                     Sign in

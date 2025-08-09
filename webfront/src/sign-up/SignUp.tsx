@@ -14,6 +14,7 @@ import AppTheme from '../shared-theme/AppTheme';
 import ColorModeSelect from '../shared-theme/ColorModeSelect';
 // Removed third-party sign up icons
 import SolarPowerIcon from '@mui/icons-material/SolarPower';
+import { Link as RouterLink } from '@tanstack/react-router';
 
 const Card = styled(MuiCard)(({ theme }) => ({
   display: 'flex',
@@ -124,7 +125,7 @@ export default function SignUp(props: { disableCustomTheme?: boolean }) {
       <ColorModeSelect sx={{ position: 'fixed', top: '1rem', right: '1rem' }} />
       <SignUpContainer direction="column" justifyContent="space-between">
         <Card variant="outlined">
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Box component={RouterLink} to="/" sx={{ display: 'flex', alignItems: 'center', gap: 1, textDecoration: 'none' }}>
             <SolarPowerIcon sx={{ color: 'primary.main', fontSize: 32 }} />
             <Typography
               variant="h6"
@@ -206,11 +207,7 @@ export default function SignUp(props: { disableCustomTheme?: boolean }) {
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
             <Typography sx={{ textAlign: 'center' }}>
               Already have an account?{' '}
-              <Link
-                href="/material-ui/getting-started/templates/sign-in/"
-                variant="body2"
-                sx={{ alignSelf: 'center' }}
-              >
+              <Link component={RouterLink} to="/sign-in" variant="body2" sx={{ alignSelf: 'center' }}>
                 Sign in
               </Link>
             </Typography>
