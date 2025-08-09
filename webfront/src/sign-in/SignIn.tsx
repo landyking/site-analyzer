@@ -1,9 +1,7 @@
 import * as React from 'react';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
-import Checkbox from '@mui/material/Checkbox';
 import CssBaseline from '@mui/material/CssBaseline';
-import FormControlLabel from '@mui/material/FormControlLabel';
 import Divider from '@mui/material/Divider';
 import FormLabel from '@mui/material/FormLabel';
 import FormControl from '@mui/material/FormControl';
@@ -16,7 +14,8 @@ import { styled } from '@mui/material/styles';
 import ForgotPassword from './components/ForgotPassword';
 import AppTheme from '../shared-theme/AppTheme';
 import ColorModeSelect from '../shared-theme/ColorModeSelect';
-import { GoogleIcon, FacebookIcon, SitemarkIcon } from './components/CustomIcons';
+import { GoogleIcon, FacebookIcon } from './components/CustomIcons';
+import SolarPowerIcon from '@mui/icons-material/SolarPower';
 
 const Card = styled(MuiCard)(({ theme }) => ({
   display: 'flex',
@@ -120,7 +119,16 @@ export default function SignIn(props: { disableCustomTheme?: boolean }) {
       <SignInContainer direction="column" justifyContent="space-between">
         <ColorModeSelect sx={{ position: 'fixed', top: '1rem', right: '1rem' }} />
         <Card variant="outlined">
-          <SitemarkIcon />
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <SolarPowerIcon sx={{ color: 'primary.main', fontSize: 32 }} />
+            <Typography
+              variant="h6"
+              component="div"
+              sx={{ fontWeight: 'bold', color: 'primary.main' }}
+            >
+              Site Analyzer
+            </Typography>
+          </Box>
           <Typography
             component="h1"
             variant="h4"
@@ -173,10 +181,7 @@ export default function SignIn(props: { disableCustomTheme?: boolean }) {
                 color={passwordError ? 'error' : 'primary'}
               />
             </FormControl>
-            <FormControlLabel
-              control={<Checkbox value="remember" color="primary" />}
-              label="Remember me"
-            />
+            {/* Removed Remember me checkbox as the feature is not offered */}
             <ForgotPassword open={open} handleClose={handleClose} />
             <Button
               type="submit"
