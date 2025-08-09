@@ -6,7 +6,7 @@ import Toolbar from '@mui/material/Toolbar';
 import { Outlet } from 'react-router';
 import DashboardHeader from './DashboardHeader';
 import DashboardSidebar from './DashboardSidebar';
-import SitemarkIcon from './SitemarkIcon';
+import SolarPowerIcon from '@mui/icons-material/SolarPower';
 
 export default function DashboardLayout() {
   const theme = useTheme();
@@ -58,8 +58,12 @@ export default function DashboardLayout() {
       }}
     >
       <DashboardHeader
-        logo={<SitemarkIcon />}
-        title=""
+        logo={
+          <SolarPowerIcon
+            sx={{ color: (theme.vars ?? theme).palette.primary.main, fontSize: 21 }}
+          />
+        }
+  title="Site Analyzer"
         menuOpen={isNavigationExpanded}
         onToggleMenu={handleToggleHeaderMenu}
       />
