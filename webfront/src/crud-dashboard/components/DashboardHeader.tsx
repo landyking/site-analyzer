@@ -11,6 +11,9 @@ import MenuOpenIcon from '@mui/icons-material/MenuOpen';
 import Stack from '@mui/material/Stack';
 import { Link } from 'react-router';
 import ThemeSwitcher from './ThemeSwitcher';
+import Button from '@mui/material/Button';
+import { useNavigate } from '@tanstack/react-router';
+import LogoutIcon from '@mui/icons-material/Logout';
 
 const AppBar = styled(MuiAppBar)(({ theme }) => ({
   borderWidth: 0,
@@ -45,6 +48,7 @@ export default function DashboardHeader({
   onToggleMenu,
 }: DashboardHeaderProps) {
   const theme = useTheme();
+  const navigate = useNavigate();
 
   const handleMenuOpen = React.useCallback(() => {
     onToggleMenu(!menuOpen);
@@ -74,6 +78,15 @@ export default function DashboardHeader({
     },
     [handleMenuOpen],
   );
+
+  const handleLogout = React.useCallback(() => {
+    try {
+      localStorage.removeItem('access_token');
+    } catch {
+      // no-op
+    }
+    navigate({ to: '/' });
+  }, [navigate]);
 
   return (
     <AppBar color="inherit" position="absolute" sx={{ displayPrint: 'none' }}>
@@ -115,7 +128,15 @@ export default function DashboardHeader({
             spacing={1}
             sx={{ marginLeft: 'auto' }}
           >
-            <Stack direction="row" alignItems="center">
+            <Stack direction="row" alignItems="center" spacing={1}>
+              <Button
+                size="small"
+                onClick={handleLogout}
+                aria-label="Logout"
+                startIcon={<LogoutIcon fontSize="small" />}
+              >
+                Logout
+              </Button>
               <ThemeSwitcher />
             </Stack>
           </Stack>
