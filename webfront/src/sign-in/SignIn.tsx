@@ -17,6 +17,9 @@ import ColorModeSelect from '../shared-theme/ColorModeSelect';
 import { GoogleIcon, FacebookIcon } from './components/CustomIcons';
 import { Link as RouterLink } from '@tanstack/react-router';
 import SolarPowerIcon from '@mui/icons-material/SolarPower';
+import { useNavigate } from '@tanstack/react-router';
+import { useMutation } from '@tanstack/react-query';
+import { ApiError, AuthService } from '../client';
 
 const Card = styled(MuiCard)(({ theme }) => ({
   display: 'flex',
@@ -61,11 +64,46 @@ const SignInContainer = styled(Stack)(({ theme }) => ({
 }));
 
 export default function SignIn(props: { disableCustomTheme?: boolean }) {
+  const navigate = useNavigate();
   const [emailError, setEmailError] = React.useState(false);
   const [emailErrorMessage, setEmailErrorMessage] = React.useState('');
   const [passwordError, setPasswordError] = React.useState(false);
   const [passwordErrorMessage, setPasswordErrorMessage] = React.useState('');
   const [open, setOpen] = React.useState(false);
+
+  const extractDetail = (body: unknown): string | undefined => {
+    if (typeof body === 'object' && body !== null && 'detail' in body) {
+      const detail = (body as { detail?: unknown }).detail;
+      if (typeof detail === 'string') return detail;
+    }
+    return undefined;
+  };
+
+  const loginMutation = useMutation({
+    mutationFn: (payload: { username: string; password: string }) =>
+      AuthService.userLogin({
+        formData: {
+          username: payload.username,
+          password: payload.password,
+        },
+      }),
+    onSuccess: (token) => {
+      // Persist token and redirect
+      localStorage.setItem('access_token', token.access_token);
+      navigate({ to: '/dashboard' });
+    },
+    onError: (err: unknown) => {
+      const fallback = 'Failed to sign in. Please try again.';
+      if (err instanceof ApiError) {
+        const detail = extractDetail(err.body);
+        setPasswordError(true);
+        setPasswordErrorMessage(detail || fallback);
+      } else {
+        setPasswordError(true);
+        setPasswordErrorMessage(fallback);
+      }
+    },
+  });
 
   const handleClickOpen = () => {
     setOpen(true);
@@ -76,15 +114,20 @@ export default function SignIn(props: { disableCustomTheme?: boolean }) {
   };
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
-    if (emailError || passwordError) {
-      event.preventDefault();
-      return;
-    }
+    event.preventDefault();
+    // Client-side validation first
+    const isValid = validateInputs();
+    if (!isValid) return;
+
     const data = new FormData(event.currentTarget);
-    console.log({
-      email: data.get('email'),
-      password: data.get('password'),
-    });
+    const email = String(data.get('email') || '');
+    const password = String(data.get('password') || '');
+
+    // Clear any previous API errors on new attempt
+    setPasswordError(false);
+    setPasswordErrorMessage('');
+
+    loginMutation.mutate({ username: email, password });
   };
 
   const validateInputs = () => {
@@ -102,9 +145,9 @@ export default function SignIn(props: { disableCustomTheme?: boolean }) {
       setEmailErrorMessage('');
     }
 
-    if (!password.value || password.value.length < 6) {
+    if (!password.value || password.value.length < 8) {
       setPasswordError(true);
-      setPasswordErrorMessage('Password must be at least 6 characters long.');
+      setPasswordErrorMessage('Password must be at least 8 characters long.');
       isValid = false;
     } else {
       setPasswordError(false);
@@ -188,9 +231,9 @@ export default function SignIn(props: { disableCustomTheme?: boolean }) {
               type="submit"
               fullWidth
               variant="contained"
-              onClick={validateInputs}
+              disabled={loginMutation.isPending}
             >
-              Sign in
+              {loginMutation.isPending ? 'Signing in…' : 'Sign in'}
             </Button>
             <Link
               component="button"
