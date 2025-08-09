@@ -14,6 +14,10 @@ import ThemeSwitcher from './ThemeSwitcher';
 import Button from '@mui/material/Button';
 import { useNavigate } from '@tanstack/react-router';
 import LogoutIcon from '@mui/icons-material/Logout';
+import Chip from '@mui/material/Chip';
+import AccountCircleIcon from '@mui/icons-material/AccountCircle';
+import { useQuery } from '@tanstack/react-query';
+import { AuthService } from '../../client';
 
 const AppBar = styled(MuiAppBar)(({ theme }) => ({
   borderWidth: 0,
@@ -88,6 +92,12 @@ export default function DashboardHeader({
     navigate({ to: '/' });
   }, [navigate]);
 
+  const { data: currentUser } = useQuery({
+    queryKey: ['auth', 'me'],
+    queryFn: () => AuthService.getUserInfo(),
+    staleTime: 5 * 60 * 1000,
+  });
+
   return (
     <AppBar color="inherit" position="absolute" sx={{ displayPrint: 'none' }}>
       <Toolbar sx={{ backgroundColor: 'inherit', mx: { xs: -0.75, sm: -1 } }}>
@@ -129,6 +139,15 @@ export default function DashboardHeader({
             sx={{ marginLeft: 'auto' }}
           >
             <Stack direction="row" alignItems="center" spacing={1}>
+              {currentUser?.email ? (
+                <Chip
+                  size="small"
+                  variant="outlined"
+                  icon={<AccountCircleIcon fontSize="small" />}
+                  label={currentUser.email}
+                  sx={{ maxWidth: 220 }}
+                />
+              ) : null}
               <Button
                 size="small"
                 onClick={handleLogout}
