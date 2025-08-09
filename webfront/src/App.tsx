@@ -4,6 +4,7 @@ import {
   createRoute,
   createRouter,
   Outlet,
+  redirect,
 } from '@tanstack/react-router'
 
 import SiteAnalyzerHomePage from './marketing-page/SiteAnalyzerHomePage'
@@ -38,6 +39,13 @@ const signUpRoute = createRoute({
 const dashboardRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/dashboard',
+  beforeLoad: () => {
+    // Protect the dashboard route: require an access token in localStorage
+    const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null
+    if (!token) {
+      throw redirect({ to: '/sign-in' })
+    }
+  },
   component: CrudDashboard,
 })
 
