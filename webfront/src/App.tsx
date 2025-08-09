@@ -3,7 +3,8 @@
 // import reactLogo from './assets/react.svg'
 // import viteLogo from '/vite.svg'
 // import './App.css'
-import SiteAnalyzerHomePage from './marketing-page/SiteAnalyzerHomePage';
+// import SiteAnalyzerHomePage from './marketing-page/SiteAnalyzerHomePage';
+import SignIn from './sign-in/SignIn';
 // import CrudDashboard from './crud-dashboard/CrudDashboard';
 
 function App() {
@@ -34,8 +35,9 @@ function App() {
   //     <Button variant="contained">Hello world</Button>
   //   </>
   // )
-  return <SiteAnalyzerHomePage />
+  // return <SiteAnalyzerHomePage />
   // return <CrudDashboard />
+  return <SignIn />
 }
 
 export default App
