@@ -14,7 +14,7 @@ import type {
 	AdminAdminGetMapTaskResponse,
 	AuthUserLoginData,
 	AuthUserLoginResponse,
-	AuthTestTokenResponse,
+	AuthGetUserInfoResponse,
 	AuthUserRegisterData,
 	AuthUserRegisterResponse,
 	AuthGetOidcInfoResponse,
@@ -159,14 +159,14 @@ export class AuthService {
 	}
 
 	/**
-	 * Test access token
+	 * Get user information
 	 * @returns UserPublic Successful Response
 	 * @throws ApiError
 	 */
-	public static testToken(): CancelablePromise<AuthTestTokenResponse> {
+	public static getUserInfo(): CancelablePromise<AuthGetUserInfoResponse> {
 		return __request(OpenAPI, {
 			method: "POST",
-			url: "/api/v1/test-token",
+			url: "/api/v1/user-info",
 		});
 	}
 

@@ -43,8 +43,8 @@ async def user_login(session: SessionDep, form_data: Annotated[OAuth2PasswordReq
         )
     )
 
-@router.post("/test-token", response_model=UserPublic, summary="Test access token")
-def test_token(current_user: CurrentUser) -> Any:
+@router.post("/user-info", response_model=UserPublic, summary="Get user information")
+def get_user_info(current_user: CurrentUser) -> Any:
     return current_user
 
 

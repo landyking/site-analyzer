@@ -203,7 +203,7 @@ export type AuthUserLoginData = {
 
 export type AuthUserLoginResponse = Token;
 
-export type AuthTestTokenResponse = UserPublic;
+export type AuthGetUserInfoResponse = UserPublic;
 
 export type AuthUserRegisterData = {
 	requestBody: RegisterRequest;
