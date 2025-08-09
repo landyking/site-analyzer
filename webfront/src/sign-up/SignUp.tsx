@@ -10,11 +10,19 @@ import Typography from '@mui/material/Typography';
 import Stack from '@mui/material/Stack';
 import MuiCard from '@mui/material/Card';
 import { styled } from '@mui/material/styles';
+import Dialog from '@mui/material/Dialog';
+import DialogTitle from '@mui/material/DialogTitle';
+import DialogContent from '@mui/material/DialogContent';
+import DialogActions from '@mui/material/DialogActions';
+import DialogContentText from '@mui/material/DialogContentText';
 import AppTheme from '../shared-theme/AppTheme';
 import ColorModeSelect from '../shared-theme/ColorModeSelect';
 // Removed third-party sign up icons
 import SolarPowerIcon from '@mui/icons-material/SolarPower';
 import { Link as RouterLink } from '@tanstack/react-router';
+import { useNavigate } from '@tanstack/react-router';
+import { useMutation } from '@tanstack/react-query';
+import { ApiError, AuthService } from '../client';
 
 const Card = styled(MuiCard)(({ theme }) => ({
   display: 'flex',
@@ -59,12 +67,44 @@ const SignUpContainer = styled(Stack)(({ theme }) => ({
 }));
 
 export default function SignUp(props: { disableCustomTheme?: boolean }) {
+  const navigate = useNavigate();
   const [emailError, setEmailError] = React.useState(false);
   const [emailErrorMessage, setEmailErrorMessage] = React.useState('');
   const [passwordError, setPasswordError] = React.useState(false);
   const [passwordErrorMessage, setPasswordErrorMessage] = React.useState('');
   const [confirmPasswordError, setConfirmPasswordError] = React.useState(false);
   const [confirmPasswordErrorMessage, setConfirmPasswordErrorMessage] = React.useState('');
+  const [successOpen, setSuccessOpen] = React.useState(false);
+
+  const extractDetail = (body: unknown): string | undefined => {
+    if (typeof body === 'object' && body !== null && 'detail' in body) {
+      const detail = (body as { detail?: unknown }).detail;
+      if (typeof detail === 'string') return detail;
+    }
+    return undefined;
+  };
+
+  const registerMutation = useMutation({
+    mutationFn: (payload: { email: string; password: string }) =>
+      AuthService.userRegister({ requestBody: payload }),
+    onSuccess: () => {
+  // Show confirmation dialog; navigate only after user confirms
+  setSuccessOpen(true);
+    },
+    onError: (err: unknown) => {
+      if (err instanceof ApiError) {
+        // Known server error like existing email
+        const detail = extractDetail(err.body);
+        setEmailError(true);
+        setEmailErrorMessage(detail || 'Failed to register. Please try again.');
+      } else {
+        setEmailError(true);
+        setEmailErrorMessage('Failed to register. Please try again.');
+      }
+    },
+  });
+
+  // No auto-redirect; user must confirm in dialog
 
   const validateInputs = () => {
     const email = document.getElementById('email') as HTMLInputElement;
@@ -82,9 +122,9 @@ export default function SignUp(props: { disableCustomTheme?: boolean }) {
       setEmailErrorMessage('');
     }
 
-    if (!password.value || password.value.length < 6) {
+    if (!password.value || password.value.length < 8) {
       setPasswordError(true);
-      setPasswordErrorMessage('Password must be at least 6 characters long.');
+      setPasswordErrorMessage('Password must be at least 8 characters long.');
       isValid = false;
     } else {
       setPasswordError(false);
@@ -108,15 +148,20 @@ export default function SignUp(props: { disableCustomTheme?: boolean }) {
   };
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
-    if (emailError || passwordError || confirmPasswordError) {
-      event.preventDefault();
-      return;
-    }
+    event.preventDefault();
+    // Run client-side validation
+    const isValid = validateInputs();
+    if (!isValid) return;
+
     const data = new FormData(event.currentTarget);
-    console.log({
-      email: data.get('email'),
-      password: data.get('password'),
-    });
+    const email = String(data.get('email') || '');
+    const password = String(data.get('password') || '');
+
+    // Clear any previous API errors on new attempt
+    setEmailError(false);
+    setEmailErrorMessage('');
+
+    registerMutation.mutate({ email, password });
   };
 
   return (
@@ -199,9 +244,9 @@ export default function SignUp(props: { disableCustomTheme?: boolean }) {
               type="submit"
               fullWidth
               variant="contained"
-              onClick={validateInputs}
+              disabled={registerMutation.isPending}
             >
-              Sign up
+              {registerMutation.isPending ? 'Signing up…' : 'Sign up'}
             </Button>
           </Box>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
@@ -214,6 +259,24 @@ export default function SignUp(props: { disableCustomTheme?: boolean }) {
           </Box>
         </Card>
       </SignUpContainer>
+      <Dialog open={successOpen} onClose={() => setSuccessOpen(false)}>
+        <DialogTitle>Registration successful</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Your account has been created. Click Continue to go to the Sign In page.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setSuccessOpen(false)}>Stay here</Button>
+          <Button
+            variant="contained"
+            onClick={() => navigate({ to: '/sign-in' })}
+            autoFocus
+          >
+            Continue to Sign In
+          </Button>
+        </DialogActions>
+      </Dialog>
     </AppTheme>
   );
 }
