@@ -1,10 +1,7 @@
 import * as React from 'react';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
-import Checkbox from '@mui/material/Checkbox';
 import CssBaseline from '@mui/material/CssBaseline';
-import Divider from '@mui/material/Divider';
-import FormControlLabel from '@mui/material/FormControlLabel';
 import FormLabel from '@mui/material/FormLabel';
 import FormControl from '@mui/material/FormControl';
 import Link from '@mui/material/Link';
@@ -15,7 +12,8 @@ import MuiCard from '@mui/material/Card';
 import { styled } from '@mui/material/styles';
 import AppTheme from '../shared-theme/AppTheme';
 import ColorModeSelect from '../shared-theme/ColorModeSelect';
-import { GoogleIcon, FacebookIcon, SitemarkIcon } from './components/CustomIcons';
+// Removed third-party sign up icons
+import SolarPowerIcon from '@mui/icons-material/SolarPower';
 
 const Card = styled(MuiCard)(({ theme }) => ({
   display: 'flex',
@@ -64,13 +62,13 @@ export default function SignUp(props: { disableCustomTheme?: boolean }) {
   const [emailErrorMessage, setEmailErrorMessage] = React.useState('');
   const [passwordError, setPasswordError] = React.useState(false);
   const [passwordErrorMessage, setPasswordErrorMessage] = React.useState('');
-  const [nameError, setNameError] = React.useState(false);
-  const [nameErrorMessage, setNameErrorMessage] = React.useState('');
+  const [confirmPasswordError, setConfirmPasswordError] = React.useState(false);
+  const [confirmPasswordErrorMessage, setConfirmPasswordErrorMessage] = React.useState('');
 
   const validateInputs = () => {
     const email = document.getElementById('email') as HTMLInputElement;
     const password = document.getElementById('password') as HTMLInputElement;
-    const name = document.getElementById('name') as HTMLInputElement;
+  const confirmPassword = document.getElementById('confirmPassword') as HTMLInputElement;
 
     let isValid = true;
 
@@ -92,27 +90,29 @@ export default function SignUp(props: { disableCustomTheme?: boolean }) {
       setPasswordErrorMessage('');
     }
 
-    if (!name.value || name.value.length < 1) {
-      setNameError(true);
-      setNameErrorMessage('Name is required.');
+    if (!confirmPassword.value) {
+      setConfirmPasswordError(true);
+      setConfirmPasswordErrorMessage('Please confirm your password.');
+      isValid = false;
+    } else if (password.value !== confirmPassword.value) {
+      setConfirmPasswordError(true);
+      setConfirmPasswordErrorMessage('Passwords do not match.');
       isValid = false;
     } else {
-      setNameError(false);
-      setNameErrorMessage('');
+      setConfirmPasswordError(false);
+      setConfirmPasswordErrorMessage('');
     }
 
     return isValid;
   };
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
-    if (nameError || emailError || passwordError) {
+    if (emailError || passwordError || confirmPasswordError) {
       event.preventDefault();
       return;
     }
     const data = new FormData(event.currentTarget);
     console.log({
-      name: data.get('name'),
-      lastName: data.get('lastName'),
       email: data.get('email'),
       password: data.get('password'),
     });
@@ -124,7 +124,16 @@ export default function SignUp(props: { disableCustomTheme?: boolean }) {
       <ColorModeSelect sx={{ position: 'fixed', top: '1rem', right: '1rem' }} />
       <SignUpContainer direction="column" justifyContent="space-between">
         <Card variant="outlined">
-          <SitemarkIcon />
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <SolarPowerIcon sx={{ color: 'primary.main', fontSize: 32 }} />
+            <Typography
+              variant="h6"
+              component="div"
+              sx={{ fontWeight: 'bold', color: 'primary.main' }}
+            >
+              Site Analyzer
+            </Typography>
+          </Box>
           <Typography
             component="h1"
             variant="h4"
@@ -138,20 +147,6 @@ export default function SignUp(props: { disableCustomTheme?: boolean }) {
             sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}
           >
             <FormControl>
-              <FormLabel htmlFor="name">Full name</FormLabel>
-              <TextField
-                autoComplete="name"
-                name="name"
-                required
-                fullWidth
-                id="name"
-                placeholder="Jon Snow"
-                error={nameError}
-                helperText={nameErrorMessage}
-                color={nameError ? 'error' : 'primary'}
-              />
-            </FormControl>
-            <FormControl>
               <FormLabel htmlFor="email">Email</FormLabel>
               <TextField
                 required
@@ -163,7 +158,7 @@ export default function SignUp(props: { disableCustomTheme?: boolean }) {
                 variant="outlined"
                 error={emailError}
                 helperText={emailErrorMessage}
-                color={passwordError ? 'error' : 'primary'}
+                color={emailError ? 'error' : 'primary'}
               />
             </FormControl>
             <FormControl>
@@ -182,10 +177,23 @@ export default function SignUp(props: { disableCustomTheme?: boolean }) {
                 color={passwordError ? 'error' : 'primary'}
               />
             </FormControl>
-            <FormControlLabel
-              control={<Checkbox value="allowExtraEmails" color="primary" />}
-              label="I want to receive updates via email."
-            />
+            <FormControl>
+              <FormLabel htmlFor="confirmPassword">Confirm password</FormLabel>
+              <TextField
+                required
+                fullWidth
+                name="confirmPassword"
+                placeholder="••••••"
+                type="password"
+                id="confirmPassword"
+                autoComplete="new-password"
+                variant="outlined"
+                error={confirmPasswordError}
+                helperText={confirmPasswordErrorMessage}
+                color={confirmPasswordError ? 'error' : 'primary'}
+              />
+            </FormControl>
+            {/* Removed marketing opt-in checkbox */}
             <Button
               type="submit"
               fullWidth
@@ -195,26 +203,7 @@ export default function SignUp(props: { disableCustomTheme?: boolean }) {
               Sign up
             </Button>
           </Box>
-          <Divider>
-            <Typography sx={{ color: 'text.secondary' }}>or</Typography>
-          </Divider>
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-            <Button
-              fullWidth
-              variant="outlined"
-              onClick={() => alert('Sign up with Google')}
-              startIcon={<GoogleIcon />}
-            >
-              Sign up with Google
-            </Button>
-            <Button
-              fullWidth
-              variant="outlined"
-              onClick={() => alert('Sign up with Facebook')}
-              startIcon={<FacebookIcon />}
-            >
-              Sign up with Facebook
-            </Button>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
             <Typography sx={{ textAlign: 'center' }}>
               Already have an account?{' '}
               <Link
