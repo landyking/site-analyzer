@@ -9,6 +9,7 @@ import {
 import SiteAnalyzerHomePage from './marketing-page/SiteAnalyzerHomePage'
 import SignIn from './sign-in/SignIn'
 import SignUp from './sign-up/SignUp'
+import CrudDashboard from './crud-dashboard/CrudDashboard'
 
 // Root route renders an Outlet for child routes
 const rootRoute = createRootRoute({
@@ -34,7 +35,18 @@ const signUpRoute = createRoute({
   component: SignUp,
 })
 
-const routeTree = rootRoute.addChildren([homeRoute, signInRoute, signUpRoute])
+const dashboardRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/dashboard',
+  component: CrudDashboard,
+})
+
+const routeTree = rootRoute.addChildren([
+  homeRoute,
+  signInRoute,
+  signUpRoute,
+  dashboardRoute,
+])
 
 const router = createRouter({
   routeTree,
