@@ -9,7 +9,7 @@ import Typography from '@mui/material/Typography';
 import MenuIcon from '@mui/icons-material/Menu';
 import MenuOpenIcon from '@mui/icons-material/MenuOpen';
 import Stack from '@mui/material/Stack';
-import { Link } from 'react-router';
+import { Link } from '@tanstack/react-router';
 import ThemeSwitcher from './ThemeSwitcher';
 import Button from '@mui/material/Button';
 import { useNavigate } from '@tanstack/react-router';

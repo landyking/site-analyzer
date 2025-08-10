@@ -11,7 +11,7 @@ import MapIcon from '@mui/icons-material/Map';
 import AddLocationAltIcon from '@mui/icons-material/AddLocationAlt';
 import GroupIcon from '@mui/icons-material/Group';
 import AssignmentTurnedInIcon from '@mui/icons-material/AssignmentTurnedIn';
-import { matchPath, useLocation } from 'react-router';
+import { useRouterState } from '@tanstack/react-router';
 import DashboardSidebarContext from '../context/DashboardSidebarContext';
 import { DRAWER_WIDTH, MINI_DRAWER_WIDTH } from '../constants';
 import DashboardSidebarPageItem from './DashboardSidebarPageItem';
@@ -37,7 +37,7 @@ export default function DashboardSidebar({
 }: DashboardSidebarProps) {
   const theme = useTheme();
 
-  const { pathname } = useLocation();
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
 
   const [, setExpandedItemIds] = React.useState<string[]>([]);
 
@@ -137,23 +137,23 @@ export default function DashboardSidebar({
               id="welcome"
               title="Welcome"
               icon={<HomeIcon />}
-              href="/welcome"
-              selected={pathname === '/' || !!matchPath('/welcome', pathname)}
+              href="/dashboard/welcome"
+              selected={pathname === '/dashboard' || pathname === '/dashboard/' || pathname === '/dashboard/welcome'}
             />
             <DashboardSidebarHeaderItem>Maps</DashboardSidebarHeaderItem>
             <DashboardSidebarPageItem
               id="my-maps"
               title="My Maps"
               icon={<MapIcon />}
-              href="/my-maps"
-              selected={!!matchPath('/my-maps/*', pathname)}
+              href="/dashboard/my-maps"
+              selected={pathname.startsWith('/dashboard/my-maps')}
             />
             <DashboardSidebarPageItem
               id="new-map"
               title="New Map"
               icon={<AddLocationAltIcon />}
-              href="/new-map"
-              selected={!!matchPath('/new-map/*', pathname)}
+              href="/dashboard/new-map"
+              selected={pathname.startsWith('/dashboard/new-map')}
             />
             {isAdmin() && (
               <React.Fragment>
@@ -162,15 +162,15 @@ export default function DashboardSidebar({
                   id="users"
                   title="Users"
                   icon={<GroupIcon />}
-                  href="/users"
-                  selected={!!matchPath('/users', pathname)}
+                  href="/dashboard/users"
+                  selected={pathname === '/dashboard/users'}
                 />
                 <DashboardSidebarPageItem
                   id="tasks"
                   title="Tasks"
                   icon={<AssignmentTurnedInIcon />}
-                  href="/tasks"
-                  selected={!!matchPath('/tasks', pathname)}
+                  href="/dashboard/tasks"
+                  selected={pathname === '/dashboard/tasks'}
                 />
               </React.Fragment>
             )}

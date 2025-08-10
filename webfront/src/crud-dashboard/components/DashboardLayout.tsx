@@ -3,7 +3,7 @@ import { useTheme } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import Box from '@mui/material/Box';
 import Toolbar from '@mui/material/Toolbar';
-import { Outlet } from 'react-router';
+import { Outlet } from '@tanstack/react-router';
 import DashboardHeader from './DashboardHeader';
 import DashboardSidebar from './DashboardSidebar';
 import SolarPowerIcon from '@mui/icons-material/SolarPower';

@@ -6,7 +6,7 @@ import LightbulbIcon from '@mui/icons-material/Lightbulb';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import PageContainer from './PageContainer';
 import Button from '@mui/material/Button';
-import { Link as RouterLink } from 'react-router';
+import { Link as RouterLink } from '@tanstack/react-router';
 
 export default function Welcome() {
   return (
@@ -18,7 +18,7 @@ export default function Welcome() {
           variant="contained"
           color="primary"
           component={RouterLink}
-          to="/my-maps"
+          to="/dashboard/my-maps"
         >
           Go to My Maps
         </Button>

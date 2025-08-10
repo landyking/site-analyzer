@@ -1,12 +1,6 @@
 // React import not required with react-jsx runtime
 import CssBaseline from '@mui/material/CssBaseline';
-import { createHashRouter, RouterProvider } from 'react-router';
-import DashboardLayout from './components/DashboardLayout';
-import Welcome from './components/Welcome.tsx';
-import MyMaps from './components/MyMaps.tsx';
-import NewMap from './components/NewMap.tsx';
-import Users from './components/Users.tsx';
-import Tasks from './components/Tasks.tsx';
+import { Outlet } from '@tanstack/react-router';
 import NotificationsProvider from './hooks/useNotifications/NotificationsProvider';
 import DialogsProvider from './hooks/useDialogs/DialogsProvider';
 import AppTheme from '../shared-theme/AppTheme';
@@ -16,59 +10,8 @@ import {
   sidebarCustomizations,
   formInputCustomizations,
 } from './theme/customizations';
-import { isAdmin } from '../utils/auth';
-import * as React from 'react';
-import { Navigate } from 'react-router';
-
-function AdminRoute({ children }: { children: React.ReactNode }) {
-  return isAdmin() ? <>{children}</> : <Navigate to="/welcome" replace />;
-}
-
-const router = createHashRouter([
-  {
-    Component: DashboardLayout,
-    children: [
-      // Default landing page and first menu item
-      {
-        path: '/welcome',
-        Component: Welcome,
-      },
-      {
-        path: '/my-maps/*',
-        Component: MyMaps,
-      },
-      {
-        path: '/new-map/*',
-        Component: NewMap,
-      },
-      {
-        path: '/users',
-        Component: () => (
-          <AdminRoute>
-            <Users />
-          </AdminRoute>
-        ),
-      },
-      {
-        path: '/tasks',
-        Component: () => (
-          <AdminRoute>
-            <Tasks />
-          </AdminRoute>
-        ),
-      },
-      {
-        index: true,
-        Component: Welcome,
-      },
-      // Fallback route for the example routes in dashboard sidebar items
-      {
-        path: '*',
-        Component: Welcome,
-      },
-    ],
-  },
-]);
+// This component now only provides theming/contexts and renders the layout.
+// Routes are defined in App.tsx via @tanstack/react-router under /dashboard.
 
 const themeComponents = {
   ...dataGridCustomizations,
@@ -83,7 +26,7 @@ export default function CrudDashboard(props: { disableCustomTheme?: boolean }) {
       <CssBaseline enableColorScheme />
       <NotificationsProvider>
         <DialogsProvider>
-          <RouterProvider router={router} />
+          <Outlet />
         </DialogsProvider>
       </NotificationsProvider>
     </AppTheme>

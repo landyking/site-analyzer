@@ -11,6 +11,13 @@ import SiteAnalyzerHomePage from './marketing-page/SiteAnalyzerHomePage'
 import SignIn from './sign-in/SignIn'
 import SignUp from './sign-up/SignUp'
 import CrudDashboard from './crud-dashboard/CrudDashboard'
+import DashboardLayout from './crud-dashboard/components/DashboardLayout'
+import Welcome from './crud-dashboard/components/Welcome'
+import MyMaps from './crud-dashboard/components/MyMaps'
+import NewMap from './crud-dashboard/components/NewMap'
+import Users from './crud-dashboard/components/Users'
+import Tasks from './crud-dashboard/components/Tasks'
+import { isAdmin } from './utils/auth'
 
 // Root route renders an Outlet for child routes
 const rootRoute = createRootRoute({
@@ -49,11 +56,74 @@ const dashboardRoute = createRoute({
   component: CrudDashboard,
 })
 
+// Dashboard children routes use DashboardLayout with an Outlet
+const dashboardLayoutRoute = createRoute({
+  getParentRoute: () => dashboardRoute,
+  id: 'dashboard-layout',
+  component: DashboardLayout,
+})
+
+const welcomeRoute = createRoute({
+  getParentRoute: () => dashboardLayoutRoute,
+  path: 'welcome',
+  component: Welcome,
+})
+
+const myMapsRoute = createRoute({
+  getParentRoute: () => dashboardLayoutRoute,
+  path: 'my-maps',
+  component: MyMaps,
+})
+
+const newMapRoute = createRoute({
+  getParentRoute: () => dashboardLayoutRoute,
+  path: 'new-map',
+  component: NewMap,
+})
+
+const usersRoute = createRoute({
+  getParentRoute: () => dashboardLayoutRoute,
+  path: 'users',
+  beforeLoad: () => {
+    if (!isAdmin()) {
+      throw redirect({ to: '/dashboard/welcome' })
+    }
+  },
+  component: Users,
+})
+
+const tasksRoute = createRoute({
+  getParentRoute: () => dashboardLayoutRoute,
+  path: 'tasks',
+  beforeLoad: () => {
+    if (!isAdmin()) {
+      throw redirect({ to: '/dashboard/welcome' })
+    }
+  },
+  component: Tasks,
+})
+
+// Index route for /dashboard -> Welcome
+const dashboardIndexRoute = createRoute({
+  getParentRoute: () => dashboardLayoutRoute,
+  path: '/',
+  component: Welcome,
+})
+
 const routeTree = rootRoute.addChildren([
   homeRoute,
   signInRoute,
   signUpRoute,
-  dashboardRoute,
+  dashboardRoute.addChildren([
+    dashboardLayoutRoute.addChildren([
+      dashboardIndexRoute,
+      welcomeRoute,
+      myMapsRoute,
+      newMapRoute,
+      usersRoute,
+      tasksRoute,
+    ]),
+  ]),
 ])
 
 const router = createRouter({
