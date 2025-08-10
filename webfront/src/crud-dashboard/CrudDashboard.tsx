@@ -16,6 +16,13 @@ import {
   sidebarCustomizations,
   formInputCustomizations,
 } from './theme/customizations';
+import { isAdmin } from '../utils/auth';
+import * as React from 'react';
+import { Navigate } from 'react-router';
+
+function AdminRoute({ children }: { children: React.ReactNode }) {
+  return isAdmin() ? <>{children}</> : <Navigate to="/welcome" replace />;
+}
 
 const router = createHashRouter([
   {
@@ -36,11 +43,19 @@ const router = createHashRouter([
       },
       {
         path: '/users',
-        Component: Users,
+        Component: () => (
+          <AdminRoute>
+            <Users />
+          </AdminRoute>
+        ),
       },
       {
         path: '/tasks',
-        Component: Tasks,
+        Component: () => (
+          <AdminRoute>
+            <Tasks />
+          </AdminRoute>
+        ),
       },
       {
         index: true,

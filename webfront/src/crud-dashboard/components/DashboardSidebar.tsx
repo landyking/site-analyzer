@@ -20,6 +20,7 @@ import {
   getDrawerSxTransitionMixin,
   getDrawerWidthTransitionMixin,
 } from '../mixins';
+import { isAdmin } from '../../utils/auth';
 
 export interface DashboardSidebarProps {
   expanded?: boolean;
@@ -154,21 +155,25 @@ export default function DashboardSidebar({
               href="/new-map"
               selected={!!matchPath('/new-map/*', pathname)}
             />
-            <DashboardSidebarHeaderItem>Management</DashboardSidebarHeaderItem>
-            <DashboardSidebarPageItem
-              id="users"
-              title="Users"
-              icon={<GroupIcon />}
-              href="/users"
-              selected={!!matchPath('/users', pathname)}
-            />
-            <DashboardSidebarPageItem
-              id="tasks"
-              title="Tasks"
-              icon={<AssignmentTurnedInIcon />}
-              href="/tasks"
-              selected={!!matchPath('/tasks', pathname)}
-            />
+            {isAdmin() && (
+              <React.Fragment>
+                <DashboardSidebarHeaderItem>Management</DashboardSidebarHeaderItem>
+                <DashboardSidebarPageItem
+                  id="users"
+                  title="Users"
+                  icon={<GroupIcon />}
+                  href="/users"
+                  selected={!!matchPath('/users', pathname)}
+                />
+                <DashboardSidebarPageItem
+                  id="tasks"
+                  title="Tasks"
+                  icon={<AssignmentTurnedInIcon />}
+                  href="/tasks"
+                  selected={!!matchPath('/tasks', pathname)}
+                />
+              </React.Fragment>
+            )}
           </List>
         </Box>
       </React.Fragment>
