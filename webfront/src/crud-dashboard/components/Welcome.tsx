@@ -26,9 +26,9 @@ export default function Welcome() {
     >
       <Stack spacing={3} sx={{ maxWidth: 900 }}>
         <Typography variant="body1" color="text.secondary">
-          This dashboard is your starting point. Use the sidebar to navigate to
-          different sections. The Employees area showcases a full CRUD flow with
-          filters, sorting, pagination, and inline actions.
+          Welcome to the Site Analyzer. Use the sidebar to create and manage map
+          analysis tasks. Submit a new task with your district and factor weights,
+          then monitor progress and download results when it’s done.
         </Typography>
         <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
           <Box
@@ -45,8 +45,9 @@ export default function Welcome() {
               <Typography variant="subtitle2">Quick tips</Typography>
             </Stack>
             <Typography variant="body2" color="text.secondary">
-              • Use the header menu button to collapse the sidebar on small screens.
-              <br />• Bookmark specific pages; routing uses hash paths for easy linking.
+              • New Map: choose a district and set constraint/suitability factors to submit a task.
+              <br />• My Maps: track status (Pending, Processing, Success, Failure, Cancelled) and access outputs.
+              <br />• Use the header menu to collapse the sidebar on small screens.
             </Typography>
           </Box>
           <Box
@@ -63,8 +64,9 @@ export default function Welcome() {
               <Typography variant="subtitle2">What to try</Typography>
             </Stack>
             <Typography variant="body2" color="text.secondary">
-              • View and edit employees, then return here via the Welcome menu.
-              <br />• Explore nested items under Reports in the sidebar.
+              • Create a task in New Map, then watch it appear in My Maps.
+              <br />• Check Tasks and Users if you have admin access.
+              <br />• Return here anytime via the Welcome menu.
             </Typography>
           </Box>
         </Box>
