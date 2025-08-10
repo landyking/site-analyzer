@@ -7,6 +7,7 @@ import List from '@mui/material/List';
 import Toolbar from '@mui/material/Toolbar';
 import type {} from '@mui/material/themeCssVarsAugmentation';
 import PersonIcon from '@mui/icons-material/Person';
+import HomeIcon from '@mui/icons-material/Home';
 import BarChartIcon from '@mui/icons-material/BarChart';
 import DescriptionIcon from '@mui/icons-material/Description';
 import LayersIcon from '@mui/icons-material/Layers';
@@ -134,11 +135,18 @@ export default function DashboardSidebar({
           >
             <DashboardSidebarHeaderItem>Main items</DashboardSidebarHeaderItem>
             <DashboardSidebarPageItem
+              id="welcome"
+              title="Welcome"
+              icon={<HomeIcon />}
+              href="/welcome"
+              selected={pathname === '/' || !!matchPath('/welcome', pathname)}
+            />
+            <DashboardSidebarPageItem
               id="employees"
               title="Employees"
               icon={<PersonIcon />}
               href="/employees"
-              selected={!!matchPath('/employees/*', pathname) || pathname === '/'}
+              selected={!!matchPath('/employees/*', pathname)}
             />
             <DashboardSidebarDividerItem />
             <DashboardSidebarHeaderItem>Example items</DashboardSidebarHeaderItem>

@@ -1,4 +1,4 @@
-import * as React from 'react';
+// React import not required with react-jsx runtime
 import CssBaseline from '@mui/material/CssBaseline';
 import { createHashRouter, RouterProvider } from 'react-router';
 import DashboardLayout from './components/DashboardLayout';
@@ -6,6 +6,7 @@ import EmployeeList from './components/EmployeeList';
 import EmployeeShow from './components/EmployeeShow';
 import EmployeeCreate from './components/EmployeeCreate';
 import EmployeeEdit from './components/EmployeeEdit';
+import Welcome from './components/Welcome.tsx';
 import NotificationsProvider from './hooks/useNotifications/NotificationsProvider';
 import DialogsProvider from './hooks/useDialogs/DialogsProvider';
 import AppTheme from '../shared-theme/AppTheme';
@@ -20,6 +21,15 @@ const router = createHashRouter([
   {
     Component: DashboardLayout,
     children: [
+      // Default landing page and first menu item
+      {
+        path: '/welcome',
+        Component: Welcome,
+      },
+      {
+        index: true,
+        Component: Welcome,
+      },
       {
         path: '/employees',
         Component: EmployeeList,
@@ -39,7 +49,7 @@ const router = createHashRouter([
       // Fallback route for the example routes in dashboard sidebar items
       {
         path: '*',
-        Component: EmployeeList,
+        Component: Welcome,
       },
     ],
   },
