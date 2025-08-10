@@ -133,7 +133,6 @@ export default function DashboardSidebar({
               width: mini ? MINI_DRAWER_WIDTH : 'auto',
             }}
           >
-            <DashboardSidebarHeaderItem>Main items</DashboardSidebarHeaderItem>
             <DashboardSidebarPageItem
               id="welcome"
               title="Welcome"
@@ -141,62 +140,41 @@ export default function DashboardSidebar({
               href="/welcome"
               selected={pathname === '/' || !!matchPath('/welcome', pathname)}
             />
+            <DashboardSidebarHeaderItem>Maps</DashboardSidebarHeaderItem>
             <DashboardSidebarPageItem
-              id="employees"
-              title="Employees"
+              id="my-maps"
+              title="My Maps"
               icon={<PersonIcon />}
-              href="/employees"
-              selected={!!matchPath('/employees/*', pathname)}
-            />
-            <DashboardSidebarDividerItem />
-            <DashboardSidebarHeaderItem>Example items</DashboardSidebarHeaderItem>
-            <DashboardSidebarPageItem
-              id="reports"
-              title="Reports"
-              icon={<BarChartIcon />}
-              href="/reports"
-              selected={!!matchPath('/reports', pathname)}
-              defaultExpanded={!!matchPath('/reports', pathname)}
-              expanded={expandedItemIds.includes('reports')}
-              nestedNavigation={
-                <List
-                  dense
-                  sx={{
-                    padding: 0,
-                    my: 1,
-                    pl: mini ? 0 : 1,
-                    minWidth: 240,
-                  }}
-                >
-                  <DashboardSidebarPageItem
-                    id="sales"
-                    title="Sales"
-                    icon={<DescriptionIcon />}
-                    href="/reports/sales"
-                    selected={!!matchPath('/reports/sales', pathname)}
-                  />
-                  <DashboardSidebarPageItem
-                    id="traffic"
-                    title="Traffic"
-                    icon={<DescriptionIcon />}
-                    href="/reports/traffic"
-                    selected={!!matchPath('/reports/traffic', pathname)}
-                  />
-                </List>
-              }
+              href="/my-maps"
+              selected={!!matchPath('/my-maps/*', pathname)}
             />
             <DashboardSidebarPageItem
-              id="integrations"
-              title="Integrations"
+              id="new-map"
+              title="New Map"
+              icon={<PersonIcon />}
+              href="/new-map"
+              selected={!!matchPath('/new-map/*', pathname)}
+            />
+            <DashboardSidebarHeaderItem>Management</DashboardSidebarHeaderItem>
+            <DashboardSidebarPageItem
+              id="users"
+              title="Users"
               icon={<LayersIcon />}
-              href="/integrations"
-              selected={!!matchPath('/integrations', pathname)}
+              href="/users"
+              selected={!!matchPath('/users', pathname)}
+            />
+            <DashboardSidebarPageItem
+              id="tasks"
+              title="Tasks"
+              icon={<LayersIcon />}
+              href="/tasks"
+              selected={!!matchPath('/tasks', pathname)}
             />
           </List>
         </Box>
       </React.Fragment>
     ),
-    [mini, hasDrawerTransitions, isFullyExpanded, expandedItemIds, pathname],
+    [mini, hasDrawerTransitions, isFullyExpanded, pathname],
   );
 
   const getDrawerSharedSx = React.useCallback(
