@@ -6,17 +6,16 @@ import Drawer from '@mui/material/Drawer';
 import List from '@mui/material/List';
 import Toolbar from '@mui/material/Toolbar';
 import type {} from '@mui/material/themeCssVarsAugmentation';
-import PersonIcon from '@mui/icons-material/Person';
 import HomeIcon from '@mui/icons-material/Home';
-import BarChartIcon from '@mui/icons-material/BarChart';
-import DescriptionIcon from '@mui/icons-material/Description';
-import LayersIcon from '@mui/icons-material/Layers';
+import MapIcon from '@mui/icons-material/Map';
+import AddLocationAltIcon from '@mui/icons-material/AddLocationAlt';
+import GroupIcon from '@mui/icons-material/Group';
+import AssignmentTurnedInIcon from '@mui/icons-material/AssignmentTurnedIn';
 import { matchPath, useLocation } from 'react-router';
 import DashboardSidebarContext from '../context/DashboardSidebarContext';
 import { DRAWER_WIDTH, MINI_DRAWER_WIDTH } from '../constants';
 import DashboardSidebarPageItem from './DashboardSidebarPageItem';
 import DashboardSidebarHeaderItem from './DashboardSidebarHeaderItem';
-import DashboardSidebarDividerItem from './DashboardSidebarDividerItem';
 import {
   getDrawerSxTransitionMixin,
   getDrawerWidthTransitionMixin,
@@ -39,7 +38,7 @@ export default function DashboardSidebar({
 
   const { pathname } = useLocation();
 
-  const [expandedItemIds, setExpandedItemIds] = React.useState<string[]>([]);
+  const [, setExpandedItemIds] = React.useState<string[]>([]);
 
   const isOverSmViewport = useMediaQuery(theme.breakpoints.up('sm'));
   const isOverMdViewport = useMediaQuery(theme.breakpoints.up('md'));
@@ -144,14 +143,14 @@ export default function DashboardSidebar({
             <DashboardSidebarPageItem
               id="my-maps"
               title="My Maps"
-              icon={<PersonIcon />}
+              icon={<MapIcon />}
               href="/my-maps"
               selected={!!matchPath('/my-maps/*', pathname)}
             />
             <DashboardSidebarPageItem
               id="new-map"
               title="New Map"
-              icon={<PersonIcon />}
+              icon={<AddLocationAltIcon />}
               href="/new-map"
               selected={!!matchPath('/new-map/*', pathname)}
             />
@@ -159,14 +158,14 @@ export default function DashboardSidebar({
             <DashboardSidebarPageItem
               id="users"
               title="Users"
-              icon={<LayersIcon />}
+              icon={<GroupIcon />}
               href="/users"
               selected={!!matchPath('/users', pathname)}
             />
             <DashboardSidebarPageItem
               id="tasks"
               title="Tasks"
-              icon={<LayersIcon />}
+              icon={<AssignmentTurnedInIcon />}
               href="/tasks"
               selected={!!matchPath('/tasks', pathname)}
             />
