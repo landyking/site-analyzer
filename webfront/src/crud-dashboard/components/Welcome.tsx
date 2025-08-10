@@ -2,25 +2,25 @@
 import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
-import Button from '@mui/material/Button';
 import LightbulbIcon from '@mui/icons-material/Lightbulb';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import { Link as RouterLink } from 'react-router';
 import PageContainer from './PageContainer';
+import Button from '@mui/material/Button';
+import { Link as RouterLink } from 'react-router';
 
 export default function Welcome() {
   return (
     <PageContainer
       title="Welcome"
       breadcrumbs={[{ title: 'Welcome' }]}
-      actions={
+            actions={
         <Button
           variant="contained"
           color="primary"
           component={RouterLink}
-          to="/employees"
+          to="/my-maps"
         >
-          Go to Employees
+          Go to My Maps
         </Button>
       }
     >

@@ -3,6 +3,10 @@ import CssBaseline from '@mui/material/CssBaseline';
 import { createHashRouter, RouterProvider } from 'react-router';
 import DashboardLayout from './components/DashboardLayout';
 import Welcome from './components/Welcome.tsx';
+import MyMaps from './components/MyMaps.tsx';
+import NewMap from './components/NewMap.tsx';
+import Users from './components/Users.tsx';
+import Tasks from './components/Tasks.tsx';
 import NotificationsProvider from './hooks/useNotifications/NotificationsProvider';
 import DialogsProvider from './hooks/useDialogs/DialogsProvider';
 import AppTheme from '../shared-theme/AppTheme';
@@ -21,6 +25,22 @@ const router = createHashRouter([
       {
         path: '/welcome',
         Component: Welcome,
+      },
+      {
+        path: '/my-maps/*',
+        Component: MyMaps,
+      },
+      {
+        path: '/new-map/*',
+        Component: NewMap,
+      },
+      {
+        path: '/users',
+        Component: Users,
+      },
+      {
+        path: '/tasks',
+        Component: Tasks,
       },
       {
         index: true,

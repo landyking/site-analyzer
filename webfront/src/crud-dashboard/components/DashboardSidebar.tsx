@@ -183,12 +183,14 @@ export default function DashboardSidebar({
       return {
         displayPrint: 'none',
         width: drawerWidth,
+        height: '100vh',
         flexShrink: 0,
         ...getDrawerWidthTransitionMixin(expanded),
         ...(isTemporary ? { position: 'absolute' } : {}),
         [`& .MuiDrawer-paper`]: {
           position: 'absolute',
           width: drawerWidth,
+          height: '100vh',
           boxSizing: 'border-box',
           backgroundImage: 'none',
           ...getDrawerWidthTransitionMixin(expanded),
