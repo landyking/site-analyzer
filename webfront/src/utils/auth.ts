@@ -41,3 +41,9 @@ export function isAdmin(): boolean {
   const payload = parseJwt<{ admin?: boolean }>(token);
   return !!payload?.admin;
 }
+
+// True when a non-empty access token exists in localStorage
+export function isLoggedIn(): boolean {
+  const token = getAccessToken();
+  return !!token && token.trim() !== '';
+}

@@ -17,7 +17,7 @@ import MyMaps from './crud-dashboard/components/MyMaps'
 import NewMap from './crud-dashboard/components/NewMap'
 import Users from './crud-dashboard/components/Users'
 import Tasks from './crud-dashboard/components/Tasks'
-import { isAdmin } from './utils/auth'
+import { getAccessToken, isAdmin, isLoggedIn } from './utils/auth'
 
 // Root route renders an Outlet for child routes
 const rootRoute = createRootRoute({
@@ -34,6 +34,11 @@ const homeRoute = createRoute({
 const signInRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/sign-in',
+  beforeLoad: () => {
+    if (isLoggedIn()) {
+      throw redirect({ to: '/dashboard' })
+    }
+  },
   component: SignIn,
 })
 
@@ -48,7 +53,7 @@ const dashboardRoute = createRoute({
   path: '/dashboard',
   beforeLoad: () => {
     // Protect the dashboard route: require an access token in localStorage
-    const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null
+  const token = typeof window !== 'undefined' ? getAccessToken() : null
     if (!token) {
       throw redirect({ to: '/sign-in' })
     }
