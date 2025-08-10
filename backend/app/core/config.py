@@ -27,7 +27,8 @@ def parse_cors(v: Any) -> list[str] | str:
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         # Use top level .env file (one level above ./backend/)
-        env_file="../.env",
+        # env_file="../.env",
+        env_file=["../.env", "../.env.local","../.env.production"],
         env_ignore_empty=True,
         extra="ignore",
     )
@@ -56,6 +57,9 @@ class Settings(BaseSettings):
     MYSQL_USER: str = "root"
     MYSQL_PASSWORD: str = ""
     MYSQL_DB: str = "site_analyzer"
+
+    GOOGLE_CLIENT_ID: str
+    GOOGLE_CLIENT_SECRET: str
 
     @computed_field  # type: ignore[prop-decorator]
     @property
@@ -118,3 +122,5 @@ class Settings(BaseSettings):
 
 
 settings = Settings()  # type: ignore
+# print(settings.MYSQL_PASSWORD)
+# print(settings.GOOGLE_CLIENT_ID, settings.GOOGLE_CLIENT_SECRET)

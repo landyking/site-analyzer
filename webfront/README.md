@@ -7,6 +7,22 @@ Currently, two official plugins are available:
 - [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
 - [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
 
+## Google Sign-In configuration (required)
+
+This frontend uses Google Sign-In. Configure the client ID via Vite env files (which are git-ignored):
+
+- Development: create `./webfront/.env.development`
+
+```
+VITE_GOOGLE_CLIENT_ID=your-google-oauth-client-id
+```
+
+- Production: create `./webfront/.env.production` with the production client ID.
+
+Notes:
+- Only variables prefixed with `VITE_` are exposed to the client at build time.
+- Do not commit secrets. Client IDs are public identifiers but still keep env files out of version control.
+
 ## Expanding the ESLint configuration
 
 If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:

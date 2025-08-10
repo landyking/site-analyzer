@@ -20,6 +20,7 @@ import SolarPowerIcon from '@mui/icons-material/SolarPower';
 import { useNavigate } from '@tanstack/react-router';
 import { useMutation } from '@tanstack/react-query';
 import { ApiError, AuthService } from '../client';
+import { useGoogleLogin } from '@react-oauth/google';
 
 const Card = styled(MuiCard)(({ theme }) => ({
   display: 'flex',
@@ -70,6 +71,26 @@ export default function SignIn(props: { disableCustomTheme?: boolean }) {
   const [passwordError, setPasswordError] = React.useState(false);
   const [passwordErrorMessage, setPasswordErrorMessage] = React.useState('');
   const [open, setOpen] = React.useState(false);
+  const login = useGoogleLogin({
+    onSuccess: async codeResponse => {
+      // console.log(codeResponse);
+      try {
+        const resp = await AuthService.getOidcToken({
+          requestBody: { code: codeResponse.code },
+        });
+        if (resp.access_token) {
+          localStorage.setItem('access_token', resp.access_token);
+          navigate({ to: '/dashboard' });
+        } else {
+          alert('Google sign-in failed: no token');
+        }
+      } catch (e) {
+        const err = e as ApiError;
+        alert((err?.body as any)?.detail || 'Google sign-in failed');
+      }
+    },
+    flow: 'auth-code',
+  });
 
   const extractDetail = (body: unknown): string | undefined => {
     if (typeof body === 'object' && body !== null && 'detail' in body) {
@@ -250,19 +271,19 @@ export default function SignIn(props: { disableCustomTheme?: boolean }) {
             <Button
               fullWidth
               variant="outlined"
-              onClick={() => alert('Sign in with Google')}
+              onClick={() => login()}
               startIcon={<GoogleIcon />}
             >
               Sign in with Google
             </Button>
-            <Button
+            {/* <Button
               fullWidth
               variant="outlined"
               onClick={() => alert('Sign in with Facebook')}
               startIcon={<FacebookIcon />}
             >
               Sign in with Facebook
-            </Button>
+            </Button> */}
             <Typography sx={{ textAlign: 'center' }}>
               Don&apos;t have an account?{' '}
               <Link component={RouterLink} to="/sign-up" variant="body2" sx={{ alignSelf: 'center' }}>

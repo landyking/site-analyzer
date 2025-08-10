@@ -7,6 +7,13 @@ A FastAPI-based backend service for the site analyzer application.
 - Python 3.11 or higher
 - pip (Python package installer)
 
+## Required environment variables
+
+These must be set for authentication to work. See "Google Sign-In configuration (required)" below for details and examples.
+
+- GOOGLE_CLIENT_ID — Google OAuth client ID
+- GOOGLE_CLIENT_SECRET — Google OAuth client secret
+
 ## Setup and Installation
 
 ### 1. Clone the repository and navigate to the backend directory
@@ -53,6 +60,26 @@ The API will be available at:
 - **API**: http://localhost:8000
 - **Interactive API docs**: http://localhost:8000/docs
 - **Alternative API docs**: http://localhost:8000/redoc
+
+## Google Sign-In configuration (required)
+
+This service uses Google OAuth. Provide the following environment variables:
+
+- GOOGLE_CLIENT_ID
+- GOOGLE_CLIENT_SECRET
+
+Development (git-ignored): create a `.env.local` file at the repository root with:
+
+```
+GOOGLE_CLIENT_ID=your-google-oauth-client-id
+GOOGLE_CLIENT_SECRET=your-google-oauth-client-secret
+```
+
+Production: provide the same variables via `.env.production` (not committed) or your deployment environment's secret manager.
+
+Notes:
+- Do not commit secrets. Rotate the client secret if it was ever exposed.
+- The backend reads these from the process environment; ensure they are set before starting the server.
 
 ## Dependency Management with requirements.txt
 
@@ -130,16 +157,9 @@ backend/
 └── README.md           # This file
 ```
 
-### Environment Variables
+### Environment variables (general)
 
-Create a `.env` file in the backend directory for environment-specific configuration:
-
-```bash
-# Example .env file
-DEBUG=True
-DATABASE_URL=sqlite:///./test.db
-SECRET_KEY=your-secret-key-here
-```
+You can define additional variables as needed (e.g., `DEBUG`, `DATABASE_URL`, etc.). Prefer using `.env.local` for development and a secret manager or `.env.production` for production. Ensure these are available in the process environment when launching the app.
 
 ## API Documentation
 
