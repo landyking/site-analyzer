@@ -1,11 +1,32 @@
-# React + TypeScript + Vite
+# Web frontend project for Site Analyzer
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+## Background
 
-Currently, two official plugins are available:
+This frontend powers the Site Analyzer app. It includes a public marketing page and an authenticated dashboard for managing maps and tasks.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- Stack: React + TypeScript + Vite, Material UI (MUI), TanStack Router (routing), TanStack Query (server state), Google OAuth (auth), and an auto-generated OpenAPI client.
+- Structure (key folders):
+  - `src/main.tsx`: App bootstrap, GoogleOAuthProvider, QueryClient, global API error handling.
+  - `src/App.tsx`: Route tree with protected routes using TanStack Router.
+  - `src/marketing-page/`: Landing page and sections (Hero, Features, FAQ, etc.).
+  - `src/crud-dashboard/`: Dashboard layout (header/sidebar) and pages: `welcome`, `my-maps`, `new-map`, `users`, `tasks`.
+  - `src/shared-theme/`: Central MUI theme (`AppTheme`) and component customizations; supports light/dark mode.
+  - `src/sign-in/`, `src/sign-up/`: Auth screens; Sign-In supports Google OAuth code flow and username/password.
+  - `src/client/`: Generated API SDK via `@hey-api/openapi-ts` (config: `openapi-ts.config.ts`; source spec: `openapi.json`).
+
+Routing and auth
+- Public routes: `/` (marketing), `/sign-in`, `/sign-up`.
+- Protected: `/dashboard` and its children. Access requires `access_token` in `localStorage`; missing/expired tokens redirect to `/sign-in`.
+- Admin-only examples: `/dashboard/users`, `/dashboard/tasks` (guarded by `isAdmin()`).
+
+API client and data fetching
+- `OpenAPI.BASE` is set from `VITE_API_URL`; `OpenAPI.TOKEN` reads `access_token` from `localStorage`.
+- Global `ApiError` handling clears the token on 401/403 and redirects to sign-in.
+- TanStack Query is used for caching and request lifecycle.
+
+Environment variables
+- `VITE_API_URL` (e.g., `http://localhost:8000`) points the SDK to the backend.
+- `VITE_GOOGLE_CLIENT_ID` is required for Google Sign-In (see section below).
 
 ## Google Sign-In configuration (required)
 
@@ -22,64 +43,3 @@ VITE_GOOGLE_CLIENT_ID=your-google-oauth-client-id
 Notes:
 - Only variables prefixed with `VITE_` are exposed to the client at build time.
 - Do not commit secrets. Client IDs are public identifiers but still keep env files out of version control.
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      ...tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      ...tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      ...tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
-
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
-
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
