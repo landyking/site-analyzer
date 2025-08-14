@@ -16,7 +16,7 @@ import { useNavigate } from '@tanstack/react-router';
 import LogoutIcon from '@mui/icons-material/Logout';
 import Chip from '@mui/material/Chip';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { AuthService } from '../../client';
 
 const AppBar = styled(MuiAppBar)(({ theme }) => ({
@@ -53,6 +53,7 @@ export default function DashboardHeader({
 }: DashboardHeaderProps) {
   const theme = useTheme();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   const handleMenuOpen = React.useCallback(() => {
     onToggleMenu(!menuOpen);
@@ -83,14 +84,21 @@ export default function DashboardHeader({
     [handleMenuOpen],
   );
 
-  const handleLogout = React.useCallback(() => {
+  const handleLogout = React.useCallback(async () => {
+    // Best-effort: cancel ongoing queries and clear cache to avoid cross-user leakage
+    try {
+      await queryClient.cancelQueries();
+      queryClient.clear();
+    } catch {
+      // no-op
+    }
     try {
       localStorage.removeItem('access_token');
     } catch {
       // no-op
     }
     navigate({ to: '/' });
-  }, [navigate]);
+  }, [navigate, queryClient]);
 
   const { data: currentUser } = useQuery({
     queryKey: ['auth', 'me'],
