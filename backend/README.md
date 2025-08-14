@@ -4,8 +4,15 @@ A FastAPI-based backend service for the site analyzer application.
 
 ## Prerequisites
 
-- Python 3.11 or higher
-- pip (Python package installer)
+- uv (Python package and project manager)
+
+Tip (macOS): install uv with Homebrew or the official installer.
+
+```bash
+brew install uv
+# or
+curl -Ls https://astral.sh/uv/install.sh | sh
+```
 
 ## Required environment variables
 
@@ -14,52 +21,36 @@ These must be set for authentication to work. See "Google Sign-In configuration 
 - GOOGLE_CLIENT_ID — Google OAuth client ID
 - GOOGLE_CLIENT_SECRET — Google OAuth client secret
 
-## Setup and Installation
+## Setup and Installation (uv)
 
-### 1. Clone the repository and navigate to the backend directory
+### Install dependencies and create the virtual environment
+
+Use uv to resolve `pyproject.toml`/`uv.lock`, create `.venv/`, and install everything:
 
 ```bash
-cd backend
+uv sync
 ```
 
-### 2. Create a virtual environment
+This creates a local `.venv/` and installs all dependencies. You do not need to manually activate the environment when using `uv run`, but you can if you prefer:
 
 ```bash
-python -m venv .venv
-```
-
-### 3. Activate the virtual environment
-
-**On macOS/Linux:**
-```bash
-source .venv/bin/activate
-```
-
-**On Windows:**
-```bash
-.venv\Scripts\activate
-```
-
-### 4. Install dependencies
-
-```bash
-pip install -r requirements.txt
+source .venv/bin/activate   # macOS/Linux (optional)
 ```
 
 ## Running the Application
 
-Start the FastAPI development server:
+Start the FastAPI development server with uv (no activation required):
 
 ```bash
-fastapi dev app/main.py
+uv run fastapi dev app/main.py
 # or
-uvicorn app.main:app --reload
+uv run uvicorn app.main:app --reload
 ```
 
 The API will be available at:
-- **API**: http://localhost:8000
-- **Interactive API docs**: http://localhost:8000/docs
-- **Alternative API docs**: http://localhost:8000/redoc
+- API: http://localhost:8000
+- Interactive API docs: http://localhost:8000/docs
+- Alternative API docs: http://localhost:8000/redoc
 
 ## Google Sign-In configuration (required)
 
@@ -81,65 +72,53 @@ Notes:
 - Do not commit secrets. Rotate the client secret if it was ever exposed.
 - The backend reads these from the process environment; ensure they are set before starting the server.
 
-## Dependency Management with requirements.txt
+## Dependency management with uv
 
-### Installing Dependencies
-
-To install all project dependencies:
+- Install/sync all dependencies (creates/updates `.venv/`):
 
 ```bash
-pip install -r requirements.txt
+uv sync
 ```
 
-### Adding New Dependencies
+- Add a runtime dependency (updates `pyproject.toml` and `uv.lock`):
 
-1. Install the new package:
 ```bash
-pip install package-name
+uv add package-name
 ```
 
-2. Update requirements.txt:
+- Add a development-only dependency:
+
 ```bash
-pip freeze > requirements.txt
+uv add --dev package-name
 ```
 
-### Generating requirements.txt from scratch
-
-If you need to regenerate the requirements.txt file:
+- Remove a dependency:
 
 ```bash
-# Make sure your virtual environment is activated
-source .venv/bin/activate  # On macOS/Linux
-# or
-.venv\Scripts\activate     # On Windows
-
-# Generate requirements.txt with all installed packages
-pip freeze > requirements.txt
+uv remove package-name
 ```
 
-### Best Practices
-
-1. **Always use a virtual environment** to avoid conflicts with system packages
-2. **Keep requirements.txt updated** whenever you add or remove dependencies
-3. **Pin specific versions** for production deployments to ensure reproducibility
-4. **Consider creating separate files** for different environments:
-   - `requirements.txt` - Production dependencies
-   - `requirements-dev.txt` - Development dependencies (testing, linting, etc.)
-
-### Example: Adding a new dependency
+- Upgrade all locked dependencies to the latest allowed by `pyproject.toml`:
 
 ```bash
-# 1. Activate virtual environment
-source .venv/bin/activate
+uv lock --upgrade
+uv sync
+```
 
-# 2. Install new package
-pip install requests
+- Show installed packages in the current environment:
 
-# 3. Update requirements.txt
-pip freeze > requirements.txt
+```bash
+uv tree
+```
 
-# 4. Commit the updated requirements.txt
-git add requirements.txt
+## Example: Adding a new dependency
+
+```bash
+# From backend/
+uv add requests
+
+# Commit the updated lockfile and project file
+git add pyproject.toml uv.lock
 git commit -m "Add requests dependency"
 ```
 
@@ -150,11 +129,11 @@ git commit -m "Add requests dependency"
 ```
 backend/
 ├── app/
-│   └── main.py          # Main FastAPI application
-├── .venv/               # Virtual environment (ignored by git)
-├── requirements.txt     # Python dependencies
-├── .gitignore          # Git ignore rules
-└── README.md           # This file
+│   └── main.py        # Main FastAPI application
+├── pyproject.toml     # Project config + dependencies (managed by uv)
+├── uv.lock            # Locked, reproducible dependency set (managed by uv)
+├── .venv/             # Virtual environment (created by `uv sync`, git-ignored)
+└── README.md          # This file
 ```
 
 ### Environment variables (general)
@@ -171,25 +150,19 @@ Once the server is running, you can access the interactive API documentation at:
 
 ### Common Issues
 
-1. **Import errors**: Make sure your virtual environment is activated and dependencies are installed
-2. **Port already in use**: Change the port by running `uvicorn app.main:app --reload --port 8001`
-3. **Permission errors**: Ensure you have write permissions in the project directory
+1. Import errors: ensure dependencies are installed with `uv sync` (and try recreating the venv if needed: `rm -rf .venv && uv sync`).
+2. Port already in use: change the port by running `uv run uvicorn app.main:app --reload --port 8001`.
+3. Permission errors: ensure you have write permissions in the project directory.
 
 ### Useful Commands
 
 ```bash
-# Check installed packages
-pip list
+# Run with automatic environment handling
+uv run uvicorn app.main:app --reload
 
-# Check if requirements.txt is up to date
-pip freeze | diff requirements.txt -
+# Inspect dependency tree (optional)
+uv tree
 
-# Install specific version of a package
-pip install "fastapi==0.116.1"
-
-# Uninstall a package
-pip uninstall package-name
-
-# Then update requirements.txt
-pip freeze > requirements.txt
+# See Python version used by uv
+uv run python -V
 ```
