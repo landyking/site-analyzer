@@ -1,10 +1,13 @@
+import json
 import uuid
 from typing import Any
 
 from sqlmodel import Session, select
 
 from app.core.security import get_password_hash, verify_password
-from app.models import UserDB, UserCreate
+from app.models import CreateMapTaskReq, MapTaskDB, MapTaskStatus, UserDB, UserCreate
+from pydantic.json import pydantic_encoder
+
 
 
 def create_user(*, session: Session, user_create: UserCreate) -> UserDB:
@@ -53,3 +56,19 @@ def authenticate(*, session: Session, email: str, password: str) -> UserDB | Non
 #     session.commit()
 #     session.refresh(db_item)
 #     return db_item
+
+def create_map_task(*, session: Session, user_id: int, payload: CreateMapTaskReq) -> MapTaskDB:
+    db_obj = MapTaskDB.model_validate(
+        payload,
+        update={
+            "user_id": user_id,
+            "status": MapTaskStatus.PENDING,
+            "district": payload.district_code,
+            "constraint_factors": json.dumps(payload.constraint_factors, default=pydantic_encoder),
+            "suitability_factors": json.dumps(payload.suitability_factors , default=pydantic_encoder)
+        }
+    )
+    session.add(db_obj)
+    session.commit()
+    session.refresh(db_obj)
+    return db_obj

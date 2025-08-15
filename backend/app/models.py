@@ -100,17 +100,17 @@ class SuitabilityFactorRange(BaseModel):
 class SuitabilityFactor(BaseModel):
     kind: str
     weight: float
-    ranges: List[SuitabilityFactorRange]
+    ranges: List[SuitabilityFactorRange]| None = None
 
 
 class MapTaskDetails(MapTask):
-    files: Optional[List[MapTaskFile]] = None
-    constraint_factors: Optional[List[ConstraintFactor]] = None
-    suitability_factors: Optional[List[SuitabilityFactor]] = None
+    files: List[MapTaskFile] = []
+    constraint_factors: List[ConstraintFactor] = []
+    suitability_factors: List[SuitabilityFactor] = []
 
 
 class MyMapTaskListResp(BaseResp):
-    list: Optional[List[MapTask]] = None
+    list: List[MapTask]
 
 
 class MyMapTaskResp(BaseResp):
@@ -202,39 +202,35 @@ class UserDB(UserBase, table=True):
     created_at: datetime | None = Field(default=None, sa_column=Column(DateTime, server_default=func.now()))
     updated_at: datetime | None = Field(default=None, sa_column=Column(DateTime, server_default=func.now(), onupdate=func.now()))
 
+class MapTaskStatus(IntEnum):
+    # status: 1 Pending, 2 Processing, 3 Success, 4 Failure, 5 Cancelled
+    PENDING = 1
+    PROCESSING = 2
+    SUCCESS = 3
+    FAILURE = 4
+    CANCELLED = 5
 
-class MapTaskDB(SQLModel, table=True):
+
+class MapTaskBase(SQLModel):
+    user_id: int = Field(sa_type=BigInteger)
+    name: str = Field(max_length=150)
+    district: str = Field(max_length=10)
+    # Stored as JSON string in TEXT column
+    constraint_factors: str = Field(default="[]")
+    suitability_factors: str = Field(default="[]")
+    
+class MapTaskDB(MapTaskBase, table=True):
     """ORM model for t_map_task"""
 
     __tablename__ = "t_map_task"
 
-    id: Optional[int] = Field(
-        default=None,
-        sa_column=Column(BigInteger, primary_key=True, autoincrement=True),
-    )
-    user_id: int = Field(foreign_key="t_user.id", sa_type=BigInteger)
-    name: str = Field(max_length=150)
-    district: str = Field(max_length=10)
-    # status: 1 Pending, 2 Processing, 3 Success, 4 Failure, 5 Cancelled
-    status: int = Field(default=1)
-    error_msg: Optional[str] = Field(default=None, max_length=255)
-    # Stored as JSON string in TEXT column
-    constraint_factors: str = Field(default="[]")
-    suitability_factors: str = Field(default="[]")
-    started_at: Optional[datetime] = Field(default=None, sa_column=Column(DateTime))
-    ended_at: Optional[datetime] = Field(default=None, sa_column=Column(DateTime))
-    created_at: Optional[datetime] = Field(
-        default=None,
-        sa_column=Column(DateTime, server_default=func.now()),
-    )
-    updated_at: Optional[datetime] = Field(
-        default=None,
-        sa_column=Column(DateTime, server_default=func.now(), onupdate=func.now()),
-    )
-
-    # relationships
-    # user: Optional["UserDB"] = Relationship(back_populates="tasks")
-    # files: List["MapTaskFileDB"] = Relationship(back_populates="map_task")
+    id: int | None = Field(default=None, sa_column=Column(BigInteger, primary_key=True, autoincrement=True))
+    status: int = Field(default=MapTaskStatus.PENDING)
+    error_msg: str | None = Field(default=None, max_length=255)
+    started_at: datetime | None = Field(default=None, sa_column=Column(DateTime))
+    ended_at: datetime | None = Field(default=None, sa_column=Column(DateTime))
+    created_at: datetime | None = Field(default=None, sa_column=Column(DateTime, server_default=func.now()))
+    updated_at: datetime | None = Field(default=None, sa_column=Column(DateTime, server_default=func.now(), onupdate=func.now()))
 
 
 class MapTaskFileDB(SQLModel, table=True):
@@ -242,24 +238,12 @@ class MapTaskFileDB(SQLModel, table=True):
 
     __tablename__ = "t_map_task_files"
 
-    id: Optional[int] = Field(
-        default=None,
-        sa_column=Column(BigInteger, primary_key=True, autoincrement=True),
-    )
-    user_id: int = Field(foreign_key="t_user.id", sa_type=BigInteger)
-    map_task_id: int = Field(foreign_key="t_map_task.id", sa_type=BigInteger)
+    id: int | None = Field(default=None, sa_column=Column(BigInteger, primary_key=True, autoincrement=True))
+    user_id: int = Field(sa_type=BigInteger)
+    map_task_id: int = Field(sa_type=BigInteger)
     file_type: str = Field(max_length=15)
     file_path: str = Field(max_length=255)
-    created_at: Optional[datetime] = Field(
-        default=None,
-        sa_column=Column(DateTime, server_default=func.now()),
-    )
-    updated_at: Optional[datetime] = Field(
-        default=None,
-        sa_column=Column(DateTime, server_default=func.now(), onupdate=func.now()),
-    )
+    created_at: datetime | None = Field(default=None, sa_column=Column(DateTime, server_default=func.now()))
+    updated_at: datetime | None = Field(default=None, sa_column=Column(DateTime, server_default=func.now(), onupdate=func.now()))
 
-    # relationships
-    # user: Optional["UserDB"] = Relationship(back_populates="files")
-    # map_task: Optional["MapTaskDB"] = Relationship(back_populates="files")
 
