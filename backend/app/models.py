@@ -3,11 +3,19 @@ from __future__ import annotations
 from datetime import datetime
 from typing import List, Optional, Annotated
 
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, field_validator, model_validator
 from sqlmodel import Field, Relationship, SQLModel
 from sqlalchemy import Column, DateTime, Index, BigInteger
 from sqlalchemy.sql import func
 from enum import Enum, IntEnum
+from math import isfinite
+
+# Validation constants from GIS module
+from app.gis.consts import (
+    ALLOWED_CONSTRAINTS,
+    ALLOWED_SUITABILITY,
+    ALLOWED_DISTRICT_CODES,
+)
 
 
 # ----------------------
@@ -90,17 +98,56 @@ class ConstraintFactor(BaseModel):
     kind: str
     value: float
 
+    @field_validator("kind")
+    @classmethod
+    def _valid_constraint_kind(cls, v: str) -> str:
+        if v not in ALLOWED_CONSTRAINTS:
+            raise ValueError(f"Invalid constraint kind '{v}'. Allowed: {', '.join(ALLOWED_CONSTRAINTS)}")
+        return v
+
+    @field_validator("value")
+    @classmethod
+    def _non_negative_value(cls, v: float) -> float:
+        # allow zero and positive numbers; reject NaN/inf
+        if not isfinite(v) or v < 0:
+            raise ValueError("value must be a finite number >= 0")
+        return v
+
 
 class SuitabilityFactorRange(BaseModel):
     start: float
     end: float
     points: int
 
+    @model_validator(mode="after")
+    def _check_range(self) -> "SuitabilityFactorRange":
+        if not all(map(isfinite, (self.start, self.end))):
+            raise ValueError("range start/end must be finite numbers")
+        if self.start >= self.end:
+            raise ValueError("range start must be < end")
+        if self.points is None or self.points < 1:
+            raise ValueError("range points must be >= 1")
+        return self
+
 
 class SuitabilityFactor(BaseModel):
     kind: str
     weight: float
-    ranges: List[SuitabilityFactorRange]| None = None
+    ranges: List[SuitabilityFactorRange]
+
+    @field_validator("kind")
+    @classmethod
+    def _valid_suitability_kind(cls, v: str) -> str:
+        if v not in ALLOWED_SUITABILITY:
+            raise ValueError(f"Invalid suitability kind '{v}'. Allowed: {', '.join(ALLOWED_SUITABILITY)}")
+        return v
+
+    @field_validator("weight")
+    @classmethod
+    def _valid_weight(cls, v: float) -> float:
+        if not isfinite(v) or v <= 0 or v > 10:
+            raise ValueError("weight must be in the interval (0, 10]")
+        return v
 
 
 class MapTaskDetails(MapTask):
@@ -126,6 +173,51 @@ class CreateMapTaskReq(BaseModel):
     district_code: str
     constraint_factors: List[ConstraintFactor]
     suitability_factors: List[SuitabilityFactor]
+
+    # --- Helpers for factor normalization ---
+    @staticmethod
+    def _unique_by_kind(items):
+        seen = set()
+        unique = []
+        for it in items:
+            k = getattr(it, "kind", None)
+            if k is None:
+                continue
+            if k in seen:
+                continue
+            seen.add(k)
+            unique.append(it)
+        return unique
+
+    @staticmethod
+    def _order_by_allowed(items, allowed_order: list[str]):
+        order = {k: i for i, k in enumerate(allowed_order)}
+        return sorted(items, key=lambda it: order.get(getattr(it, "kind", ""), 1_000_000))
+
+    # --- Field validations ---
+    @field_validator("district_code")
+    @classmethod
+    def _valid_district(cls, v: str) -> str:
+        if v not in ALLOWED_DISTRICT_CODES:
+            raise ValueError("Invalid district_code. Use a valid code from constants.")
+        return v
+
+    @field_validator("constraint_factors", mode="after")
+    @classmethod
+    def _normalize_constraints(cls, v: List[ConstraintFactor]) -> List[ConstraintFactor]:
+        if v is None:
+            return []
+        # de-duplicate by kind, keep first occurrence and stable order aligned to allowed list
+        unique = cls._unique_by_kind(v)
+        return cls._order_by_allowed(unique, ALLOWED_CONSTRAINTS)
+
+    @field_validator("suitability_factors", mode="after")
+    @classmethod
+    def _normalize_suitability(cls, v: List[SuitabilityFactor]) -> List[SuitabilityFactor]:
+        if not v:
+            raise ValueError("At least one suitability factor is required")
+        unique = cls._unique_by_kind(v)
+        return cls._order_by_allowed(unique, ALLOWED_SUITABILITY)
 
 
 # ----------------------
