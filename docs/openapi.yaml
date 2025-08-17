@@ -164,6 +164,22 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/SelectOptionListResp"
+  /v1/user/select-options/constraint-factors:
+    get:
+      summary: "Get constraint factors select options"
+      operationId: "userGetConstraintFactorsSelectOptions"
+      tags:
+        - User
+      parameters:
+        - $ref: "#/components/parameters/queryLimit"
+        - $ref: "#/components/parameters/queryKeyword"
+      responses:
+        "200":
+          description: Successful retrieval of select options
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SelectOptionListResp"
   /v1/user/my-map-tasks:
     get:
       summary: "Get user's map tasks"
