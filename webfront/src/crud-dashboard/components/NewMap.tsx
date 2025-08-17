@@ -10,7 +10,7 @@ import Paper from '@mui/material/Paper';
 import PageContainer from './PageContainer';
 import { useDialogs } from '../hooks/useDialogs/useDialogs';
 import BaseInfoStep, { type BaseInfoStepHandle } from './new-map/BaseInfoStep';
-import ConstraintFactorsStep, { type ConstraintFactorsStepHandle } from './new-map/ConstraintFactorsStep';
+import ConstraintFactorsStep, { type ConstraintFactorsStepHandle, type ConstraintFactorsValue } from './new-map/ConstraintFactorsStep';
 import SuitabilityFactorsStep, { type SuitabilityFactorsStepHandle } from './new-map/SuitabilityFactorsStep';
 import ConfirmationStep, { type ConfirmationStepHandle } from './new-map/ConfirmationStep';
 import { useRef } from 'react';
@@ -28,7 +28,7 @@ export default function NewMap() {
     name: '', // submit as name
     district: '', // submit as district (code)
     // placeholders for next steps (will be refined later)
-    constraints: '',
+  constraints: [] as ConstraintFactorsValue,
     suitability: '',
     confirmation: '',
     constraintsSelect: '',
@@ -95,10 +95,8 @@ export default function NewMap() {
         return (
           <ConstraintFactorsStep
             ref={constraintRef}
-            textValue={form.constraints}
-            onTextChange={(v) => setForm((f) => ({ ...f, constraints: v }))}
-            selectValue={form.constraintsSelect}
-            onSelectChange={(v) => setForm((f) => ({ ...f, constraintsSelect: v }))}
+            value={form.constraints}
+            onChange={(v) => setForm((f) => ({ ...f, constraints: v }))}
           />
         );
       case 2:
