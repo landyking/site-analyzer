@@ -148,6 +148,22 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/BaseResp"
+  /v1/user/select-options/district:
+    get:
+      summary: "Get district select options"
+      operationId: "userGetDistrictSelectOptions"
+      tags:
+        - User
+      parameters:
+        - $ref: "#/components/parameters/queryLimit"
+        - $ref: "#/components/parameters/queryKeyword"
+      responses:
+        "200":
+          description: Successful retrieval of select options
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SelectOptionListResp"
   /v1/user/my-map-tasks:
     get:
       summary: "Get user's map tasks"
@@ -362,6 +378,14 @@ components:
       schema:
         type: integer
         default: 20
+    queryLimit:
+      name: limit
+      in: query
+      description: "Maximum number of items to return"
+      required: false
+      schema:
+        type: integer
+        default: 50
     queryCurrentPage:
       name: current_page
       in: query
@@ -394,6 +418,24 @@ components:
               type: integer
               format: int64
               description: Number of items per page
+    SelectOptionItem:
+      type: object
+      properties:
+        code:
+          type: string
+          description: The code of the select option
+        label:
+          type: string
+          description: The label of the select option
+    SelectOptionListResp:
+      allOf:
+        - $ref: "#/components/schemas/BaseResp"
+        - type: object
+          properties:
+            list:
+              type: array
+              items:
+                $ref: "#/components/schemas/SelectOptionItem"
     LoginResult:
       type: object
       properties:
