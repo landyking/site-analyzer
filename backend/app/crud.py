@@ -1,6 +1,7 @@
 import json
 import uuid
 from typing import Any
+from datetime import datetime
 
 from sqlmodel import Session, select
 
@@ -71,4 +72,28 @@ def create_map_task(*, session: Session, user_id: int, payload: CreateMapTaskReq
     session.add(db_obj)
     session.commit()
     session.refresh(db_obj)
+    return db_obj
+
+
+def get_map_task(*, session: Session, user_id: int, task_id: int) -> MapTaskDB | None:
+    """Fetch a map task by id for the given user."""
+    statement = select(MapTaskDB).where(
+        MapTaskDB.id == task_id,
+        MapTaskDB.user_id == user_id,
+    )
+    return session.exec(statement).first()
+
+
+def cancel_map_task(*, session: Session, user_id: int, task_id: int) -> MapTaskDB | None:
+    """Cancel a user's map task if it exists. Returns the updated task or None if not found."""
+    db_obj = get_map_task(session=session, user_id=user_id, task_id=task_id)
+    if not db_obj:
+        return None
+    # Only update status if not already terminal; allow idempotent cancel
+    if db_obj.status not in (MapTaskStatus.SUCCESS, MapTaskStatus.CANCELLED):
+        db_obj.status = MapTaskStatus.CANCELLED
+        db_obj.ended_at = db_obj.ended_at or datetime.utcnow()
+        session.add(db_obj)
+        session.commit()
+        session.refresh(db_obj)
     return db_obj
