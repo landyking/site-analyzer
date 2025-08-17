@@ -97,3 +97,31 @@ def cancel_map_task(*, session: Session, user_id: int, task_id: int) -> MapTaskD
         session.commit()
         session.refresh(db_obj)
     return db_obj
+
+
+def list_map_tasks(*, session: Session, user_id: int, completed: bool | None = None) -> list[MapTaskDB]:
+    """List a user's map tasks with optional completion filter.
+
+    completed=True  -> statuses in (SUCCESS, FAILURE, CANCELLED)
+    completed=False -> statuses in (PENDING, PROCESSING)
+    completed=None  -> no status filter
+    """
+    statement = select(MapTaskDB).where(MapTaskDB.user_id == user_id)
+    if completed is True:
+        statement = statement.where(
+            MapTaskDB.status.in_([
+                MapTaskStatus.SUCCESS,
+                MapTaskStatus.FAILURE,
+                MapTaskStatus.CANCELLED,
+            ])
+        )
+    elif completed is False:
+        statement = statement.where(
+            MapTaskDB.status.in_([
+                MapTaskStatus.PENDING,
+                MapTaskStatus.PROCESSING,
+            ])
+        )
+    # Order by newest first
+    statement = statement.order_by(MapTaskDB.created_at.desc())
+    return list(session.exec(statement).all())

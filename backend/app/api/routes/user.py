@@ -17,11 +17,27 @@ router = APIRouter(tags=["User"])
 
 
 @router.get("/user/my-map-tasks", response_model=MyMapTaskListResp, summary="Get user's map tasks")
-async def user_get_my_map_tasks(completed: bool | None = None) -> MyMapTaskListResp:
-    # Placeholder demo data
-    tasks = [
-        MapTask(id=1, name="Demo Task", status=3),
-    ]
+async def user_get_my_map_tasks(session: SessionDep, current_user: CurrentUser, completed: bool | None = None) -> MyMapTaskListResp:
+    db_list = crud.list_map_tasks(session=session, user_id=current_user.id, completed=completed)
+    tasks: list[MapTask] = []
+    for data in db_list:
+        tasks.append(
+            MapTaskDetails(
+                id=data.id,
+                name=data.name,
+                constraint_factors=json.loads(data.constraint_factors),
+                suitability_factors=json.loads(data.suitability_factors),
+                user_id=data.user_id,
+                # user_email=data.user_email,
+                status=data.status,
+                started_at=data.started_at,
+                ended_at=data.ended_at,
+                created_at=data.created_at,
+                updated_at=data.updated_at,
+                district_code=data.district,
+                # district_name=data.district_name,
+            )
+        )
     return MyMapTaskListResp(error=0, list=tasks)
 
 

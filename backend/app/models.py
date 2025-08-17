@@ -110,7 +110,7 @@ class MapTaskDetails(MapTask):
 
 
 class MyMapTaskListResp(BaseResp):
-    list: List[MapTask]
+    list: List[MapTaskDetails]
 
 
 class MyMapTaskResp(BaseResp):
