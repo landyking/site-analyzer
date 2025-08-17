@@ -13,7 +13,7 @@ from app.models import (
 from app.api.deps import CurrentUser, SessionDep
 from app import crud
 import json
-from app.gis.consts import districts
+from app.gis.consts import districts, ALLOWED_CONSTRAINTS
 
 router = APIRouter(tags=["User"])
 
@@ -102,6 +102,23 @@ async def user_get_district_select_options(
 ) -> SelectOptionListResp:
     # Build options from constants; filter by keyword; then apply limit if provided and positive
     items = [{"code": code, "label": name} for code, name in districts]
+    if keyword:
+        kw = keyword.strip().lower()
+        if kw:
+            items = [it for it in items if kw in it["label"].lower()]
+    if limit is not None and limit > 0:
+        items = items[:limit]
+    return SelectOptionListResp(error=0, list=items)
+
+@router.get("/user/select-options/constraint-factors", response_model=SelectOptionListResp, summary="Get constraint factors select options")
+async def user_get_constraint_factors_select_options(
+    session: SessionDep,
+    current_user: CurrentUser,
+    limit: int | None = 50,
+    keyword: str | None = None,
+) -> SelectOptionListResp:
+    # Build options from constants; filter by keyword; then apply limit if provided and positive
+    items = [{"code": code, "label": code} for code in ALLOWED_CONSTRAINTS]
     if keyword:
         kw = keyword.strip().lower()
         if kw:
