@@ -32,6 +32,8 @@ import type {
 	UserUserCancelMapTaskResponse,
 	UserUserGetDistrictSelectOptionsData,
 	UserUserGetDistrictSelectOptionsResponse,
+	UserUserGetConstraintFactorsSelectOptionsData,
+	UserUserGetConstraintFactorsSelectOptionsResponse,
 } from "./types.gen";
 
 export class AdminService {
@@ -353,6 +355,30 @@ export class UserService {
 		return __request(OpenAPI, {
 			method: "GET",
 			url: "/api/v1/user/select-options/district",
+			query: {
+				limit: data.limit,
+				keyword: data.keyword,
+			},
+			errors: {
+				422: "Validation Error",
+			},
+		});
+	}
+
+	/**
+	 * Get constraint factors select options
+	 * @param data The data for the request.
+	 * @param data.limit
+	 * @param data.keyword
+	 * @returns SelectOptionListResp Successful Response
+	 * @throws ApiError
+	 */
+	public static userGetConstraintFactorsSelectOptions(
+		data: UserUserGetConstraintFactorsSelectOptionsData = {},
+	): CancelablePromise<UserUserGetConstraintFactorsSelectOptionsResponse> {
+		return __request(OpenAPI, {
+			method: "GET",
+			url: "/api/v1/user/select-options/constraint-factors",
 			query: {
 				limit: data.limit,
 				keyword: data.keyword,

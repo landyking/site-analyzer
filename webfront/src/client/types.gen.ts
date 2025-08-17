@@ -263,3 +263,11 @@ export type UserUserGetDistrictSelectOptionsData = {
 };
 
 export type UserUserGetDistrictSelectOptionsResponse = SelectOptionListResp;
+
+export type UserUserGetConstraintFactorsSelectOptionsData = {
+	keyword?: string | null;
+	limit?: number | null;
+};
+
+export type UserUserGetConstraintFactorsSelectOptionsResponse =
+	SelectOptionListResp;
