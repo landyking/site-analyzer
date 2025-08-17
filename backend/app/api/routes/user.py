@@ -8,10 +8,12 @@ from app.models import (
     MapTask,
     MapTaskDetails,
     BaseResp,
+    SelectOptionListResp,
 )
 from app.api.deps import CurrentUser, SessionDep
 from app import crud
 import json
+from app.gis.consts import districts
 
 router = APIRouter(tags=["User"])
 
@@ -89,3 +91,21 @@ async def user_cancel_map_task(session: SessionDep, current_user: CurrentUser, t
     if not data:
         raise HTTPException(status_code=404, detail="Task not found")
     return BaseResp(error=0)
+
+
+@router.get("/user/select-options/district", response_model=SelectOptionListResp, summary="Get district select options")
+async def user_get_district_select_options(
+    session: SessionDep,
+    current_user: CurrentUser,
+    limit: int | None = 50,
+    keyword: str | None = None,
+) -> SelectOptionListResp:
+    # Build options from constants; filter by keyword; then apply limit if provided and positive
+    items = [{"code": code, "label": name} for code, name in districts]
+    if keyword:
+        kw = keyword.strip().lower()
+        if kw:
+            items = [it for it in items if kw in it["label"].lower()]
+    if limit is not None and limit > 0:
+        items = items[:limit]
+    return SelectOptionListResp(error=0, list=items)

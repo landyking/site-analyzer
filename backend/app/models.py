@@ -34,6 +34,20 @@ class PageData(BaseModel):
 
 
 # ----------------------
+# Common selector Schemas
+# ----------------------
+
+
+class SelectOptionItem(BaseModel):
+    code: str
+    label: str
+
+
+class SelectOptionListResp(BaseResp):
+    list: List[SelectOptionItem]
+
+
+# ----------------------
 # Auth Schemas
 # ----------------------
 
