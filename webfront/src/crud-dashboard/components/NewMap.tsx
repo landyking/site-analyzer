@@ -24,11 +24,13 @@ export default function NewMap() {
 
   const [activeStep, setActiveStep] = useState(0);
   const [form, setForm] = useState({
-    baseInfo: '',
+    // base info
+    name: '', // submit as name
+    district: '', // submit as district (code)
+    // placeholders for next steps (will be refined later)
     constraints: '',
     suitability: '',
     confirmation: '',
-    baseInfoSelect: '',
     constraintsSelect: '',
     suitabilitySelect: '',
     confirmationSelect: '',
@@ -85,10 +87,8 @@ export default function NewMap() {
         return (
           <BaseInfoStep
             ref={baseRef}
-            textValue={form.baseInfo}
-            onTextChange={(v) => setForm((f) => ({ ...f, baseInfo: v }))}
-            selectValue={form.baseInfoSelect}
-            onSelectChange={(v) => setForm((f) => ({ ...f, baseInfoSelect: v }))}
+            value={{ name: form.name, district: form.district }}
+            onChange={(v) => setForm((f) => ({ ...f, ...v }))}
           />
         );
       case 1:
