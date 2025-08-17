@@ -71,9 +71,9 @@ export type MapTaskDetails = {
 	started_at?: string | null;
 	ended_at?: string | null;
 	created_at?: string | null;
-	files?: Array<MapTaskFile> | null;
-	constraint_factors?: Array<ConstraintFactor> | null;
-	suitability_factors?: Array<SuitabilityFactor> | null;
+	files?: Array<MapTaskFile>;
+	constraint_factors?: Array<ConstraintFactor>;
+	suitability_factors?: Array<SuitabilityFactor>;
 };
 
 export type MapTaskFile = {
@@ -86,7 +86,7 @@ export type MapTaskFile = {
 
 export type MyMapTaskListResp = {
 	error?: number;
-	list?: Array<MapTask> | null;
+	list: Array<MapTaskDetails>;
 };
 
 export type MyMapTaskResp = {
@@ -113,6 +113,16 @@ export type PostLoginResp = {
 export type RegisterRequest = {
 	email: string;
 	password: string;
+};
+
+export type SelectOptionItem = {
+	code: string;
+	label: string;
+};
+
+export type SelectOptionListResp = {
+	error?: number;
+	list: Array<SelectOptionItem>;
 };
 
 export type SuitabilityFactor = {
@@ -246,3 +256,10 @@ export type UserUserCancelMapTaskData = {
 };
 
 export type UserUserCancelMapTaskResponse = BaseResp;
+
+export type UserUserGetDistrictSelectOptionsData = {
+	keyword?: string | null;
+	limit?: number | null;
+};
+
+export type UserUserGetDistrictSelectOptionsResponse = SelectOptionListResp;

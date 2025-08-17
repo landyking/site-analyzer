@@ -30,6 +30,8 @@ import type {
 	UserUserGetMapTaskResponse,
 	UserUserCancelMapTaskData,
 	UserUserCancelMapTaskResponse,
+	UserUserGetDistrictSelectOptionsData,
+	UserUserGetDistrictSelectOptionsResponse,
 } from "./types.gen";
 
 export class AdminService {
@@ -294,7 +296,7 @@ export class UserService {
 	}
 
 	/**
-	 * Get user's map tasks
+	 * Get a user's map task by id
 	 * @param data The data for the request.
 	 * @param data.taskId
 	 * @returns MyMapTaskResp Successful Response
@@ -330,6 +332,30 @@ export class UserService {
 			url: "/api/v1/user/my-map-tasks/{taskId}/cancel",
 			path: {
 				taskId: data.taskId,
+			},
+			errors: {
+				422: "Validation Error",
+			},
+		});
+	}
+
+	/**
+	 * Get district select options
+	 * @param data The data for the request.
+	 * @param data.limit
+	 * @param data.keyword
+	 * @returns SelectOptionListResp Successful Response
+	 * @throws ApiError
+	 */
+	public static userGetDistrictSelectOptions(
+		data: UserUserGetDistrictSelectOptionsData = {},
+	): CancelablePromise<UserUserGetDistrictSelectOptionsResponse> {
+		return __request(OpenAPI, {
+			method: "GET",
+			url: "/api/v1/user/select-options/district",
+			query: {
+				limit: data.limit,
+				keyword: data.keyword,
 			},
 			errors: {
 				422: "Validation Error",
