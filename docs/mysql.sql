@@ -43,3 +43,18 @@ CREATE TABLE IF NOT EXISTS t_map_task_files (
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT 'File upload timestamp',
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Last modification timestamp'
 );
+
+-- MapTaskProgress table (append-only progress events; no foreign keys by project policy)
+CREATE TABLE IF NOT EXISTS t_map_task_progress (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT 'Unique progress record identifier',
+    map_task_id BIGINT NOT NULL COMMENT 'Related map task identifier',
+    percent TINYINT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Progress percentage (0-100)',
+    description VARCHAR(255) NULL COMMENT 'Brief progress description',
+    phase VARCHAR(50) NULL COMMENT 'Optional phase tag (e.g., restrict, score, combine)',
+    error_msg VARCHAR(255) NULL COMMENT 'Optional error information for failure/cancel events',
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Progress record creation timestamp',
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Last modification timestamp'
+);
+
+-- Helpful index for retrieving the latest progress entries quickly
+CREATE INDEX IF NOT EXISTS idx_map_task_progress_task_time ON t_map_task_progress(map_task_id, created_at);
