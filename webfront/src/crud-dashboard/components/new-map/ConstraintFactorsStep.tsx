@@ -129,6 +129,7 @@ const ConstraintFactorsStep = forwardRef<ConstraintFactorsStepHandle, Constraint
                         updateItemByKind(opt.code, { value: v === '' ? Number.NaN : Number(v) });
                         setErrors((prev) => ({ ...prev, [opt.code]: { value: undefined } }));
                       }}
+                      error={Boolean(err)}
                       helperText={err}
                       inputProps={{ step: 'any', min: 0 }}
                       InputProps={{
