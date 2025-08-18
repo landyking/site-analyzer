@@ -1,5 +1,4 @@
 from datetime import datetime
-import matplotlib.pyplot as plt
 import rasterio
 import numpy as np
 import geopandas as gpd
@@ -59,6 +58,7 @@ def show_shapefile_plot(shapefile_path):
     Returns:
     - None
     """
+    import matplotlib.pyplot as plt
     gdf = gpd.read_file(shapefile_path)
     fig, ax = plt.subplots(figsize=(5, 10))
     gdf.plot(ax=ax, color='blue')
@@ -77,6 +77,7 @@ def show_raster_plot(raster_path, cmap='viridis', title=None):
     Returns:
     - None
     """
+    import matplotlib.pyplot as plt
     with rasterio.open(raster_path) as src:
         data = src.read(1)
         nodata = src.nodata
@@ -105,6 +106,7 @@ def show_shapefile_plot(shapefile_path):
     Returns:
     - None
     """
+    import matplotlib.pyplot as plt
     gdf = gpd.read_file(shapefile_path)
     fig, ax = plt.subplots(figsize=(5, 10))
     gdf.plot(ax=ax, color='blue')

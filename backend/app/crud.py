@@ -4,10 +4,12 @@ from typing import Any
 from datetime import datetime
 
 from sqlmodel import Session, select
+from fastapi import BackgroundTasks
 
 from app.core.security import get_password_hash, verify_password
 from app.models import CreateMapTaskReq, MapTaskDB, MapTaskStatus, UserDB, UserCreate
 from pydantic.json import pydantic_encoder
+from app.gis.processor import process_map_task
 
 
 
@@ -58,7 +60,7 @@ def authenticate(*, session: Session, email: str, password: str) -> UserDB | Non
 #     session.refresh(db_item)
 #     return db_item
 
-def create_map_task(*, session: Session, user_id: int, payload: CreateMapTaskReq) -> MapTaskDB:
+def create_map_task(*, session: Session, user_id: int, payload: CreateMapTaskReq, background_tasks: BackgroundTasks | None = None) -> MapTaskDB:
     db_obj = MapTaskDB.model_validate(
         payload,
         update={
@@ -72,6 +74,11 @@ def create_map_task(*, session: Session, user_id: int, payload: CreateMapTaskReq
     session.add(db_obj)
     session.commit()
     session.refresh(db_obj)
+    # Schedule background processing after successful insert
+    if background_tasks is not None:
+        background_tasks.add_task(process_map_task, db_obj.id)
+    else:
+        print("No background tasks available")
     return db_obj
 
 

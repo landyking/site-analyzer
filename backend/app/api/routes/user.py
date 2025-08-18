@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, BackgroundTasks
 
 from app.models import (
     CreateMapTaskReq,
@@ -44,8 +44,8 @@ async def user_get_my_map_tasks(session: SessionDep, current_user: CurrentUser, 
 
 
 @router.post("/user/my-map-tasks", response_model=MyMapTaskResp, summary="Create a new map task")
-async def user_create_map_task(session: SessionDep,current_user: CurrentUser, payload: CreateMapTaskReq) -> MyMapTaskResp:
-    data: MapTaskDB = crud.create_map_task(session=session, user_id=current_user.id, payload=payload)
+async def user_create_map_task(background_tasks: BackgroundTasks, session: SessionDep, current_user: CurrentUser, payload: CreateMapTaskReq) -> MyMapTaskResp:
+    data: MapTaskDB = crud.create_map_task(session=session, user_id=current_user.id, payload=payload, background_tasks=background_tasks)
     my_map_task = MapTaskDetails(
         id=data.id,
         name=data.name,
