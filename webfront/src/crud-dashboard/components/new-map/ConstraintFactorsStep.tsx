@@ -12,7 +12,7 @@ import Paper from '@mui/material/Paper';
 import type { SelectOptionItem } from '../../../client/types.gen';
 import { UserService } from '../../../client/sdk.gen';
 
-export type ConstraintFactorItem = { kind: string; value: number };
+export type ConstraintFactorItem = { kind: string; label?: string; value: number };
 export type ConstraintFactorsValue = ConstraintFactorItem[];
 
 export interface ConstraintFactorsStepProps {
@@ -73,7 +73,7 @@ const ConstraintFactorsStep = forwardRef<ConstraintFactorsStepHandle, Constraint
       };
     }, []);
 
-    function updateItemByKind(kind: string, patch: Partial<ConstraintFactorItem>) {
+  function updateItemByKind(kind: string, patch: Partial<ConstraintFactorItem>) {
       const base = [...value];
       const idx = base.findIndex((x) => x.kind === kind);
       if (idx >= 0) {
@@ -82,11 +82,12 @@ const ConstraintFactorsStep = forwardRef<ConstraintFactorsStepHandle, Constraint
       }
     }
 
-    function toggle(kind: string, checked: boolean) {
+  function toggle(kind: string, checked: boolean) {
       const idx = value.findIndex((v) => v.kind === kind);
       const next = [...value];
       if (checked && idx === -1) {
-        next.push({ kind, value: Number.NaN });
+    const lbl = kindOptions.find((o) => o.code === kind)?.label;
+    next.push({ kind, label: lbl, value: Number.NaN });
       } else if (!checked && idx >= 0) {
         next.splice(idx, 1);
       }
@@ -126,7 +127,7 @@ const ConstraintFactorsStep = forwardRef<ConstraintFactorsStepHandle, Constraint
                       value={Number.isFinite(selected.value) ? selected.value : ''}
                       onChange={(e) => {
                         const v = e.target.value;
-                        updateItemByKind(opt.code, { value: v === '' ? Number.NaN : Number(v) });
+                        updateItemByKind(opt.code, { value: v === '' ? Number.NaN : Number(v), label: opt.label });
                         setErrors((prev) => ({ ...prev, [opt.code]: { value: undefined } }));
                       }}
                       error={Boolean(err)}

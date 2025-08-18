@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { useNavigate } from '@tanstack/react-router';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import Stepper from '@mui/material/Stepper';
@@ -14,9 +15,12 @@ import ConstraintFactorsStep, { type ConstraintFactorsStepHandle, type Constrain
 import SuitabilityFactorsStep, { type SuitabilityFactorsStepHandle, type SuitabilityFactorsValue } from './new-map/SuitabilityFactorsStep';
 import ConfirmationStep, { type ConfirmationStepHandle } from './new-map/ConfirmationStep';
 import { useRef } from 'react';
+import { UserService } from '../../client/sdk.gen';
+import type { CreateMapTaskReq } from '../../client/types.gen';
 
 export default function NewMap() {
   const { alert } = useDialogs();
+  const navigate = useNavigate();
   const steps = useMemo(
     () => ['base info', 'Constraint factors', 'Suitability factors', 'Confirmation'],
     [],
@@ -25,16 +29,14 @@ export default function NewMap() {
   const [activeStep, setActiveStep] = useState(0);
   const [form, setForm] = useState({
     // base info
-    name: '', // submit as name
-    district: '', // submit as district (code)
+  name: '', // submit as name
+  district: '', // submit as district (code)
+  districtLabel: '',
     // placeholders for next steps (will be refined later)
   constraints: [] as ConstraintFactorsValue,
   suitability: [] as SuitabilityFactorsValue,
-    confirmation: '',
-    constraintsSelect: '',
-    suitabilitySelect: '',
-    confirmationSelect: '',
   });
+  const [submitting, setSubmitting] = useState(false);
 
   // Step-to-field mapping now handled inline per component props.
 
@@ -70,15 +72,32 @@ export default function NewMap() {
   async function handleSubmit() {
     // Validate the last step
     if (!validateStep(activeStep)) return;
-
-    // Show dialog with all input values as JSON and remain on the last step
-    const json = JSON.stringify(form, null, 2);
-    await alert(
-      <Box component="pre" sx={{ m: 0, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
-        {json}
-      </Box>,
-      { title: 'New Map Inputs' },
-    );
+    const payload: CreateMapTaskReq = {
+      name: form.name,
+      district_code: form.district,
+      constraint_factors: form.constraints.map((c) => ({ kind: c.kind, value: c.value })),
+      suitability_factors: form.suitability.map((s) => ({ kind: s.kind, weight: s.weight, ranges: s.ranges })),
+    };
+    try {
+      setSubmitting(true);
+      const resp = await UserService.userCreateMapTask({ requestBody: payload });
+      const taskId = resp.data?.id ?? undefined;
+      await alert(
+        <Box>
+          <Typography component="div" sx={{ mb: 1 }}>Your map task has been created.</Typography>
+          {taskId ? (
+            <Typography component="div" color="text.secondary">Task ID: {taskId}</Typography>
+          ) : null}
+        </Box>,
+        { title: 'Submitted' },
+      );
+      navigate({ to: '/dashboard/my-maps' });
+  } catch {
+      // Errors are also handled globally; show a simple message here
+      await alert('Failed to submit. Please try again.', { title: 'Error' });
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   function renderStepContent(stepIndex: number) {
@@ -87,7 +106,7 @@ export default function NewMap() {
         return (
           <BaseInfoStep
             ref={baseRef}
-            value={{ name: form.name, district: form.district }}
+            value={{ name: form.name, district: form.district, districtLabel: form.districtLabel }}
             onChange={(v) => setForm((f) => ({ ...f, ...v }))}
           />
         );
@@ -112,10 +131,13 @@ export default function NewMap() {
         return (
           <ConfirmationStep
             ref={confirmRef}
-            textValue={form.confirmation}
-            onTextChange={(v) => setForm((f) => ({ ...f, confirmation: v }))}
-            selectValue={form.confirmationSelect}
-            onSelectChange={(v) => setForm((f) => ({ ...f, confirmationSelect: v }))}
+            data={{
+              name: form.name,
+              district: form.district,
+              districtLabel: form.districtLabel,
+              constraints: form.constraints,
+              suitability: form.suitability,
+            }}
           />
         );
     }
@@ -152,11 +174,11 @@ export default function NewMap() {
                   Previous
                 </Button>
                 {activeStep < steps.length - 1 ? (
-                  <Button variant="contained" onClick={handleNext}>
+                  <Button variant="contained" onClick={handleNext} disabled={submitting}>
                     Next
                   </Button>
                 ) : (
-                  <Button variant="contained" color="primary" onClick={handleSubmit}>
+                  <Button variant="contained" color="primary" onClick={handleSubmit} disabled={submitting}>
                     Submit
                   </Button>
                 )}

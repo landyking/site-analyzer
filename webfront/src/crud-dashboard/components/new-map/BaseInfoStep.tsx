@@ -8,7 +8,7 @@ import CircularProgress from '@mui/material/CircularProgress';
 import type { SelectOptionItem } from '../../../client/types.gen';
 import { UserService } from '../../../client/sdk.gen';
 
-export type BaseInfoValue = { name: string; district: string };
+export type BaseInfoValue = { name: string; district: string; districtLabel?: string };
 
 export interface BaseInfoStepProps {
   value: BaseInfoValue;
@@ -91,7 +91,7 @@ const BaseInfoStep = forwardRef<BaseInfoStepHandle, BaseInfoStepProps>(
             isOptionEqualToValue={(a, b) => a.code === b.code}
             value={useMemo(() => options.find((o) => o.code === value.district) ?? null, [options, value.district])}
             onChange={(_, val) => {
-              onChange({ ...value, district: val?.code ?? '' });
+              onChange({ ...value, district: val?.code ?? '', districtLabel: val?.label ?? '' });
               setDistrictError(undefined);
             }}
             onInputChange={(_, val, reason) => {
