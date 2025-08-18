@@ -57,4 +57,4 @@ CREATE TABLE IF NOT EXISTS t_map_task_progress (
 );
 
 -- Helpful index for retrieving the latest progress entries quickly
-CREATE INDEX IF NOT EXISTS idx_map_task_progress_task_time ON t_map_task_progress(map_task_id, created_at);
+CREATE INDEX idx_map_task_progress_task_time ON t_map_task_progress(map_task_id, created_at);
