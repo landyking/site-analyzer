@@ -131,7 +131,7 @@ const SuitabilityFactorsStep = forwardRef<SuitabilityFactorsStepHandle, Suitabil
       <Stack spacing={2}>
         <FormControl error={Boolean(selectionError)}>
           <FormHelperText>
-            {selectionError ?? 'Select one or more suitability factors; each selected one requires weight and scoring rules.'}
+            {selectionError ?? 'Select suitability factors; each selected factor requires a weight and scoring rules.'}
           </FormHelperText>
         </FormControl>
         {ALL_FACTORS.map((opt) => {

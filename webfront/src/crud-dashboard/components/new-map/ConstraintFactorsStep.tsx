@@ -103,7 +103,7 @@ const ConstraintFactorsStep = forwardRef<ConstraintFactorsStepHandle, Constraint
             <FormHelperText>{kindsError}</FormHelperText>
           ) : (
             <FormHelperText>
-              Select constraint factors; each selected one requires a distance value.
+              Select constraints; each selected constraint requires a distance value.
             </FormHelperText>
           )}
         </FormControl>

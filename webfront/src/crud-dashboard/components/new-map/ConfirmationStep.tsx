@@ -40,7 +40,7 @@ const ConfirmationStep = forwardRef<ConfirmationStepHandle, ConfirmationStepProp
     <Stack spacing={2}>
       <Paper variant="outlined" sx={{ p: 2 }}>
         <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
-          Basic Info
+          Basics
         </Typography>
         <Box
           sx={{
@@ -72,7 +72,7 @@ const ConfirmationStep = forwardRef<ConfirmationStepHandle, ConfirmationStepProp
         <Box>
           <Paper variant="outlined" sx={{ p: 2 }}>
             <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
-              Constraint Factors
+              Constraints
             </Typography>
             {data.constraints.length ? (
               <List dense>
@@ -95,7 +95,7 @@ const ConfirmationStep = forwardRef<ConfirmationStepHandle, ConfirmationStepProp
         <Box>
           <Paper variant="outlined" sx={{ p: 2 }}>
             <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
-              Suitability Factors
+              Suitability & weights
             </Typography>
             {data.suitability.length ? (
               <List dense>

@@ -22,7 +22,7 @@ export default function NewMap() {
   const { alert } = useDialogs();
   const navigate = useNavigate();
   const steps = useMemo(
-    () => ['base info', 'Constraint factors', 'Suitability factors', 'Confirmation'],
+  () => ['Basics', 'Constraints', 'Suitability & weights', 'Review & create'],
     [],
   );
 
@@ -144,10 +144,10 @@ export default function NewMap() {
   }
 
   return (
-    <PageContainer title="New Map" breadcrumbs={[{ title: 'New Map' }]}>
+    <PageContainer title="New Map" breadcrumbs={[{ title: 'New Map' }]}> 
       <Stack spacing={3}>
         <Typography color="text.secondary">
-          Start creating a new map from data sources and layers.
+          Define basics, set constraints, configure suitability weights and scoring, then review and create.
         </Typography>
 
         <Stepper activeStep={activeStep} alternativeLabel>
@@ -179,7 +179,7 @@ export default function NewMap() {
                   </Button>
                 ) : (
                   <Button variant="contained" color="primary" onClick={handleSubmit} disabled={submitting}>
-                    Submit
+                    Create map
                   </Button>
                 )}
               </Box>
