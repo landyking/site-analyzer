@@ -107,7 +107,7 @@ export default function DashboardHeader({
   });
 
   return (
-    <AppBar color="inherit" position="absolute" sx={{ displayPrint: 'none' }}>
+    <AppBar color="inherit" position="fixed" sx={{ displayPrint: 'none' }}>
       <Toolbar sx={{ backgroundColor: 'inherit', mx: { xs: -0.75, sm: -1 } }}>
         <Stack
           direction="row"
