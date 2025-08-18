@@ -21,6 +21,25 @@ These must be set for authentication to work. See "Google Sign-In configuration 
 - GOOGLE_CLIENT_ID — Google OAuth client ID
 - GOOGLE_CLIENT_SECRET — Google OAuth client secret
 
+### Data directories (required)
+
+Configure absolute paths for where input datasets live and where analysis outputs are written. These are read from the repository-root env files (e.g., `.env.local`).
+
+- INPUT_DATA_DIR — absolute path to your input test/production data directory
+- OUTPUT_DATA_DIR — absolute path to your output directory
+
+Examples for local development (macOS):
+
+```
+# In the repository root .env.local (not under backend/)
+INPUT_DATA_DIR=/Users/you/path/to/site-analyzer/test-data
+OUTPUT_DATA_DIR=/Users/you/path/to/site-analyzer/output-data
+```
+
+Notes:
+- Paths must be absolute. `~` is allowed and will be expanded.
+- Relative paths (e.g., `../test-data`) will be rejected at startup.
+
 ## Setup and Installation (uv)
 
 ### Install dependencies and create the virtual environment
@@ -64,6 +83,9 @@ Development (git-ignored): create a `.env.local` file at the repository root wit
 ```
 GOOGLE_CLIENT_ID=your-google-oauth-client-id
 GOOGLE_CLIENT_SECRET=your-google-oauth-client-secret
+# Data directories
+INPUT_DATA_DIR=/absolute/path/to/test-data
+OUTPUT_DATA_DIR=/absolute/path/to/output-data
 ```
 
 Production: provide the same variables via `.env.production` (not committed) or your deployment environment's secret manager.

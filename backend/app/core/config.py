@@ -1,6 +1,7 @@
 import secrets
 import warnings
 from typing import Annotated, Any, Literal
+from pathlib import Path
 
 from pydantic import (
     AnyUrl,
@@ -22,6 +23,21 @@ def parse_cors(v: Any) -> list[str] | str:
     elif isinstance(v, list | str):
         return v
     raise ValueError(v)
+
+
+def parse_abs_path(v: Any) -> Path | None:
+    """Ensure the provided value is an absolute filesystem path.
+
+    Accepts strings or Path instances. Expands '~'. Raises ValueError if not absolute.
+    """
+    if v in (None, ""):
+        return None
+    if isinstance(v, (str, Path)):
+        p = Path(v).expanduser()
+        if not p.is_absolute():
+            raise ValueError(f"Path must be absolute: {p}")
+        return p
+    raise ValueError(f"Invalid path value: {v!r}")
 
 
 class Settings(BaseSettings):
@@ -60,6 +76,10 @@ class Settings(BaseSettings):
 
     GOOGLE_CLIENT_ID: str
     GOOGLE_CLIENT_SECRET: str
+
+    # Absolute paths to input and output data directories (configured via env/.env)
+    INPUT_DATA_DIR: Annotated[Path, BeforeValidator(parse_abs_path)]
+    OUTPUT_DATA_DIR: Annotated[Path, BeforeValidator(parse_abs_path)]
 
     @computed_field  # type: ignore[prop-decorator]
     @property
@@ -122,5 +142,5 @@ class Settings(BaseSettings):
 
 
 settings = Settings()  # type: ignore
-# print(settings.MYSQL_PASSWORD)
+# print(settings.INPUT_DATA_DIR, settings.OUTPUT_DATA_DIR)
 # print(settings.GOOGLE_CLIENT_ID, settings.GOOGLE_CLIENT_SECRET)
