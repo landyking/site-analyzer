@@ -19,7 +19,7 @@ import { UserService } from '../../client/sdk.gen';
 import type { CreateMapTaskReq } from '../../client/types.gen';
 
 export default function NewMap() {
-  const { alert } = useDialogs();
+  const { alert, confirm } = useDialogs();
   const navigate = useNavigate();
   const steps = useMemo(
   () => ['Basics', 'Constraints', 'Suitability & weights', 'Review & create'],
@@ -72,6 +72,14 @@ export default function NewMap() {
   async function handleSubmit() {
     // Validate the last step
     if (!validateStep(activeStep)) return;
+    // Confirm before submitting
+    const ok = await confirm('Are you sure you want to create this map?', {
+      title: 'Confirm submission',
+      okText: 'Create map',
+      cancelText: 'Cancel',
+      severity: 'warning',
+    });
+    if (!ok) return;
     const payload: CreateMapTaskReq = {
       name: form.name,
       district_code: form.district,
