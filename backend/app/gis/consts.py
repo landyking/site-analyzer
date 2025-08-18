@@ -68,5 +68,11 @@ districts = [
     ('002', 'Whangarei District')
  ]
 ALLOWED_DISTRICT_CODES = {code for code, _ in districts}
-ALLOWED_CONSTRAINTS = ["rivers","lakes","coastlines","residential"]
+constraint_factors = [
+    ('rivers', 'Rivers'),
+    ('lakes', 'Lakes'),
+    ('coastlines', 'Coastlines'),
+    ('residential', 'Residential areas'),
+]
+ALLOWED_CONSTRAINTS = [code for code, _ in constraint_factors]
 ALLOWED_SUITABILITY = ["slope","roads","powerlines","solar","temperature"]
