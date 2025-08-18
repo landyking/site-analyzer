@@ -353,3 +353,18 @@ class MapTaskFileDB(SQLModel, table=True):
     updated_at: datetime | None = Field(default=None, sa_column=Column(DateTime, server_default=func.now(), onupdate=func.now()))
 
 
+class MapTaskProgressDB(SQLModel, table=True):
+    """ORM model for t_map_task_progress"""
+
+    __tablename__ = "t_map_task_progress"
+
+    id: int | None = Field(default=None, sa_column=Column(BigInteger, primary_key=True, autoincrement=True))
+    map_task_id: int = Field(sa_type=BigInteger)
+    percent: int = Field(default=0)  # 0-100
+    description: str | None = Field(default=None, max_length=255)
+    phase: str | None = Field(default=None, max_length=50)
+    error_msg: str | None = Field(default=None, max_length=255)
+    created_at: datetime | None = Field(default=None, sa_column=Column(DateTime, server_default=func.now()))
+    updated_at: datetime | None = Field(default=None, sa_column=Column(DateTime, server_default=func.now(), onupdate=func.now()))
+
+
