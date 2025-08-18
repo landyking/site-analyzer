@@ -1,11 +1,14 @@
-import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
+import { forwardRef, useEffect, useImperativeHandle, useMemo, useState } from 'react';
 import TextField from '@mui/material/TextField';
 import Stack from '@mui/material/Stack';
 import FormControl from '@mui/material/FormControl';
 import FormHelperText from '@mui/material/FormHelperText';
-import Autocomplete from '@mui/material/Autocomplete';
-import CircularProgress from '@mui/material/CircularProgress';
 import InputAdornment from '@mui/material/InputAdornment';
+import Checkbox from '@mui/material/Checkbox';
+import FormControlLabel from '@mui/material/FormControlLabel';
+import Typography from '@mui/material/Typography';
+import Paper from '@mui/material/Paper';
+// Divider removed; inputs are inline next to checkbox
 import type { SelectOptionItem } from '../../../client/types.gen';
 import { UserService } from '../../../client/sdk.gen';
 
@@ -23,12 +26,10 @@ const ConstraintFactorsStep = forwardRef<ConstraintFactorsStepHandle, Constraint
   ({ value, onChange }, ref) => {
     const [errors, setErrors] = useState<Record<string, { value?: string }>>({});
   const [kindOptions, setKindOptions] = useState<SelectOptionItem[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [keyword, setKeyword] = useState('');
-  const debounceRef = useRef<number | undefined>(undefined);
   const [kindsError, setKindsError] = useState<string | undefined>();
 
-    const items = useMemo<ConstraintFactorsValue>(() => value, [value]);
+  const items = useMemo<ConstraintFactorsValue>(() => value, [value]);
+  const selectedMap = useMemo(() => new Map(value.map((v) => [v.kind, v])), [value]);
 
     useImperativeHandle(ref, () => ({
       validate: () => {
@@ -56,22 +57,21 @@ const ConstraintFactorsStep = forwardRef<ConstraintFactorsStepHandle, Constraint
       },
     }));
 
-    // Fetch kind options (debounced by keyword)
+    // Fetch all kind options once
     useEffect(() => {
-      window.clearTimeout(debounceRef.current);
-      debounceRef.current = window.setTimeout(async () => {
-        setLoading(true);
+      let ignore = false;
+      (async () => {
         try {
-          const resp = await UserService.userGetConstraintFactorsSelectOptions({ limit: 50, keyword: keyword || undefined });
-          setKindOptions(resp.list ?? []);
+          const resp = await UserService.userGetConstraintFactorsSelectOptions({ limit: 200 });
+          if (!ignore) setKindOptions(resp.list ?? []);
         } catch {
-          setKindOptions([]);
-        } finally {
-          setLoading(false);
+          if (!ignore) setKindOptions([]);
         }
-      }, 300);
-      return () => window.clearTimeout(debounceRef.current);
-    }, [keyword]);
+      })();
+      return () => {
+        ignore = true;
+      };
+    }, []);
 
     function updateItemByKind(kind: string, patch: Partial<ConstraintFactorItem>) {
       const base = [...value];
@@ -82,84 +82,69 @@ const ConstraintFactorsStep = forwardRef<ConstraintFactorsStepHandle, Constraint
       }
     }
 
+    function toggle(kind: string, checked: boolean) {
+      const idx = value.findIndex((v) => v.kind === kind);
+      const next = [...value];
+      if (checked && idx === -1) {
+        next.push({ kind, value: Number.NaN });
+      } else if (!checked && idx >= 0) {
+        next.splice(idx, 1);
+      }
+      onChange(next);
+      setKindsError(undefined);
+    }
+
     return (
       <Stack spacing={2}>
-    <FormControl fullWidth error={Boolean(kindsError)}>
-          <Autocomplete
-            multiple
-            options={kindOptions}
-            loading={loading}
-            getOptionLabel={(opt) => opt.label}
-            isOptionEqualToValue={(a, b) => a.code === b.code}
-            value={kindOptions.filter((o) => value.some((v) => v.kind === o.code))}
-            onChange={(_, sel) => {
-              const selectedCodes = sel.map((s) => s.code);
-              const next: ConstraintFactorsValue = [];
-              // keep existing values for selected kinds
-              for (const code of selectedCodes) {
-                const existing = value.find((v) => v.kind === code);
-                next.push({ kind: code, value: existing?.value ?? Number.NaN });
-              }
-              onChange(next);
-      setKindsError(undefined);
-            }}
-            onInputChange={(_, val, reason) => {
-              if (reason !== 'reset') setKeyword(val);
-            }}
-            renderInput={(params) => (
-              <TextField
-                {...params}
-                label="Constraint factors"
-                placeholder="Select one or more constraint factors"
-        error={Boolean(kindsError)}
-        helperText={kindsError}
-                InputProps={{
-                  ...params.InputProps,
-                  endAdornment: (
-                    <>
-                      {loading ? <CircularProgress color="inherit" size={18} /> : null}
-                      {params.InputProps.endAdornment}
-                    </>
-                  ),
-                }}
-              />
-            )}
-          />
-          {!kindsError && (
+        {/* Top-level helper/error for selection requirement */}
+        <FormControl error={Boolean(kindsError)}>
+          {kindsError ? (
+            <FormHelperText>{kindsError}</FormHelperText>
+          ) : (
             <FormHelperText>
-              Select constraint factors; each will require a distance value.
+              Select constraint factors; each selected one requires a distance value.
             </FormHelperText>
           )}
         </FormControl>
 
-        {items.map((it) => {
-          const opt = kindOptions.find((o) => o.code === it.kind);
-          const label = opt?.label ?? it.kind;
-          const err = errors[it.kind]?.value;
+        {kindOptions.map((opt) => {
+          const selected = selectedMap.get(opt.code);
+          const err = selected ? errors[opt.code]?.value : undefined;
           return (
-            <FormControl key={it.kind} fullWidth error={Boolean(err)}>
-              <TextField
-                required
-                type="number"
-                value={Number.isFinite(it.value) ? it.value : ''}
-                onChange={(e) => {
-                  const v = e.target.value;
-                  updateItemByKind(it.kind, { value: v === '' ? Number.NaN : Number(v) });
-                  setErrors((prev) => ({ ...prev, [it.kind]: { value: undefined } }));
-                }}
-                error={Boolean(err)}
-                helperText={err}
-                  inputProps={{ step: 'any', min: 0 }}
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      {`Distance from ${label} `}{'>='}
-                    </InputAdornment>
-                  ),
-                  endAdornment: <InputAdornment position="end">m</InputAdornment>,
-                }}
-              />
-            </FormControl>
+            <Paper key={opt.code} variant="outlined" sx={{ p: 2 }}>
+              <Stack direction="row" spacing={2} alignItems="center" flexWrap="wrap">
+                <FormControlLabel
+                  control={<Checkbox checked={Boolean(selected)} onChange={(_, c) => toggle(opt.code, c)} />}
+                  label={<Typography variant="subtitle1">{opt.label}</Typography>}
+                />
+
+                {selected && (
+                  <FormControl error={Boolean(err)} sx={{ minWidth: 280, maxWidth: 460 }}>
+                    <TextField
+                      required
+                      type="number"
+                      value={Number.isFinite(selected.value) ? selected.value : ''}
+                      onChange={(e) => {
+                        const v = e.target.value;
+                        updateItemByKind(opt.code, { value: v === '' ? Number.NaN : Number(v) });
+                        setErrors((prev) => ({ ...prev, [opt.code]: { value: undefined } }));
+                      }}
+                      helperText={err}
+                      inputProps={{ step: 'any', min: 0 }}
+                      InputProps={{
+                        startAdornment: (
+                          <InputAdornment position="start">
+                            {`Distance from ${opt.label} `}
+                            {'>='}
+                          </InputAdornment>
+                        ),
+                        endAdornment: <InputAdornment position="end">m</InputAdornment>,
+                      }}
+                    />
+                  </FormControl>
+                )}
+              </Stack>
+            </Paper>
           );
         })}
       </Stack>
