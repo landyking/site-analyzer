@@ -54,8 +54,8 @@ const SuitabilityFactorsStep = forwardRef<SuitabilityFactorsStepHandle, Suitabil
           if (!Number.isFinite(item.weight)) {
             e.weight = 'Weight is required and must be a number';
             ok = false;
-          } else if (item.weight <= 0) {
-            e.weight = 'Weight must be greater than 0';
+          } else if (item.weight <= 0 || item.weight > 10) {
+            e.weight = 'Weight must be in (0, 10]';
             ok = false;
           }
           if (!item.ranges.length) {
@@ -146,7 +146,7 @@ const SuitabilityFactorsStep = forwardRef<SuitabilityFactorsStepHandle, Suitabil
                 />
 
                 {selected && (
-                  <FormControl error={Boolean(err?.weight)} sx={{ maxWidth: 320, minWidth: 220 }}>
+          <FormControl error={Boolean(err?.weight)} sx={{ maxWidth: 320, minWidth: 220 }}>
                     <TextField
                       required
                       type="number"
@@ -154,12 +154,11 @@ const SuitabilityFactorsStep = forwardRef<SuitabilityFactorsStepHandle, Suitabil
                       onChange={(e) => updateWeight(opt.code, e.target.value === '' ? '' : Number(e.target.value))}
                       error={Boolean(err?.weight)}
                       helperText={err?.weight}
-                      inputProps={{ step: 'any', min: 0 }}
+            inputProps={{ step: 'any', min: 0, max: 10 }}
                       InputProps={{
                         startAdornment: (
                           <InputAdornment position="start">Weight</InputAdornment>
                         ),
-                        endAdornment: <InputAdornment position="end">%</InputAdornment>,
                       }}
                     />
                   </FormControl>
