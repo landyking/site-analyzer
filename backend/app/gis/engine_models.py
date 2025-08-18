@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import List, Optional
+from typing import List, Optional, Protocol
 from datetime import datetime
 from pydantic import BaseModel, EmailStr
 
@@ -15,3 +15,19 @@ class SuitabilityFactor(BaseModel):
 class EngineConfigs(BaseModel):
     restricted_factors: List[RestrictedFactor]
     suitability_factors: List[SuitabilityFactor]
+
+
+class TaskMonitor(Protocol):
+    """Contract for monitoring and controlling long-running GIS engine tasks."""
+
+    def is_cancelled(self) -> bool:  # pragma: no cover - interface
+        """Return True if task processing should stop early."""
+        ...
+
+    def update_progress(self, percent: int, phase: Optional[str] = None, description: Optional[str] = None) -> None:  # pragma: no cover - interface
+        """Report progress percentage (0-100) with optional phase and description."""
+        ...
+
+    def record_error(self, error_msg: str, phase: Optional[str] = None, percent: Optional[int] = None, description: Optional[str] = None) -> None:  # pragma: no cover - interface
+        """Record an error event with optional phase, percent and description."""
+        ...

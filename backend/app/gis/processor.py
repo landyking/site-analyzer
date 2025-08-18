@@ -10,11 +10,79 @@ from sqlmodel import Session, select
 
 from app.core.config import settings
 from app.core.db import engine as db_engine
-from app.models import MapTaskDB, MapTaskStatus
+from app.models import MapTaskDB, MapTaskStatus, MapTaskProgressDB
 from app.gis.engine import SiteSuitabilityEngine
-from app.gis.engine_models import EngineConfigs, RestrictedFactor, SuitabilityFactor
+from app.gis.engine_models import EngineConfigs, RestrictedFactor, SuitabilityFactor, TaskMonitor
 
 logger = logging.getLogger(__name__)
+
+
+class MapTaskMonitor:
+	"""Task monitor backed by DB rows.
+
+	- is_cancelled(): short-lived DB read of t_map_task.status
+	- update_progress(): throttled insert into t_map_task_progress
+	"""
+
+	def __init__(self, task_id: int, min_interval: float = 1.0) -> None:
+		# min_interval kept for signature compatibility but unused (no throttling)
+		self.task_id = task_id
+
+	@staticmethod
+	def _clamp_percent(v: int) -> int:
+		try:
+			iv = int(v)
+		except Exception:
+			iv = 0
+		return 0 if iv < 0 else 100 if iv > 100 else iv
+
+	def is_cancelled(self) -> bool:
+		with Session(db_engine) as session:
+			stmt = select(MapTaskDB).where(MapTaskDB.id == self.task_id)
+			obj = session.exec(stmt).first()
+			if not obj:
+				# If task is missing, treat as cancelled for safety
+				return True
+			return obj.status == MapTaskStatus.CANCELLED
+
+	def update_progress(self, percent: int, phase: str | None = None, description: str | None = None) -> None:
+		p = self._clamp_percent(percent)
+		ph = (phase or "").strip() or None
+		desc = (description or "").strip() or None
+
+		try:
+			with Session(db_engine) as session:
+				row = MapTaskProgressDB(
+					map_task_id=self.task_id,
+					percent=p,
+					description=desc,
+					phase=ph,
+				)
+				session.add(row)
+				session.commit()
+		except Exception as e:
+			# Log and continue; progress persistence shouldn't crash the worker
+			logger.debug("progress insert failed for task %s: %s", self.task_id, e)
+
+	def record_error(self, error_msg: str, phase: str | None = None, percent: int | None = None, description: str | None = None) -> None:
+		ph = (phase or "").strip() or None
+		desc = (description or "").strip() or None
+		msg = (error_msg or "").strip() or "Error"
+		p = None if percent is None else self._clamp_percent(percent)
+
+		try:
+			with Session(db_engine) as session:
+				row = MapTaskProgressDB(
+					map_task_id=self.task_id,
+					percent=p if p is not None else 0,
+					description=desc,
+					phase=ph,
+					error_msg=msg,
+				)
+				session.add(row)
+				session.commit()
+		except Exception as e:
+			logger.debug("record_error failed for task %s: %s", self.task_id, e)
 
 
 def _quick_update_task(task_id: int, **fields) -> None:
