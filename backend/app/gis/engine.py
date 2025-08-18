@@ -4,7 +4,8 @@ import app.gis.consts as consts
 from app.gis.engine_models import (
     EngineConfigs,
     RestrictedFactor, 
-    SuitabilityFactor
+    SuitabilityFactor,
+    TaskMonitor,
 )
 from app.gis.functions import (
     RPL_Select_analysis,
@@ -331,7 +332,7 @@ class SiteSuitabilityEngine:
         return score_raster
 
 
-    def process_district(self, district_code, district_name):
+    def process_district(self, district_code, district_name, monitor: TaskMonitor | None = None):
         """
         Processes a single district for site suitability analysis.
         
@@ -342,6 +343,8 @@ class SiteSuitabilityEngine:
         Returns:
         - Path to the final suitability raster
         """
+        if monitor and monitor.is_cancelled():
+            return None
         print(f"Start processing {district_name}")
 
         self.template_raster = None
@@ -353,6 +356,8 @@ class SiteSuitabilityEngine:
             district_boundary_shp, 
             f"TA2025_V1_ == '{district_code}'"
         )
+        if monitor:
+            monitor.update_progress(10, "district", f"Boundary prepared: {district_name}")
         # show_shapefile_info(district_boundary_shp)
 
         
@@ -362,6 +367,8 @@ class SiteSuitabilityEngine:
             prepared_data[factor["name"]] = factor["method_prepare"](
                 factor, prepared_data, district_name, district_boundary_shp
             )
+            if monitor and monitor.is_cancelled():
+                return None
 
         self.template_raster = prepared_data["slope"]  # Use slope as template for raster operations
 
@@ -378,6 +385,8 @@ class SiteSuitabilityEngine:
             )
             if zone is not None:
                 restricted_zones.append(zone)
+            if monitor and monitor.is_cancelled():
+                return None
         
               # print(f"prepared_data: {prepared_data}")
         # for v in restricted_zones:
@@ -393,6 +402,8 @@ class SiteSuitabilityEngine:
             restricted_mask_raster = os.path.join(self.output_dir, f"zone_restricted_{district_name}.tif")
             RPL_PolygonToRaster_conversion(restricted_union, restricted_mask_raster, self.template_raster)
             tools.show_file_info(restricted_mask_raster)
+            if monitor:
+                monitor.update_progress(50, "restrict", f"Restricted zones prepared: {district_name}")
         else:
             print(f"Warning: No restricted zones for {district_name}")
             # Create an empty mask if no restricted zones
@@ -408,6 +419,10 @@ class SiteSuitabilityEngine:
                 )
                 if score_raster is not None:
                     score_rasters[factor["name"]] = score_raster
+            if monitor and monitor.is_cancelled():
+                return None
+        if monitor:
+            monitor.update_progress(80, "score", f"Factors scored: {district_name}")
         # for k,v in score_rasters.items():
         #     print(f"{k}: {v}")
         #     show_file_info(v)
@@ -428,8 +443,12 @@ class SiteSuitabilityEngine:
                 if restricted_mask_raster:
                     final_zone_raster = os.path.join(self.output_dir, f"zone_masked_{district_name}.tif")
                     RPL_Apply_mask(weighted_sum_raster, restricted_mask_raster, final_zone_raster)
+                    if monitor:
+                        monitor.update_progress(95, "combine", f"Finalizing: {district_name}")
                     return final_zone_raster
                 else:
+                    if monitor:
+                        monitor.update_progress(95, "combine", f"Finalizing: {district_name}")
                     return weighted_sum_raster
             else:
                 print(f"Warning: No weighted rasters for {district_name}")
@@ -438,7 +457,7 @@ class SiteSuitabilityEngine:
             print(f"Warning: No score rasters for {district_name}")
             return None
     
-    def run(self, selected_districts=None):
+    def run(self, selected_districts=None, monitor: TaskMonitor | None = None):
         """
         Run the site suitability analysis for all districts or selected districts.
         
@@ -458,10 +477,16 @@ class SiteSuitabilityEngine:
             raise Exception(f"No districts found for the provided codes: {selected_districts}")
 
         for district_code, district_name in districts_to_process:
-            result_path = self.process_district(district_code, district_name)
+            if monitor and monitor.is_cancelled():
+                return results
+            result_path = self.process_district(district_code, district_name, monitor=monitor)
             results[district_name] = result_path
             print(f"Finished processing {district_name}")
-        
+            if monitor and not monitor.is_cancelled():
+                monitor.update_progress(100, "success", f"Finished processing {district_name}")
+
+        # if monitor and not monitor.is_cancelled():
+        #     monitor.update_progress(100, "success", "All districts processed")
         print("All selected districts processed successfully.")
         return results
 

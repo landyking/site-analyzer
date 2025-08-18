@@ -187,7 +187,10 @@ def process_map_task(task_id: int) -> None:
 		# Run engine for the selected district code
 		engine = SiteSuitabilityEngine(str(data_dir), str(task_out), configs)
 		selected = [task.district]
-		engine.run(selected_districts=selected)
+		monitor = MapTaskMonitor(task_id)
+		monitor.update_progress(0, "init", "Starting")
+		results = engine.run(selected_districts=selected, monitor=monitor)
+		monitor.update_progress(100, "success", "Completed")
 
 		_quick_update_task(
 			task_id,
@@ -200,6 +203,10 @@ def process_map_task(task_id: int) -> None:
 		if len(msg) > 250:
 			msg = msg[:247] + "..."
 		logger.exception("MapTask %s failed: %s", task_id, msg)
+		try:
+			MapTaskMonitor(task_id).record_error(msg, phase="error", description="Failed")
+		except Exception:
+			pass
 		_quick_update_task(
 			task_id,
 			status=MapTaskStatus.FAILURE,
