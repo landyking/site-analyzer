@@ -2,6 +2,7 @@ import { forwardRef, useImperativeHandle, useMemo, useState } from 'react';
 import TextField from '@mui/material/TextField';
 import Stack from '@mui/material/Stack';
 import FormControl from '@mui/material/FormControl';
+import FormHelperText from '@mui/material/FormHelperText';
 import Checkbox from '@mui/material/Checkbox';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import IconButton from '@mui/material/IconButton';
@@ -10,6 +11,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import Typography from '@mui/material/Typography';
 import Paper from '@mui/material/Paper';
 import Divider from '@mui/material/Divider';
+import InputAdornment from '@mui/material/InputAdornment';
 
 export type SuitabilityFactorRangeItem = { start: number; end: number; points: number };
 export type SuitabilityFactorItem = { kind: string; weight: number; ranges: SuitabilityFactorRangeItem[] };
@@ -32,7 +34,8 @@ const ALL_FACTORS = [
 
 const SuitabilityFactorsStep = forwardRef<SuitabilityFactorsStepHandle, SuitabilityFactorsStepProps>(
   ({ value, onChange }, ref) => {
-    const [errors, setErrors] = useState<Record<string, { weight?: string; ranges?: Array<{ start?: string; end?: string; points?: string }> }>>({});
+  const [errors, setErrors] = useState<Record<string, { weight?: string; ranges?: Array<{ start?: string; end?: string; points?: string }> }>>({});
+  const [selectionError, setSelectionError] = useState<string | undefined>();
 
     const selectedMap = useMemo(() => new Map(value.map((v) => [v.kind, v])), [value]);
 
@@ -40,6 +43,12 @@ const SuitabilityFactorsStep = forwardRef<SuitabilityFactorsStepHandle, Suitabil
       validate: () => {
         let ok = true;
         const next: Record<string, { weight?: string; ranges?: Array<{ start?: string; end?: string; points?: string }> }> = {};
+        if (value.length === 0) {
+          ok = false;
+          setSelectionError('Select at least one suitability factor');
+        } else {
+          setSelectionError(undefined);
+        }
         for (const item of value) {
           const e: { weight?: string; ranges?: Array<{ start?: string; end?: string; points?: string }> } = {};
           if (!Number.isFinite(item.weight)) {
@@ -74,6 +83,7 @@ const SuitabilityFactorsStep = forwardRef<SuitabilityFactorsStepHandle, Suitabil
       const next = [...value];
       if (checked && idx === -1) {
         next.push({ kind, weight: Number.NaN, ranges: [{ start: Number.NaN, end: Number.NaN, points: Number.NaN }] });
+  setSelectionError(undefined);
       } else if (!checked && idx >= 0) {
         next.splice(idx, 1);
       }
@@ -119,30 +129,45 @@ const SuitabilityFactorsStep = forwardRef<SuitabilityFactorsStepHandle, Suitabil
 
     return (
       <Stack spacing={2}>
+        <FormControl error={Boolean(selectionError)}>
+          <FormHelperText>
+            {selectionError ?? 'Select one or more suitability factors; each selected one requires weight and scoring rules.'}
+          </FormHelperText>
+        </FormControl>
         {ALL_FACTORS.map((opt) => {
           const selected = selectedMap.get(opt.code);
           const err = errors[opt.code];
           return (
             <Paper key={opt.code} variant="outlined" sx={{ p: 2 }}>
-              <FormControlLabel
-                control={<Checkbox checked={Boolean(selected)} onChange={(_, c) => toggle(opt.code, c)} />}
-                label={<Typography variant="subtitle1">{opt.label}</Typography>}
-              />
+              <Stack direction="row" spacing={2} alignItems="center" flexWrap="wrap">
+                <FormControlLabel
+                  control={<Checkbox checked={Boolean(selected)} onChange={(_, c) => toggle(opt.code, c)} />}
+                  label={<Typography variant="subtitle1">{opt.label}</Typography>}
+                />
 
-              {selected && (
-                <Stack spacing={2} sx={{ pl: 5, pt: 1 }}>
-                  <FormControl error={Boolean(err?.weight)} sx={{ maxWidth: 320 }}>
+                {selected && (
+                  <FormControl error={Boolean(err?.weight)} sx={{ maxWidth: 320, minWidth: 220 }}>
                     <TextField
                       required
-                      label="Weight"
                       type="number"
                       value={Number.isFinite(selected.weight) ? selected.weight : ''}
                       onChange={(e) => updateWeight(opt.code, e.target.value === '' ? '' : Number(e.target.value))}
+                      error={Boolean(err?.weight)}
                       helperText={err?.weight}
                       inputProps={{ step: 'any', min: 0 }}
+                      InputProps={{
+                        startAdornment: (
+                          <InputAdornment position="start">Weight</InputAdornment>
+                        ),
+                        endAdornment: <InputAdornment position="end">%</InputAdornment>,
+                      }}
                     />
                   </FormControl>
+                )}
+              </Stack>
 
+              {selected && (
+                <Stack spacing={2} sx={{ pl: 5, pt: 1 }}>
                   <Divider flexItem />
                   <Typography variant="subtitle2">Scoring rules</Typography>
 
@@ -158,6 +183,7 @@ const SuitabilityFactorsStep = forwardRef<SuitabilityFactorsStepHandle, Suitabil
                               type="number"
                               value={Number.isFinite(r.start) ? r.start : ''}
                               onChange={(e) => updateRange(opt.code, idx, { start: e.target.value === '' ? Number.NaN : Number(e.target.value) })}
+                              error={Boolean(re.start)}
                               helperText={re.start}
                               inputProps={{ step: 'any' }}
                             />
@@ -170,6 +196,7 @@ const SuitabilityFactorsStep = forwardRef<SuitabilityFactorsStepHandle, Suitabil
                               type="number"
                               value={Number.isFinite(r.end) ? r.end : ''}
                               onChange={(e) => updateRange(opt.code, idx, { end: e.target.value === '' ? Number.NaN : Number(e.target.value) })}
+                              error={Boolean(re.end)}
                               helperText={re.end}
                               inputProps={{ step: 'any' }}
                             />
@@ -182,6 +209,7 @@ const SuitabilityFactorsStep = forwardRef<SuitabilityFactorsStepHandle, Suitabil
                               type="number"
                               value={Number.isFinite(r.points) ? r.points : ''}
                               onChange={(e) => updateRange(opt.code, idx, { points: e.target.value === '' ? Number.NaN : Number(e.target.value) })}
+                              error={Boolean(re.points)}
                               helperText={re.points}
                               inputProps={{ step: 1 }}
                             />
