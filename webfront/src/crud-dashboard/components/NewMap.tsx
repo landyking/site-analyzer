@@ -11,7 +11,7 @@ import PageContainer from './PageContainer';
 import { useDialogs } from '../hooks/useDialogs/useDialogs';
 import BaseInfoStep, { type BaseInfoStepHandle } from './new-map/BaseInfoStep';
 import ConstraintFactorsStep, { type ConstraintFactorsStepHandle, type ConstraintFactorsValue } from './new-map/ConstraintFactorsStep';
-import SuitabilityFactorsStep, { type SuitabilityFactorsStepHandle } from './new-map/SuitabilityFactorsStep';
+import SuitabilityFactorsStep, { type SuitabilityFactorsStepHandle, type SuitabilityFactorsValue } from './new-map/SuitabilityFactorsStep';
 import ConfirmationStep, { type ConfirmationStepHandle } from './new-map/ConfirmationStep';
 import { useRef } from 'react';
 
@@ -29,7 +29,7 @@ export default function NewMap() {
     district: '', // submit as district (code)
     // placeholders for next steps (will be refined later)
   constraints: [] as ConstraintFactorsValue,
-    suitability: '',
+  suitability: [] as SuitabilityFactorsValue,
     confirmation: '',
     constraintsSelect: '',
     suitabilitySelect: '',
@@ -103,10 +103,8 @@ export default function NewMap() {
         return (
           <SuitabilityFactorsStep
             ref={suitabilityRef}
-            textValue={form.suitability}
-            onTextChange={(v) => setForm((f) => ({ ...f, suitability: v }))}
-            selectValue={form.suitabilitySelect}
-            onSelectChange={(v) => setForm((f) => ({ ...f, suitabilitySelect: v }))}
+            value={form.suitability}
+            onChange={(v) => setForm((f) => ({ ...f, suitability: v }))}
           />
         );
       case 3:
