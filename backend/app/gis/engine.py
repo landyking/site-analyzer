@@ -136,7 +136,7 @@ class SiteSuitabilityEngine:
                 "method_evaluate": self._evaluate_distance_vector,
             },
             {
-                "name": "radiation",
+                "name": "solar",
                 "dataset": self.in_solar_radiation,
                 "method_prepare": self._clip_data,
                 "method_restricted_zone": lambda *args: None,

@@ -69,4 +69,4 @@ districts = [
  ]
 ALLOWED_DISTRICT_CODES = {code for code, _ in districts}
 ALLOWED_CONSTRAINTS = ["rivers","lakes","coastlines","residential"]
-ALLOWED_SUITABILITY = ["slope","roads","powerlines","radiation","temperature"]
+ALLOWED_SUITABILITY = ["slope","roads","powerlines","solar","temperature"]
