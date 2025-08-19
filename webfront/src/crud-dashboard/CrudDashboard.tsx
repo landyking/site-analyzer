@@ -6,11 +6,13 @@ import DialogsProvider from './hooks/useDialogs/DialogsProvider';
 import AppTheme from '../shared-theme/AppTheme';
 import {
   sidebarCustomizations,
+  formInputCustomizations,
 } from './theme/customizations';
 // This component now only provides theming/contexts and renders the layout.
 // Routes are defined in App.tsx via @tanstack/react-router under /dashboard.
 
 const themeComponents = {
+  ...formInputCustomizations,
   ...sidebarCustomizations
 };
 
