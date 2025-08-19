@@ -19,6 +19,8 @@ import RefreshRoundedIcon from '@mui/icons-material/RefreshRounded';
 import VisibilityRoundedIcon from '@mui/icons-material/VisibilityRounded';
 import DownloadRoundedIcon from '@mui/icons-material/DownloadRounded';
 import CancelRoundedIcon from '@mui/icons-material/CancelRounded';
+import DeleteRoundedIcon from '@mui/icons-material/DeleteRounded';
+import ContentCopyRoundedIcon from '@mui/icons-material/ContentCopyRounded';
 import CircularProgress from '@mui/material/CircularProgress';
 
 import PageContainer from './PageContainer';
@@ -113,6 +115,22 @@ export default function MyMaps() {
     },
   });
 
+  const deleteMutation = useMutation({
+    mutationFn: (taskId: number) => UserService.userDeleteMapTask({ taskId }),
+    onSuccess: () => {
+      show('Task deleted', { severity: 'success', autoHideDuration: 2000 });
+      queryClient.invalidateQueries({ queryKey: ['my-map-tasks'] });
+    },
+  });
+
+  const duplicateMutation = useMutation({
+    mutationFn: (taskId: number) => UserService.userDuplicateMapTask({ taskId }),
+    onSuccess: () => {
+      show('Task duplicated', { severity: 'success', autoHideDuration: 2000 });
+      queryClient.invalidateQueries({ queryKey: ['my-map-tasks'] });
+    },
+  });
+
   const ongoingRows = useMemo(() => ongoing?.list ?? [], [ongoing]);
   const completedRows = useMemo(() => completed?.list ?? [], [completed]);
 
@@ -138,6 +156,38 @@ export default function MyMaps() {
     ).then((ok) => {
       if (ok) {
         cancelMutation.mutate(task.id);
+      }
+    });
+  };
+
+  const handleDelete = (task: MapTaskDetails) => {
+    void confirm(
+      <>Are you sure you want to delete “{task.name}”?<br/>This will permanently remove the task and its results.</>,
+      {
+        title: 'Delete task?',
+        okText: 'Yes, delete',
+        cancelText: 'Keep',
+        severity: 'error',
+      },
+    ).then((ok) => {
+      if (ok) {
+        deleteMutation.mutate(task.id);
+      }
+    });
+  };
+
+  const handleDuplicate = (task: MapTaskDetails) => {
+    void confirm(
+      <>Do you want to duplicate “{task.name}”?<br/>A new map task will be created with the same settings.</>,
+      {
+        title: 'Duplicate task?',
+        okText: 'Yes, duplicate',
+        cancelText: 'Cancel',
+        severity: 'info',
+      },
+    ).then((ok) => {
+      if (ok) {
+        duplicateMutation.mutate(task.id);
       }
     });
   };
@@ -256,6 +306,12 @@ export default function MyMaps() {
                                 Download
                               </Button>
                             )}
+                            <Button size="small" startIcon={<ContentCopyRoundedIcon />} disabled={duplicateMutation.isPending} onClick={() => handleDuplicate(row)}>
+                              Duplicate
+                            </Button>
+                            <Button size="small" color="error" startIcon={<DeleteRoundedIcon />} disabled={deleteMutation.isPending} onClick={() => handleDelete(row)}>
+                              Delete
+                            </Button>
                             <Button size="small" startIcon={<VisibilityRoundedIcon />} onClick={openDetails}>View</Button>
                           </Stack>
                         </TableCell>
