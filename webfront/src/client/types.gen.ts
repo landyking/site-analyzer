@@ -253,11 +253,23 @@ export type UserUserGetMapTaskData = {
 
 export type UserUserGetMapTaskResponse = MyMapTaskResp;
 
+export type UserUserDeleteMapTaskData = {
+	taskId: number;
+};
+
+export type UserUserDeleteMapTaskResponse = BaseResp;
+
 export type UserUserCancelMapTaskData = {
 	taskId: number;
 };
 
 export type UserUserCancelMapTaskResponse = BaseResp;
+
+export type UserUserDuplicateMapTaskData = {
+	taskId: number;
+};
+
+export type UserUserDuplicateMapTaskResponse = BaseResp;
 
 export type UserUserGetDistrictSelectOptionsData = {
 	keyword?: string | null;

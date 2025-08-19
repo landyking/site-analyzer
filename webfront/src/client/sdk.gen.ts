@@ -28,8 +28,12 @@ import type {
 	UserUserCreateMapTaskResponse,
 	UserUserGetMapTaskData,
 	UserUserGetMapTaskResponse,
+	UserUserDeleteMapTaskData,
+	UserUserDeleteMapTaskResponse,
 	UserUserCancelMapTaskData,
 	UserUserCancelMapTaskResponse,
+	UserUserDuplicateMapTaskData,
+	UserUserDuplicateMapTaskResponse,
 	UserUserGetDistrictSelectOptionsData,
 	UserUserGetDistrictSelectOptionsResponse,
 	UserUserGetConstraintFactorsSelectOptionsData,
@@ -320,6 +324,28 @@ export class UserService {
 	}
 
 	/**
+	 * Delete a map task
+	 * @param data The data for the request.
+	 * @param data.taskId
+	 * @returns BaseResp Successful Response
+	 * @throws ApiError
+	 */
+	public static userDeleteMapTask(
+		data: UserUserDeleteMapTaskData,
+	): CancelablePromise<UserUserDeleteMapTaskResponse> {
+		return __request(OpenAPI, {
+			method: "DELETE",
+			url: "/api/v1/user/my-map-tasks/{taskId}",
+			path: {
+				taskId: data.taskId,
+			},
+			errors: {
+				422: "Validation Error",
+			},
+		});
+	}
+
+	/**
 	 * Cancel a map task
 	 * @param data The data for the request.
 	 * @param data.taskId
@@ -332,6 +358,28 @@ export class UserService {
 		return __request(OpenAPI, {
 			method: "POST",
 			url: "/api/v1/user/my-map-tasks/{taskId}/cancel",
+			path: {
+				taskId: data.taskId,
+			},
+			errors: {
+				422: "Validation Error",
+			},
+		});
+	}
+
+	/**
+	 * Duplicate a map task
+	 * @param data The data for the request.
+	 * @param data.taskId
+	 * @returns BaseResp Successful Response
+	 * @throws ApiError
+	 */
+	public static userDuplicateMapTask(
+		data: UserUserDuplicateMapTaskData,
+	): CancelablePromise<UserUserDuplicateMapTaskResponse> {
+		return __request(OpenAPI, {
+			method: "POST",
+			url: "/api/v1/user/my-map-tasks/{taskId}/duplicate",
 			path: {
 				taskId: data.taskId,
 			},
