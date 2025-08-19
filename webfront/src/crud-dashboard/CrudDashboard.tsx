@@ -5,19 +5,13 @@ import NotificationsProvider from './hooks/useNotifications/NotificationsProvide
 import DialogsProvider from './hooks/useDialogs/DialogsProvider';
 import AppTheme from '../shared-theme/AppTheme';
 import {
-  dataGridCustomizations,
-  datePickersCustomizations,
   sidebarCustomizations,
-  formInputCustomizations,
 } from './theme/customizations';
 // This component now only provides theming/contexts and renders the layout.
 // Routes are defined in App.tsx via @tanstack/react-router under /dashboard.
 
 const themeComponents = {
-  ...dataGridCustomizations,
-  ...datePickersCustomizations,
-  ...sidebarCustomizations,
-  ...formInputCustomizations,
+  ...sidebarCustomizations
 };
 
 export default function CrudDashboard(props: { disableCustomTheme?: boolean }) {
