@@ -153,6 +153,7 @@ export default function MyMaps() {
                   <TableCell sx={{ fontWeight: 700 }}>Name</TableCell>
                   <TableCell sx={{ fontWeight: 700 }}>District</TableCell>
                   <TableCell sx={{ fontWeight: 700 }}>Created At</TableCell>
+                  <TableCell sx={{ fontWeight: 700 }}>Started At</TableCell>
                   <TableCell sx={{ fontWeight: 700 }}>Elapse</TableCell>
                   <TableCell sx={{ fontWeight: 700 }}>Status</TableCell>
                   <TableCell sx={{ fontWeight: 700 }} align="right">Actions</TableCell>
@@ -180,7 +181,8 @@ export default function MyMaps() {
                       <TableCell>{row.name}</TableCell>
                       <TableCell>{row.district_name ?? row.district_code}</TableCell>
                       <TableCell>{formatDate(row.created_at)}</TableCell>
-                      <TableCell>{formatElapsed(row.started_at ?? row.created_at, undefined)}</TableCell>
+                      <TableCell>{formatDate(row.started_at)}</TableCell>
+                      <TableCell>{formatElapsed(row.started_at, row.ended_at)}</TableCell>
                       <TableCell>
                         <Chip size="small" color={statusColor(row.status_desc)} label={row.status_desc ?? row.status} />
                       </TableCell>
@@ -207,8 +209,8 @@ export default function MyMaps() {
                 <TableRow>
                   <TableCell sx={{ fontWeight: 700 }}>Name</TableCell>
                   <TableCell sx={{ fontWeight: 700 }}>District</TableCell>
+                  <TableCell sx={{ fontWeight: 700 }}>Started At</TableCell>
                   <TableCell sx={{ fontWeight: 700 }}>Ended At</TableCell>
-                  <TableCell sx={{ fontWeight: 700 }}>Created At</TableCell>
                   <TableCell sx={{ fontWeight: 700 }}>Elapse</TableCell>
                   <TableCell sx={{ fontWeight: 700 }}>Status</TableCell>
                   <TableCell sx={{ fontWeight: 700 }} align="right">Actions</TableCell>
@@ -237,9 +239,9 @@ export default function MyMaps() {
                       <TableRow key={row.id} hover>
                         <TableCell>{row.name}</TableCell>
                         <TableCell>{row.district_name ?? row.district_code}</TableCell>
+                        <TableCell>{formatDate(row.started_at)}</TableCell>
                         <TableCell>{formatDate(row.ended_at)}</TableCell>
-                        <TableCell>{formatDate(row.created_at)}</TableCell>
-                        <TableCell>{formatElapsed(row.started_at ?? row.created_at, row.ended_at)}</TableCell>
+                        <TableCell>{formatElapsed(row.started_at, row.ended_at)}</TableCell>
                         <TableCell>
                           <Chip size="small" color={statusColor(row.status_desc)} label={row.status_desc ?? row.status} />
                         </TableCell>
