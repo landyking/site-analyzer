@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
@@ -131,11 +131,22 @@ export default function MyMaps() {
     },
   });
 
+
+  // Dummy state to force re-render for elapsed time
+  const [, forceRerender] = useState({});
+  const handleRefresh = () => {
+    refetchOngoing();
+    refetchCompleted();
+    forceRerender({});
+  };
+  // Optionally, update elapsedKey every second for live update (not required by user, so skip)
+
+  // elapsedKey is only used to force re-render, not for memoization
   const ongoingRows = useMemo(() => ongoing?.list ?? [], [ongoing]);
   const completedRows = useMemo(() => completed?.list ?? [], [completed]);
 
   const actions = (
-    <IconButton aria-label="refresh" onClick={() => { refetchOngoing(); refetchCompleted(); }}>
+    <IconButton aria-label="refresh" onClick={handleRefresh}>
       <RefreshRoundedIcon />
     </IconButton>
   );
