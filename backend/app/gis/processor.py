@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import List, Tuple
 
@@ -127,7 +127,7 @@ def process_map_task(task_id: int) -> None:
 	_quick_update_task(
 		task_id,
 		status=MapTaskStatus.PROCESSING,
-		started_at=task.started_at or datetime.utcnow(),
+		started_at=task.started_at or datetime.now(timezone.utc),
 		error_msg=None,
 	)
 
@@ -195,7 +195,7 @@ def process_map_task(task_id: int) -> None:
 		_quick_update_task(
 			task_id,
 			status=MapTaskStatus.SUCCESS,
-			ended_at=datetime.utcnow(),
+			ended_at=datetime.now(timezone.utc),
 		)
 	except Exception as e:
 		# Truncate error message to fit DB column (255)
@@ -211,5 +211,5 @@ def process_map_task(task_id: int) -> None:
 			task_id,
 			status=MapTaskStatus.FAILURE,
 			error_msg=msg,
-			ended_at=datetime.utcnow(),
+			ended_at=datetime.now(timezone.utc),
 		)

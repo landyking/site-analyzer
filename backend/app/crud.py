@@ -1,7 +1,7 @@
 import json
 import uuid
 from typing import Any
-from datetime import datetime
+from datetime import datetime, timezone
 
 from sqlmodel import Session, select
 from fastapi import BackgroundTasks
@@ -105,7 +105,8 @@ def cancel_map_task(*, session: Session, user_id: int, task_id: int) -> MapTaskD
     # Only update status if not already terminal; allow idempotent cancel
     if db_obj.status not in (MapTaskStatus.SUCCESS, MapTaskStatus.CANCELLED):
         db_obj.status = MapTaskStatus.CANCELLED
-        db_obj.ended_at = db_obj.ended_at or datetime.utcnow()
+        # Ensure timezone-aware UTC datetime so API responses include timezone info
+        db_obj.ended_at = db_obj.ended_at or datetime.now(timezone.utc)
         session.add(db_obj)
         session.commit()
         session.refresh(db_obj)

@@ -188,3 +188,29 @@ uv tree
 # See Python version used by uv
 uv run python -V
 ```
+
+## Time and time zones (UTC policy)
+
+To avoid time zone bugs, the backend stores and processes all instants in UTC. Keep these rules in mind:
+
+- Always store UTC in the database. Treat database values as UTC unless explicitly documented otherwise.
+- Use timezone-aware datetimes in Python when generating or returning values to clients.
+
+Practical guidance
+- MySQL
+	- We use `DATETIME` columns (see SQLModel models). MySQL `DATETIME` doesn’t store a time zone, so we standardize on UTC.
+	- The dev `docker-compose.yml` sets the container time zone to UTC: `TZ: UTC`. MySQL’s default time_zone is `SYSTEM`, so `NOW()` will be UTC in our container.
+	- If you run your own MySQL, set the server default to UTC (any one of):
+		- my.cnf: `default-time-zone = '+00:00'`
+		- SQL: `SET GLOBAL time_zone = '+00:00'` (requires restart for new connections or re-connect)
+	- Keep session time zone at UTC as well: `SET time_zone = '+00:00'` (your ORM/connection can run this on connect if needed).
+	- Prefer fractional seconds when useful: `DATETIME(6)` for microseconds.
+- Python (FastAPI)
+	- When generating timestamps, use timezone-aware UTC, e.g. `datetime.now(timezone.utc)`.
+	- When reading naive `datetime` from MySQL (which is UTC by convention), attach UTC before returning via the API. The API code already normalizes datetimes to UTC-aware values in responses.
+	- Convert between UTC and user-local times only at the UI/reporting edges; do not persist local times unless explicitly required.
+- When you truly need a local “wall-clock” time (e.g., business hours), store both: the local `DATETIME(6)` plus an IANA time zone string (e.g., `Pacific/Auckland`).
+
+Notes
+- `TIMESTAMP` also stores instants in UTC with automatic conversion, but it’s limited to 1970–2038. We use `DATETIME(6)` for a wider range and explicit UTC handling.
+- Audit fields using `NOW()`/`CURRENT_TIMESTAMP` in our UTC-configured environment will be in UTC.

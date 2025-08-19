@@ -4,7 +4,7 @@ services:
     ports:
       - "3306:3306"
     environment:
-      TZ: Pacific/Auckland
+      TZ: UTC
       MYSQL_ROOT_PASSWORD: 2x8#339mdn
       MYSQL_DATABASE: site_analyzer
       MYSQL_USER: site_analyzer

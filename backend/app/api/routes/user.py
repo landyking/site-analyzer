@@ -15,6 +15,7 @@ from app.api.deps import CurrentUser, SessionDep
 from app import crud
 import json
 from app.gis.consts import districts, constraint_factors
+from datetime import timezone
 
 router = APIRouter(tags=["User"])
 
@@ -40,6 +41,14 @@ def _to_map_task_details(session: SessionDep, data: MapTaskDB) -> MapTaskDetails
         status_desc = MapTaskStatus(data.status).name.title()
     except Exception:
         status_desc = None
+    # Ensure timezone-aware datetimes (UTC) for consistent ISO output with offset
+    def _as_aware_utc(dt):
+        if dt is None:
+            return None
+        if dt.tzinfo is None:
+            return dt.replace(tzinfo=timezone.utc)
+        return dt.astimezone(timezone.utc)
+
     return MapTaskDetails(
         id=data.id,
         name=data.name,
@@ -57,10 +66,10 @@ def _to_map_task_details(session: SessionDep, data: MapTaskDB) -> MapTaskDetails
         user_email=user_email,
         status=data.status,
         status_desc=status_desc,
-        started_at=data.started_at,
-        ended_at=data.ended_at,
-        created_at=data.created_at,
-        updated_at=data.updated_at,
+        started_at=_as_aware_utc(data.started_at),
+        ended_at=_as_aware_utc(data.ended_at),
+        created_at=_as_aware_utc(data.created_at),
+        updated_at=_as_aware_utc(data.updated_at),
         district_code=data.district,
         district_name=district_name,
     )
