@@ -190,13 +190,14 @@ def process_map_task(task_id: int) -> None:
 		monitor = MapTaskMonitor(task_id)
 		monitor.update_progress(0, "init", "Starting")
 		results = engine.run(selected_districts=selected, monitor=monitor)
-		monitor.update_progress(100, "success", "Completed")
+		if not monitor.is_cancelled():
+			monitor.update_progress(100, "success", "Completed")
 
-		_quick_update_task(
-			task_id,
-			status=MapTaskStatus.SUCCESS,
-			ended_at=datetime.now(timezone.utc),
-		)
+			_quick_update_task(
+				task_id,
+				status=MapTaskStatus.SUCCESS,
+				ended_at=datetime.now(timezone.utc),
+			)
 	except Exception as e:
 		# Truncate error message to fit DB column (255)
 		msg = str(e)
