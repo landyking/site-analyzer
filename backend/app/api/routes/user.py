@@ -18,39 +18,21 @@ from app.gis.consts import districts, constraint_factors
 router = APIRouter(tags=["User"])
 
 
-@router.get("/user/my-map-tasks", response_model=MyMapTaskListResp, summary="Get user's map tasks")
-async def user_get_my_map_tasks(session: SessionDep, current_user: CurrentUser, completed: bool | None = None) -> MyMapTaskListResp:
-    db_list = crud.list_map_tasks(session=session, user_id=current_user.id, completed=completed)
-    tasks: list[MapTask] = []
-    for data in db_list:
-        tasks.append(
-            MapTaskDetails(
-                id=data.id,
-                name=data.name,
-                constraint_factors=json.loads(data.constraint_factors),
-                suitability_factors=json.loads(data.suitability_factors),
-                user_id=data.user_id,
-                # user_email=data.user_email,
-                status=data.status,
-                started_at=data.started_at,
-                ended_at=data.ended_at,
-                created_at=data.created_at,
-                updated_at=data.updated_at,
-                district_code=data.district,
-                # district_name=data.district_name,
-            )
-        )
-    return MyMapTaskListResp(error=0, list=tasks)
-
-
-@router.post("/user/my-map-tasks", response_model=MyMapTaskResp, summary="Create a new map task")
-async def user_create_map_task(background_tasks: BackgroundTasks, session: SessionDep, current_user: CurrentUser, payload: CreateMapTaskReq) -> MyMapTaskResp:
-    data: MapTaskDB = crud.create_map_task(session=session, user_id=current_user.id, payload=payload, background_tasks=background_tasks)
-    my_map_task = MapTaskDetails(
+def _to_map_task_details(data: MapTaskDB) -> MapTaskDetails:
+    """Create a MapTaskDetails from a MapTaskDB row, safely parsing JSON fields."""
+    return MapTaskDetails(
         id=data.id,
         name=data.name,
-        constraint_factors=json.loads(data.constraint_factors),
-        suitability_factors=json.loads(data.suitability_factors),
+        constraint_factors=(
+            json.loads(data.constraint_factors)
+            if isinstance(data.constraint_factors, str)
+            else data.constraint_factors
+        ),
+        suitability_factors=(
+            json.loads(data.suitability_factors)
+            if isinstance(data.suitability_factors, str)
+            else data.suitability_factors
+        ),
         user_id=data.user_id,
         # user_email=data.user_email,
         status=data.status,
@@ -61,6 +43,19 @@ async def user_create_map_task(background_tasks: BackgroundTasks, session: Sessi
         district_code=data.district,
         # district_name=data.district_name,
     )
+
+
+@router.get("/user/my-map-tasks", response_model=MyMapTaskListResp, summary="Get user's map tasks")
+async def user_get_my_map_tasks(session: SessionDep, current_user: CurrentUser, completed: bool | None = None) -> MyMapTaskListResp:
+    db_list = crud.list_map_tasks(session=session, user_id=current_user.id, completed=completed)
+    tasks: list[MapTask] = [_to_map_task_details(data) for data in db_list]
+    return MyMapTaskListResp(error=0, list=tasks)
+
+
+@router.post("/user/my-map-tasks", response_model=MyMapTaskResp, summary="Create a new map task")
+async def user_create_map_task(background_tasks: BackgroundTasks, session: SessionDep, current_user: CurrentUser, payload: CreateMapTaskReq) -> MyMapTaskResp:
+    data: MapTaskDB = crud.create_map_task(session=session, user_id=current_user.id, payload=payload, background_tasks=background_tasks)
+    my_map_task = _to_map_task_details(data)
     return MyMapTaskResp(error=0, data=my_map_task)
 
 
@@ -69,19 +64,7 @@ async def user_get_map_task(session: SessionDep, current_user: CurrentUser, task
     data: MapTaskDB | None = crud.get_map_task(session=session, user_id=current_user.id, task_id=taskId)
     if not data:
         raise HTTPException(status_code=404, detail="Task not found")
-    my_map_task = MapTaskDetails(
-        id=data.id,
-        name=data.name,
-        constraint_factors=json.loads(data.constraint_factors),
-        suitability_factors=json.loads(data.suitability_factors),
-        user_id=data.user_id,
-        status=data.status,
-        started_at=data.started_at,
-        ended_at=data.ended_at,
-        created_at=data.created_at,
-        updated_at=data.updated_at,
-        district_code=data.district,
-    )
+    my_map_task = _to_map_task_details(data)
     return MyMapTaskResp(error=0, data=my_map_task)
 
 
