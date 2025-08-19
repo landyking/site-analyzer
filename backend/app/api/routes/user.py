@@ -7,6 +7,7 @@ from app.models import (
     MyMapTaskResp,
     MapTask,
     MapTaskDetails,
+    MapTaskStatus,
     BaseResp,
     SelectOptionListResp,
 )
@@ -17,9 +18,28 @@ from app.gis.consts import districts, constraint_factors
 
 router = APIRouter(tags=["User"])
 
+# Build a fast lookup for district code -> name
+_DISTRICT_CODE_TO_NAME = {code: name for code, name in districts}
 
-def _to_map_task_details(data: MapTaskDB) -> MapTaskDetails:
+
+def _to_map_task_details(session: SessionDep, data: MapTaskDB) -> MapTaskDetails:
     """Create a MapTaskDetails from a MapTaskDB row, safely parsing JSON fields."""
+    # Fetch user email by user_id; ignore failures gracefully
+    user_email: str | None = None
+    try:
+        user = crud.get_user_by_id(session=session, user_id=data.user_id)
+        if user:
+            user_email = user.email
+    except Exception:
+        user_email = None
+
+    district_name = _DISTRICT_CODE_TO_NAME.get(data.district)
+    # Translate status to a human-readable description using Enum
+    status_desc: str | None = None
+    try:
+        status_desc = MapTaskStatus(data.status).name.title()
+    except Exception:
+        status_desc = None
     return MapTaskDetails(
         id=data.id,
         name=data.name,
@@ -34,28 +54,29 @@ def _to_map_task_details(data: MapTaskDB) -> MapTaskDetails:
             else data.suitability_factors
         ),
         user_id=data.user_id,
-        # user_email=data.user_email,
+        user_email=user_email,
         status=data.status,
+        status_desc=status_desc,
         started_at=data.started_at,
         ended_at=data.ended_at,
         created_at=data.created_at,
         updated_at=data.updated_at,
         district_code=data.district,
-        # district_name=data.district_name,
+        district_name=district_name,
     )
 
 
 @router.get("/user/my-map-tasks", response_model=MyMapTaskListResp, summary="Get user's map tasks")
 async def user_get_my_map_tasks(session: SessionDep, current_user: CurrentUser, completed: bool | None = None) -> MyMapTaskListResp:
     db_list = crud.list_map_tasks(session=session, user_id=current_user.id, completed=completed)
-    tasks: list[MapTask] = [_to_map_task_details(data) for data in db_list]
+    tasks: list[MapTask] = [_to_map_task_details(session, data) for data in db_list]
     return MyMapTaskListResp(error=0, list=tasks)
 
 
 @router.post("/user/my-map-tasks", response_model=MyMapTaskResp, summary="Create a new map task")
 async def user_create_map_task(background_tasks: BackgroundTasks, session: SessionDep, current_user: CurrentUser, payload: CreateMapTaskReq) -> MyMapTaskResp:
     data: MapTaskDB = crud.create_map_task(session=session, user_id=current_user.id, payload=payload, background_tasks=background_tasks)
-    my_map_task = _to_map_task_details(data)
+    my_map_task = _to_map_task_details(session, data)
     return MyMapTaskResp(error=0, data=my_map_task)
 
 
@@ -64,7 +85,7 @@ async def user_get_map_task(session: SessionDep, current_user: CurrentUser, task
     data: MapTaskDB | None = crud.get_map_task(session=session, user_id=current_user.id, task_id=taskId)
     if not data:
         raise HTTPException(status_code=404, detail="Task not found")
-    my_map_task = _to_map_task_details(data)
+    my_map_task = _to_map_task_details(session, data)
     return MyMapTaskResp(error=0, data=my_map_task)
 
 

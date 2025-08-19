@@ -87,25 +87,26 @@ class PostLoginResp(BaseResp, LoginResult):
 
 
 class MapTask(BaseModel):
-    id: Optional[int] = None
-    name: Optional[str] = None
-    user_id: Optional[int] = None
-    user_email: Optional[EmailStr] = None
-    district_code: Optional[str] = None
-    district_name: Optional[str] = None
+    id: int
+    name: str
+    user_id: int
+    user_email: EmailStr | None = None
+    district_code: str
+    district_name: str | None = None
     # status: 1 Created, 2 Processing, 3 Success, 4 Failure, 5 Cancelled
-    status: Optional[int] = None
+    status: int
+    status_desc: str | None = None
     started_at: Optional[datetime] = None
     ended_at: Optional[datetime] = None
-    created_at: Optional[datetime] = None
+    created_at: datetime
 
 
 class MapTaskFile(BaseModel):
-    id: Optional[int] = None
-    map_task_id: Optional[int] = None
-    file_type: Optional[str] = None
-    file_path: Optional[str] = None
-    created_at: Optional[datetime] = None
+    id: int
+    map_task_id: int
+    file_type: str
+    file_path: str
+    created_at: datetime
 
 
 class ConstraintFactor(BaseModel):

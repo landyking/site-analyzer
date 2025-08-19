@@ -43,6 +43,12 @@ def get_user_by_email(*, session: Session, email: str) -> UserDB | None:
     return session_user
 
 
+def get_user_by_id(*, session: Session, user_id: int) -> UserDB | None:
+    """Fetch a user by primary key id."""
+    statement = select(UserDB).where(UserDB.id == user_id)
+    return session.exec(statement).first()
+
+
 def authenticate(*, session: Session, email: str, password: str) -> UserDB | None:
     db_user = get_user_by_email(session=session, email=email)
     # print("Authenticating user...", db_user)
