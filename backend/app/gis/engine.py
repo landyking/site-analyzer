@@ -1,6 +1,7 @@
 import os
 import app.gis.tools as tools
 import app.gis.consts as consts
+import logging
 from app.gis.engine_models import (
     EngineConfigs,
     RestrictedFactor, 
@@ -20,6 +21,7 @@ from app.gis.functions import (
     RPL_Apply_mask,
 )
 
+logger = logging.getLogger(__name__)
 class SiteSuitabilityEngine:
     def __init__(self, data_dir, output_dir, configs: EngineConfigs):
         """
@@ -201,18 +203,17 @@ class SiteSuitabilityEngine:
         """
         key = factor['name']
         dataset = factor['dataset']
-        
-        print(f"{district_name} # Clipping {key} data")
+        logger.info(f"{district_name} # Clipping {key} data")
         out_path = os.path.join(self.clip_dir, f"clip_{key}_{district_name}")
-        
+
         if dataset.endswith(".shp"):
             out_path += ".shp"
             RPL_Clip_analysis(out_path, dataset, district_boundary_shp)
         elif dataset.endswith(".tif"):
             out_path += ".tif"
-            print(f"range {dataset}: {tools.get_data_range(dataset)}")
+            logger.info(f"range {dataset}: {tools.get_data_range(dataset)}")
             RPL_ExtractByMask(dataset, district_boundary_shp, out_path)
-            print(f"range {out_path}: {tools.get_data_range(out_path)}")
+            logger.info(f"range {out_path}: {tools.get_data_range(out_path)}")
 
         return out_path
     
@@ -231,14 +232,14 @@ class SiteSuitabilityEngine:
         """
         feature = factor['name']
         distance = factor["buffer_distance"]
-        
-        print(f"{district_name} # Creating buffer for {feature}...")
+
+        logger.info(f"{district_name} # Creating buffer for {feature}...")
         buffer_output = os.path.join(self.restrict_dir, f"buffer_{feature}_{district_name}.shp")
         RPL_Buffer_analysis(prepared_data[feature], buffer_output, distance)
-        
+
         buffer_clipped_output = os.path.join(self.restrict_dir, f"buffer_clipped_{feature}_{district_name}.shp")
         RPL_Clip_analysis(buffer_clipped_output, buffer_output, district_boundary_shp)
-        
+
         return buffer_clipped_output
     
     def _evaluate_distance_vector(self, factor, prepared_data, district_name, district_boundary):
@@ -260,15 +261,15 @@ class SiteSuitabilityEngine:
         # Create a binary raster from the vector
         binary_raster = os.path.join(self.score_dir, f"binary_{factor['name']}_{district_name}.tif")
         RPL_PolygonToRaster_conversion(vector_path, binary_raster, template_raster)
-        print(f"range {binary_raster}: {tools.get_data_range(binary_raster)}")
+        logger.info(f"range {binary_raster}: {tools.get_data_range(binary_raster)}")
         # Calculate distance
         dist_raster = os.path.join(self.score_dir, f"distance_{factor['name']}_{district_name}.tif")
         RPL_DistanceAccumulation(binary_raster, dist_raster)
-        print(f"range {dist_raster}: {tools.get_data_range(dist_raster)}")
+        logger.info(f"range {dist_raster}: {tools.get_data_range(dist_raster)}")
         # Reclassify distance to score
         score_raster = os.path.join(self.score_dir, f"score_{factor['name']}_{district_name}.tif")
         RPL_Reclassify(dist_raster, score_raster, factor["evaluate_rules"])
-        print(f"range {score_raster}: {tools.get_data_range(score_raster)}")
+        logger.info(f"range {score_raster}: {tools.get_data_range(score_raster)}")
         return score_raster
     
     def _evaluate_slope(self, factor, prepared_data, district_name, district_boundary):
@@ -286,9 +287,9 @@ class SiteSuitabilityEngine:
         """
         slope_raster = prepared_data[factor['name']]
         score_raster = os.path.join(self.score_dir, f"score_{factor['name']}_{district_name}.tif")
-        print(f"range {slope_raster}: {tools.get_data_range(slope_raster)}")
+        logger.info(f"range {slope_raster}: {tools.get_data_range(slope_raster)}")
         RPL_Reclassify(slope_raster, score_raster, factor["evaluate_rules"])
-        print(f"range {score_raster}: {tools.get_data_range(score_raster)}")
+        logger.info(f"range {score_raster}: {tools.get_data_range(score_raster)}")
         return score_raster
     
     def _evaluate_radiation(self, factor, prepared_data, district_name, district_boundary):
@@ -306,9 +307,9 @@ class SiteSuitabilityEngine:
         """
         radiation_raster = prepared_data[factor['name']]
         score_raster = os.path.join(self.score_dir, f"score_{factor['name']}_{district_name}.tif")
-        print(f"range {radiation_raster}: {tools.get_data_range(radiation_raster)}")
+        logger.info(f"range {radiation_raster}: {tools.get_data_range(radiation_raster)}")
         RPL_Reclassify(radiation_raster, score_raster, factor["evaluate_rules"])
-        print(f"range {score_raster}: {tools.get_data_range(score_raster)}")
+        logger.info(f"range {score_raster}: {tools.get_data_range(score_raster)}")
         return score_raster
     
     def _evaluate_temperature(self, factor, prepared_data, district_name, district_boundary):
@@ -326,9 +327,9 @@ class SiteSuitabilityEngine:
         """
         temperature_raster = prepared_data[factor['name']]
         score_raster = os.path.join(self.score_dir, f"score_{factor['name']}_{district_name}.tif")
-        print(f"range {temperature_raster}: {tools.get_data_range(temperature_raster)}")
+        logger.info(f"range {temperature_raster}: {tools.get_data_range(temperature_raster)}")
         RPL_Reclassify(temperature_raster, score_raster, factor["evaluate_rules"])
-        print(f"range {score_raster}: {tools.get_data_range(score_raster)}")
+        logger.info(f"range {score_raster}: {tools.get_data_range(score_raster)}")
         return score_raster
 
 
@@ -344,8 +345,9 @@ class SiteSuitabilityEngine:
         - Path to the final suitability raster
         """
         if monitor and monitor.is_cancelled():
+            logger.info("Processing cancelled for district %s; aborting.", district_name)
             return None
-        print(f"Start processing {district_name}")
+        logger.info(f"Start processing {district_name}")
 
         self.template_raster = None
         
@@ -368,6 +370,7 @@ class SiteSuitabilityEngine:
                 factor, prepared_data, district_name, district_boundary_shp
             )
             if monitor and monitor.is_cancelled():
+                logger.info("Processing cancelled for district %s during data preparation; aborting.", district_name)
                 return None
 
         self.template_raster = prepared_data["slope"]  # Use slope as template for raster operations
@@ -386,6 +389,7 @@ class SiteSuitabilityEngine:
             if zone is not None:
                 restricted_zones.append(zone)
             if monitor and monitor.is_cancelled():
+                logger.info("Processing cancelled for district %s during restricted zone creation; aborting.", district_name)
                 return None
         
               # print(f"prepared_data: {prepared_data}")
@@ -405,7 +409,7 @@ class SiteSuitabilityEngine:
             if monitor:
                 monitor.update_progress(50, "restrict", f"Restricted zones prepared: {district_name}")
         else:
-            print(f"Warning: No restricted zones for {district_name}")
+            logger.info(f"Warning: No restricted zones for {district_name}")
             # Create an empty mask if no restricted zones
             restricted_mask_raster = None
         
@@ -413,13 +417,14 @@ class SiteSuitabilityEngine:
         score_rasters = {}
         for factor in self.factors:
             if "method_evaluate" in factor and factor["method_evaluate"] is not None:
-                print(f"{district_name} # Evaluating {factor['name']}...")
+                logger.info(f"{district_name} # Evaluating {factor['name']}...")
                 score_raster = factor["method_evaluate"](
                     factor, prepared_data, district_name, district_boundary_shp
                 )
                 if score_raster is not None:
                     score_rasters[factor["name"]] = score_raster
             if monitor and monitor.is_cancelled():
+                logger.info("Processing cancelled for district %s during factor evaluation; aborting.", district_name)
                 return None
         if monitor:
             monitor.update_progress(80, "score", f"Factors scored: {district_name}")
@@ -478,6 +483,7 @@ class SiteSuitabilityEngine:
 
         for district_code, district_name in districts_to_process:
             if monitor and monitor.is_cancelled():
+                logger.info("Processing cancelled; aborting further districts.")
                 return results
             result_path = self.process_district(district_code, district_name, monitor=monitor)
             results[district_name] = result_path
