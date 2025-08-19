@@ -118,6 +118,16 @@ async def user_cancel_map_task(session: SessionDep, current_user: CurrentUser, t
     return BaseResp(error=0)
 
 
+@router.post("/user/my-map-tasks/{taskId}/duplicate", response_model=BaseResp, summary="Duplicate a map task")
+async def user_duplicate_map_task(background_tasks: BackgroundTasks, session: SessionDep, current_user: CurrentUser, taskId: int):
+    data: MapTaskDB | None = crud.duplicate_map_task(
+        session=session, user_id=current_user.id, task_id=taskId, background_tasks=background_tasks
+    )
+    if not data:
+        raise HTTPException(status_code=404, detail="Task not found")
+    return BaseResp(error=0)
+
+
 @router.get("/user/select-options/district", response_model=SelectOptionListResp, summary="Get district select options")
 async def user_get_district_select_options(
     session: SessionDep,

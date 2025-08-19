@@ -173,3 +173,38 @@ def delete_map_task(*, session: Session, user_id: int, task_id: int) -> MapTaskD
     session.delete(db_obj)
     session.commit()
     return db_obj
+
+
+def duplicate_map_task(
+    *,
+    session: Session,
+    user_id: int,
+    task_id: int,
+    background_tasks: BackgroundTasks | None = None,
+) -> MapTaskDB | None:
+    """Duplicate an existing map task for the same user and enqueue processing.
+
+    Returns the newly created MapTaskDB or None if the source task is not found.
+    """
+    src = get_map_task(session=session, user_id=user_id, task_id=task_id)
+    if not src:
+        return None
+
+    new_task = MapTaskDB(
+        user_id=user_id,
+        name=src.name,
+        district=src.district,
+        constraint_factors=src.constraint_factors,
+        suitability_factors=src.suitability_factors,
+        status=MapTaskStatus.PENDING,
+        error_msg=None,
+        started_at=None,
+        ended_at=None,
+    )
+    session.add(new_task)
+    session.commit()
+    session.refresh(new_task)
+
+    if background_tasks is not None:
+        background_tasks.add_task(process_map_task, new_task.id)
+    return new_task
