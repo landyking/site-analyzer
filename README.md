@@ -28,10 +28,10 @@ The platform consists of two main components:
      `git clone <repo-url>`
 
 2. **Backend Setup**  
-     - See `/backend/README.md` for API installation and configuration.
+     - See [`/backend/README.md`](/backend/README.md) for API installation and configuration.
 
 3. **Frontend Setup**  
-     - See `/frontend/README.md` for web app installation and usage.
+     - See [`/frontend/README.md`](frontend/README.md) for web app installation and usage.
 
 ## 📦 Project Structure
 
