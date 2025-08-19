@@ -98,6 +98,18 @@ async def user_get_map_task(session: SessionDep, current_user: CurrentUser, task
     return MyMapTaskResp(error=0, data=my_map_task)
 
 
+@router.delete("/user/my-map-tasks/{taskId}", response_model=BaseResp, summary="Delete a map task")
+async def user_delete_map_task(session: SessionDep, current_user: CurrentUser, taskId: int):
+    try:
+        data: MapTaskDB | None = crud.delete_map_task(session=session, user_id=current_user.id, task_id=taskId)
+    except ValueError as e:
+        # Trying to delete a running task
+        raise HTTPException(status_code=400, detail=str(e))
+    if not data:
+        raise HTTPException(status_code=404, detail="Task not found")
+    return BaseResp(error=0)
+
+
 @router.post("/user/my-map-tasks/{taskId}/cancel", response_model=BaseResp, summary="Cancel a map task")
 async def user_cancel_map_task(session: SessionDep, current_user: CurrentUser, taskId: int):
     data: MapTaskDB | None = crud.cancel_map_task(session=session, user_id=current_user.id, task_id=taskId)

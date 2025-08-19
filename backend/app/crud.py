@@ -3,11 +3,19 @@ import uuid
 from typing import Any
 from datetime import datetime, timezone
 
-from sqlmodel import Session, select
+from sqlmodel import Session, select, delete
 from fastapi import BackgroundTasks
 
 from app.core.security import get_password_hash, verify_password
-from app.models import CreateMapTaskReq, MapTaskDB, MapTaskStatus, UserDB, UserCreate
+from app.models import (
+    CreateMapTaskReq,
+    MapTaskDB,
+    MapTaskStatus,
+    MapTaskProgressDB,
+    MapTaskFileDB,
+    UserDB,
+    UserCreate,
+)
 from pydantic.json import pydantic_encoder
 from app.gis.processor import process_map_task
 
@@ -139,3 +147,29 @@ def list_map_tasks(*, session: Session, user_id: int, completed: bool | None = N
     # Order by newest first
     statement = statement.order_by(MapTaskDB.created_at.desc())
     return list(session.exec(statement).all())
+
+
+def delete_map_task(*, session: Session, user_id: int, task_id: int) -> MapTaskDB | None:
+    """Delete a user's map task if it exists and is not running.
+
+    Returns the deleted task object (pre-delete) or None if not found.
+    Raises ValueError if the task is still pending/processing and cannot be deleted safely.
+    Also removes related files and progress rows when present.
+    """
+    db_obj = get_map_task(session=session, user_id=user_id, task_id=task_id)
+    if not db_obj:
+        return None
+    if db_obj.status in (MapTaskStatus.PENDING, MapTaskStatus.PROCESSING):
+        raise ValueError("Cannot delete a running task; cancel it first")
+
+    # Clean up related rows in batch (best-effort; no FKs defined)
+    try:
+        session.exec(delete(MapTaskFileDB).where(MapTaskFileDB.map_task_id == db_obj.id))
+        session.exec(delete(MapTaskProgressDB).where(MapTaskProgressDB.map_task_id == db_obj.id))
+    except Exception:
+        # If cleanup fails, still attempt to delete the task to honor API contract
+        pass
+
+    session.delete(db_obj)
+    session.commit()
+    return db_obj
