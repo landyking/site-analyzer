@@ -219,19 +219,19 @@ paths:
               schema:
                 $ref: "#/components/schemas/MyMapTaskResp"
   /v1/user/my-map-tasks/{taskId}:
+    parameters:
+      - name: taskId
+        in: path
+        required: true
+        description: "The ID of the map task"
+        schema:
+          type: integer
+          format: int64
     get:
       summary: "Get user's map tasks"
       operationId: "userGetMapTask"
       tags:
         - User
-      parameters:
-        - name: taskId
-          in: path
-          required: true
-          description: "The ID of the map task"
-          schema:
-            type: integer
-            format: int64
       responses:
         "200":
           description: Successful retrieval of user's map tasks
@@ -239,6 +239,39 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/MyMapTaskResp"
+    delete:
+      summary: "Delete a map task"
+      operationId: "userDeleteMapTask"
+      tags:
+        - User
+      responses:
+        "200":
+          description: Successful deletion of map task
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BaseResp"
+  /v1/user/my-map-tasks/{taskId}/duplicate:
+    post:
+      summary: "Duplicate a map task"
+      operationId: "userDuplicateMapTask"
+      tags:
+        - User
+      parameters:
+        - name: taskId
+          in: path
+          required: true
+          description: "The ID of the map task to duplicate"
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "200":
+          description: Successful duplication of map task
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BaseResp"
   /v1/user/my-map-tasks/{taskId}/cancel:
     post:
       summary: "Cancel a map task"
