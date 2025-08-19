@@ -40,16 +40,17 @@ export type HTTPValidationError = {
 };
 
 export type MapTask = {
-	id?: number | null;
-	name?: string | null;
-	user_id?: number | null;
+	id: number;
+	name: string;
+	user_id: number;
 	user_email?: string | null;
-	district_code?: string | null;
+	district_code: string;
 	district_name?: string | null;
-	status?: number | null;
+	status: number;
+	status_desc?: string | null;
 	started_at?: string | null;
 	ended_at?: string | null;
-	created_at?: string | null;
+	created_at: string;
 };
 
 export type MapTask4AdminPageData = {
@@ -61,27 +62,28 @@ export type MapTask4AdminPageData = {
 };
 
 export type MapTaskDetails = {
-	id?: number | null;
-	name?: string | null;
-	user_id?: number | null;
+	id: number;
+	name: string;
+	user_id: number;
 	user_email?: string | null;
-	district_code?: string | null;
+	district_code: string;
 	district_name?: string | null;
-	status?: number | null;
+	status: number;
+	status_desc?: string | null;
 	started_at?: string | null;
 	ended_at?: string | null;
-	created_at?: string | null;
+	created_at: string;
 	files?: Array<MapTaskFile>;
 	constraint_factors?: Array<ConstraintFactor>;
 	suitability_factors?: Array<SuitabilityFactor>;
 };
 
 export type MapTaskFile = {
-	id?: number | null;
-	map_task_id?: number | null;
-	file_type?: string | null;
-	file_path?: string | null;
-	created_at?: string | null;
+	id: number;
+	map_task_id: number;
+	file_type: string;
+	file_path: string;
+	created_at: string;
 };
 
 export type MyMapTaskListResp = {
