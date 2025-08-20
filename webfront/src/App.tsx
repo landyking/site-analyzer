@@ -83,7 +83,7 @@ const myMapsRoute = createRoute({
 
 const mapDetailsRoute = createRoute({
   getParentRoute: () => dashboardLayoutRoute,
-  path: 'my-maps/:taskId',
+  path: 'my-maps/$taskId',
   component: MapDetails,
 })
 

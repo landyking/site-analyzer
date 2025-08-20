@@ -156,7 +156,7 @@ export default function MyMaps() {
   );
 
   const openDetails = (task: MapTaskDetails) => {
-    navigate({ to: '/dashboard/my-maps/:taskId', params: { taskId: String(task.id) } });
+    navigate({ to: `/dashboard/my-maps/$taskId`, params: { taskId: String(task.id) } });
   };
 
   const handleCancel = (task: MapTaskDetails) => {
