@@ -38,6 +38,8 @@ import type {
 	UserUserGetDistrictSelectOptionsResponse,
 	UserUserGetConstraintFactorsSelectOptionsData,
 	UserUserGetConstraintFactorsSelectOptionsResponse,
+	UserUserGetMapTaskProgressData,
+	UserUserGetMapTaskProgressResponse,
 } from "./types.gen";
 
 export class AdminService {
@@ -430,6 +432,28 @@ export class UserService {
 			query: {
 				limit: data.limit,
 				keyword: data.keyword,
+			},
+			errors: {
+				422: "Validation Error",
+			},
+		});
+	}
+
+	/**
+	 * Get progress of a map task
+	 * @param data The data for the request.
+	 * @param data.taskId
+	 * @returns MapTaskProgressListResp Successful Response
+	 * @throws ApiError
+	 */
+	public static userGetMapTaskProgress(
+		data: UserUserGetMapTaskProgressData,
+	): CancelablePromise<UserUserGetMapTaskProgressResponse> {
+		return __request(OpenAPI, {
+			method: "GET",
+			url: "/api/v1/user/my-map-tasks/{taskId}/progress",
+			path: {
+				taskId: data.taskId,
 			},
 			errors: {
 				422: "Validation Error",

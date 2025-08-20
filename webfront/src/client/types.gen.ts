@@ -86,6 +86,21 @@ export type MapTaskFile = {
 	created_at: string;
 };
 
+export type MapTaskProgress = {
+	id: number;
+	map_task_id: number;
+	percent: number;
+	description?: string | null;
+	phase?: string | null;
+	error_msg?: string | null;
+	created_at: string;
+};
+
+export type MapTaskProgressListResp = {
+	error?: number;
+	list: Array<MapTaskProgress>;
+};
+
 export type MyMapTaskListResp = {
 	error?: number;
 	list: Array<MapTaskDetails>;
@@ -285,3 +300,9 @@ export type UserUserGetConstraintFactorsSelectOptionsData = {
 
 export type UserUserGetConstraintFactorsSelectOptionsResponse =
 	SelectOptionListResp;
+
+export type UserUserGetMapTaskProgressData = {
+	taskId: number;
+};
+
+export type UserUserGetMapTaskProgressResponse = MapTaskProgressListResp;
