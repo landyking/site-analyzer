@@ -190,19 +190,19 @@ export default function MapDetails() {
         </Paper>
 
         {/* Settings section */}
-        <Paper variant="outlined" sx={{ p: 0 }}>
-          <Box sx={{ px: 2, py: 1, borderBottom: '1px solid', borderColor: 'divider', background: 'linear-gradient(90deg, #f5f7fa 0%, #e3eafc 100%)', display: 'flex', alignItems: 'center', gap: 1 }}>
+        {/* <Paper variant="outlined" sx={{ p: 0 }}> */}
+          {/* <Box sx={{ px: 2, py: 1, borderBottom: '1px solid', borderColor: 'divider', background: 'linear-gradient(90deg, #f5f7fa 0%, #e3eafc 100%)', display: 'flex', alignItems: 'center', gap: 1 }}>
             <SettingsRoundedIcon color="primary" fontSize="small" />
             <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
               Settings
             </Typography>
-          </Box>
+          </Box> */}
           <Box
             sx={{
               display: 'grid',
               gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' },
               gap: 2,
-              p: 2,
+              // p: 2,
             }}
           >
             <Paper variant="outlined" sx={{ p: 2 }}>
@@ -236,7 +236,7 @@ export default function MapDetails() {
               )}
             </Paper>
           </Box>
-        </Paper>
+        {/* </Paper> */}
       </Stack>
     </PageContainer>
   );
