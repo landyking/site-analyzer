@@ -3,6 +3,7 @@ from fastapi import APIRouter, HTTPException, BackgroundTasks
 from app.models import (
     CreateMapTaskReq,
     MapTaskDB,
+    MapTaskProgressDB,
     MyMapTaskListResp,
     MyMapTaskResp,
     MapTask,
@@ -10,6 +11,7 @@ from app.models import (
     MapTaskStatus,
     BaseResp,
     SelectOptionListResp,
+    MapTaskProgress, MapTaskProgressListResp
 )
 from app.api.deps import CurrentAdminUser, CurrentUser, SessionDep
 from app import crud
@@ -22,6 +24,13 @@ router = APIRouter(tags=["User"])
 # Build a fast lookup for district code -> name
 _DISTRICT_CODE_TO_NAME = {code: name for code, name in districts}
 
+# Ensure timezone-aware datetimes (UTC) for consistent ISO output with offset
+def _as_aware_utc(dt):
+    if dt is None:
+        return None
+    if dt.tzinfo is None:
+        return dt.replace(tzinfo=timezone.utc)
+    return dt.astimezone(timezone.utc)
 
 def _to_map_task_details(session: SessionDep, data: MapTaskDB) -> MapTaskDetails:
     """Create a MapTaskDetails from a MapTaskDB row, safely parsing JSON fields."""
@@ -41,13 +50,6 @@ def _to_map_task_details(session: SessionDep, data: MapTaskDB) -> MapTaskDetails
         status_desc = MapTaskStatus(data.status).name.title()
     except Exception:
         status_desc = None
-    # Ensure timezone-aware datetimes (UTC) for consistent ISO output with offset
-    def _as_aware_utc(dt):
-        if dt is None:
-            return None
-        if dt.tzinfo is None:
-            return dt.replace(tzinfo=timezone.utc)
-        return dt.astimezone(timezone.utc)
 
     return MapTaskDetails(
         id=data.id,
@@ -161,3 +163,12 @@ async def user_get_constraint_factors_select_options(
     if limit is not None and limit > 0:
         items = items[:limit]
     return SelectOptionListResp(error=0, list=items)
+
+@router.get("/user/my-map-tasks/{taskId}/progress", response_model=MapTaskProgressListResp, summary="Get progress of a map task")
+async def user_get_map_task_progress(session: SessionDep, current_user: CurrentUser, taskId: int):
+    rows: list[MapTaskProgressDB] = crud.get_map_task_progress(session=session, user_id=current_user.id, task_id=taskId)
+    for row in rows:
+        row.created_at = _as_aware_utc(row.created_at)
+        row.updated_at = _as_aware_utc(row.updated_at)
+    progress_list = [MapTaskProgress.model_validate(row.model_dump()) for row in rows]
+    return MapTaskProgressListResp(error=0, list=progress_list)

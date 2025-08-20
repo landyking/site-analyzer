@@ -295,6 +295,24 @@ class Token(SQLModel):
 class TokenPayload(SQLModel):
     sub: str
     admin: bool = False
+
+# ----------------------
+# Progress Schemas
+# ----------------------
+
+
+class MapTaskProgress(BaseModel):
+    id: int
+    map_task_id: int
+    percent: int
+    description: str | None = None
+    phase: str | None = None
+    error_msg: str | None = None
+    created_at: datetime
+
+class MapTaskProgressListResp(BaseResp):
+    list: List[MapTaskProgress]
+
 # ----------------------
 # SQLModel ORM Tables (MySQL)
 # ----------------------
