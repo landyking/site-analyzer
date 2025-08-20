@@ -14,6 +14,7 @@ import CrudDashboard from './crud-dashboard/CrudDashboard'
 import DashboardLayout from './crud-dashboard/components/DashboardLayout'
 import Welcome from './crud-dashboard/components/Welcome'
 import MyMaps from './crud-dashboard/components/MyMaps'
+import MapDetails from './crud-dashboard/components/MapDetails'
 import NewMap from './crud-dashboard/components/NewMap'
 import Users from './crud-dashboard/components/Users'
 import Tasks from './crud-dashboard/components/Tasks'
@@ -80,6 +81,12 @@ const myMapsRoute = createRoute({
   component: MyMaps,
 })
 
+const mapDetailsRoute = createRoute({
+  getParentRoute: () => dashboardLayoutRoute,
+  path: 'my-maps/:taskId',
+  component: MapDetails,
+})
+
 const newMapRoute = createRoute({
   getParentRoute: () => dashboardLayoutRoute,
   path: 'new-map',
@@ -124,6 +131,7 @@ const routeTree = rootRoute.addChildren([
       dashboardIndexRoute,
       welcomeRoute,
       myMapsRoute,
+      mapDetailsRoute,
       newMapRoute,
       usersRoute,
       tasksRoute,

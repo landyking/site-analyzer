@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { useMemo, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useNavigate } from '@tanstack/react-router';
 import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
@@ -95,6 +96,7 @@ export default function MyMaps() {
   const queryClient = useQueryClient();
   const { show } = useNotifications();
   const { confirm } = useDialogs();
+  const navigate = useNavigate();
 
   const { data: ongoing, isLoading: loadingOngoing, refetch: refetchOngoing } = useQuery({
     queryKey: ['my-map-tasks', { completed: false }],
@@ -151,8 +153,8 @@ export default function MyMaps() {
     </IconButton>
   );
 
-  const openDetails = () => {
-    // Details not implemented yet
+  const openDetails = (task: MapTaskDetails) => {
+    navigate({ to: '/dashboard/my-maps/:taskId', params: { taskId: String(task.id) } });
   };
 
   const handleCancel = (task: MapTaskDetails) => {
@@ -252,7 +254,7 @@ export default function MyMaps() {
                           <Button size="small" startIcon={<CancelRoundedIcon />} disabled={cancelMutation.isPending} onClick={() => handleCancel(row)}>
                             Cancel
                           </Button>
-                          <Button size="small" startIcon={<VisibilityRoundedIcon />} onClick={openDetails}>View</Button>
+                          <Button size="small" startIcon={<VisibilityRoundedIcon />} onClick={() => openDetails(row)}>View</Button>
                         </Stack>
                       </TableCell>
                     </TableRow>
@@ -323,7 +325,7 @@ export default function MyMaps() {
                             <Button size="small" color="error" startIcon={<DeleteRoundedIcon />} disabled={deleteMutation.isPending} onClick={() => handleDelete(row)}>
                               Delete
                             </Button>
-                            <Button size="small" startIcon={<VisibilityRoundedIcon />} onClick={openDetails}>View</Button>
+                            <Button size="small" startIcon={<VisibilityRoundedIcon />} onClick={() => openDetails(row)}>View</Button>
                           </Stack>
                         </TableCell>
                       </TableRow>
