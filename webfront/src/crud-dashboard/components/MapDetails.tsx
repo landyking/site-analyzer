@@ -190,8 +190,8 @@ export default function MapDetails() {
             <Tab label="Progress" />
           </Tabs>
           <Box sx={{ p: 0 }}>
-            {tabValue === 0 && <MapTab />}
-            {tabValue === 1 && <ProgressTab />}
+            {tabValue === 0 && <MapTab mapTask={mapTask} />}
+            {tabValue === 1 && <ProgressTab mapTask={mapTask} />}
           </Box>
         </Paper>
 
