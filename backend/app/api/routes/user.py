@@ -11,7 +11,7 @@ from app.models import (
     BaseResp,
     SelectOptionListResp,
 )
-from app.api.deps import CurrentUser, SessionDep
+from app.api.deps import CurrentAdminUser, CurrentUser, SessionDep
 from app import crud
 import json
 from app.gis.consts import districts, constraint_factors
@@ -119,7 +119,7 @@ async def user_cancel_map_task(session: SessionDep, current_user: CurrentUser, t
 
 
 @router.post("/user/my-map-tasks/{taskId}/duplicate", response_model=BaseResp, summary="Duplicate a map task")
-async def user_duplicate_map_task(background_tasks: BackgroundTasks, session: SessionDep, current_user: CurrentUser, taskId: int):
+async def user_duplicate_map_task(background_tasks: BackgroundTasks, session: SessionDep, current_user: CurrentAdminUser, taskId: int):
     data: MapTaskDB | None = crud.duplicate_map_task(
         session=session, user_id=current_user.id, task_id=taskId, background_tasks=background_tasks
     )

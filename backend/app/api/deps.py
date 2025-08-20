@@ -11,7 +11,7 @@ from sqlmodel import Session
 from app.core import security
 from app.core.config import settings
 from app.core.db import engine
-from app.models import TokenPayload, UserDB, UserStatus
+from app.models import TokenPayload, UserDB, UserRole, UserStatus
 
 reusable_oauth2 = OAuth2PasswordBearer(
     tokenUrl=f"{settings.API_V1_STR}/user-login"
@@ -49,9 +49,11 @@ def get_current_user(session: SessionDep, token: TokenDep) -> UserDB:
 CurrentUser = Annotated[UserDB, Depends(get_current_user)]
 
 
-def get_current_active_superuser(current_user: CurrentUser) -> UserDB:
-    if not current_user.is_superuser:
+def get_current_active_admin(current_user: CurrentUser) -> UserDB:
+    if not current_user.role == UserRole.ADMIN:
         raise HTTPException(
             status_code=403, detail="The user doesn't have enough privileges"
         )
     return current_user
+
+CurrentAdminUser = Annotated[UserDB, Depends(get_current_active_admin)]
