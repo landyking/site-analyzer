@@ -28,6 +28,7 @@ import PageContainer from './PageContainer';
 import { OpenAPI, UserService, type MapTaskDetails } from '../../client';
 import useNotifications from '../hooks/useNotifications/useNotifications';
 import { useDialogs } from '../hooks/useDialogs/useDialogs';
+import { isAdmin } from '../../utils/auth';
 
 function formatDate(value?: string | null) {
   if (!value) return '-';
@@ -97,6 +98,7 @@ export default function MyMaps() {
   const { show } = useNotifications();
   const { confirm } = useDialogs();
   const navigate = useNavigate();
+  const admin = isAdmin();
 
   const { data: ongoing, isLoading: loadingOngoing, refetch: refetchOngoing } = useQuery({
     queryKey: ['my-map-tasks', { completed: false }],
@@ -319,9 +321,11 @@ export default function MyMaps() {
                                 Download
                               </Button>
                             )}
-                            <Button size="small" startIcon={<ContentCopyRoundedIcon />} disabled={duplicateMutation.isPending} onClick={() => handleDuplicate(row)}>
-                              Duplicate
-                            </Button>
+                            {admin && (
+                              <Button size="small" startIcon={<ContentCopyRoundedIcon />} disabled={duplicateMutation.isPending} onClick={() => handleDuplicate(row)}>
+                                Duplicate
+                              </Button>
+                            )}
                             <Button size="small" color="error" startIcon={<DeleteRoundedIcon />} disabled={deleteMutation.isPending} onClick={() => handleDelete(row)}>
                               Delete
                             </Button>
