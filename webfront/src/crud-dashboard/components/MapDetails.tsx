@@ -16,7 +16,7 @@ import TuneRoundedIcon from '@mui/icons-material/TuneRounded';
 import StarRoundedIcon from '@mui/icons-material/StarRounded';
 import Tabs from '@mui/material/Tabs';
 import Tab from '@mui/material/Tab';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import MapTab from '../map-details/MapTab';
 import ProgressTab from '../map-details/ProgressTab';
 import { useNavigate, useParams } from '@tanstack/react-router';
@@ -95,10 +95,12 @@ export default function MapDetails() {
   const { taskId = '' } = useParams({ strict: false }) as { taskId?: string };
   const [tabValue, setTabValue] = useState(0);
 
+  const [polling, setPolling] = useState(false);
   const query = useQuery({
     queryKey: ['userGetMapTask', taskId],
     queryFn: () => UserService.userGetMapTask({ taskId: Number(taskId) }),
     enabled: !!taskId,
+    refetchInterval: polling ? 10000 : false,
   });
   const { data, isLoading, isError, error } = query;
 
@@ -115,6 +117,16 @@ export default function MapDetails() {
   let mapTask: UserUserGetMapTaskResponse['data'] | undefined = undefined;
   if (data && typeof data === 'object' && 'data' in data) {
     mapTask = (data as UserUserGetMapTaskResponse).data;
+  }
+
+  // Determine if task is ongoing (status < 3)
+  const isOngoing = useMemo(() => {
+    return mapTask && typeof mapTask.status === 'number' && mapTask.status < 3;
+  }, [mapTask]);
+
+  // Enable/disable polling based on status
+  if (polling !== !!isOngoing) {
+    setPolling(!!isOngoing);
   }
 
   const summary = {
@@ -180,69 +192,77 @@ export default function MapDetails() {
 
         {/* Tabs for Map and Progress */}
         <Paper variant="outlined" sx={{ p: 2, mb: 1 }}>
-          <Tabs
-            value={tabValue}
-            onChange={(_, v) => setTabValue(v)}
-            aria-label="Map details tabs"
-            sx={{ borderBottom: 1, borderColor: 'divider', px: 2 }}
-          >
-            <Tab label="Map" />
-            <Tab label="Progress" />
-          </Tabs>
-          <Box sx={{ p: 0 }}>
-            {tabValue === 0 && <MapTab mapTask={mapTask} />}
-            {tabValue === 1 && <ProgressTab mapTask={mapTask} />}
-          </Box>
+          {isOngoing ? (
+            <>
+              <Tabs
+                value={0}
+                aria-label="Map details tabs"
+                sx={{ borderBottom: 1, borderColor: 'divider', px: 2 }}
+              >
+                <Tab label="Progress" />
+              </Tabs>
+              <Box sx={{ p: 0 }}>
+                <ProgressTab mapTask={mapTask} />
+              </Box>
+            </>
+          ) : (
+            <>
+              <Tabs
+                value={tabValue}
+                onChange={(_, v) => setTabValue(v)}
+                aria-label="Map details tabs"
+                sx={{ borderBottom: 1, borderColor: 'divider', px: 2 }}
+              >
+                <Tab label="Map" />
+                <Tab label="Progress" />
+              </Tabs>
+              <Box sx={{ p: 0 }}>
+                {tabValue === 0 && <MapTab mapTask={mapTask} />}
+                {tabValue === 1 && <ProgressTab mapTask={mapTask} />}
+              </Box>
+            </>
+          )}
         </Paper>
 
         {/* Settings section */}
-        {/* <Paper variant="outlined" sx={{ p: 0 }}> */}
-          {/* <Box sx={{ px: 2, py: 1, borderBottom: '1px solid', borderColor: 'divider', background: 'linear-gradient(90deg, #f5f7fa 0%, #e3eafc 100%)', display: 'flex', alignItems: 'center', gap: 1 }}>
-            <SettingsRoundedIcon color="primary" fontSize="small" />
-            <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-              Settings
-            </Typography>
-          </Box> */}
-          <Box
-            sx={{
-              display: 'grid',
-              gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' },
-              gap: 2,
-              // p: 2,
-            }}
-          >
-            <Paper variant="outlined" sx={{ p: 2 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                <TuneRoundedIcon color="secondary" fontSize="small" />
-                <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-                  Constraint Factors
-                </Typography>
-              </Box>
-              {isLoading ? (
-                <Typography color="text.secondary">Loading...</Typography>
-              ) : isError ? (
-                <Typography color="error">Failed to load.</Typography>
-              ) : (
-                <ConstraintList constraints={constraints} />
-              )}
-            </Paper>
-            <Paper variant="outlined" sx={{ p: 2 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                <StarRoundedIcon color="secondary" fontSize="small" />
-                <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-                  Suitability Factors
-                </Typography>
-              </Box>
-              {isLoading ? (
-                <Typography color="text.secondary">Loading...</Typography>
-              ) : isError ? (
-                <Typography color="error">Failed to load.</Typography>
-              ) : (
-                <SuitabilityList suitability={suitability} />
-              )}
-            </Paper>
-          </Box>
-        {/* </Paper> */}
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' },
+            gap: 2,
+          }}
+        >
+          <Paper variant="outlined" sx={{ p: 2 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+              <TuneRoundedIcon color="secondary" fontSize="small" />
+              <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+                Constraint Factors
+              </Typography>
+            </Box>
+            {isLoading ? (
+              <Typography color="text.secondary">Loading...</Typography>
+            ) : isError ? (
+              <Typography color="error">Failed to load.</Typography>
+            ) : (
+              <ConstraintList constraints={constraints} />
+            )}
+          </Paper>
+          <Paper variant="outlined" sx={{ p: 2 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+              <StarRoundedIcon color="secondary" fontSize="small" />
+              <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+                Suitability Factors
+              </Typography>
+            </Box>
+            {isLoading ? (
+              <Typography color="text.secondary">Loading...</Typography>
+            ) : isError ? (
+              <Typography color="error">Failed to load.</Typography>
+            ) : (
+              <SuitabilityList suitability={suitability} />
+            )}
+          </Paper>
+        </Box>
       </Stack>
     </PageContainer>
   );
