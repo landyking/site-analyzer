@@ -12,9 +12,13 @@ import Alert from '@mui/material/Alert';
 import List from '@mui/material/List';
 import ListItem from '@mui/material/ListItem';
 import ListItemText from '@mui/material/ListItemText';
-import SettingsRoundedIcon from '@mui/icons-material/SettingsRounded';
 import TuneRoundedIcon from '@mui/icons-material/TuneRounded';
 import StarRoundedIcon from '@mui/icons-material/StarRounded';
+import Tabs from '@mui/material/Tabs';
+import Tab from '@mui/material/Tab';
+import { useState } from 'react';
+import MapTab from '../map-details/MapTab';
+import ProgressTab from '../map-details/ProgressTab';
 import { useNavigate, useParams } from '@tanstack/react-router';
 import { useQuery } from '@tanstack/react-query';
 import { UserService } from '../../client/sdk.gen';
@@ -89,7 +93,7 @@ function SuitabilityList({ suitability }: { suitability: { kind: string; weight:
 export default function MapDetails() {
   const navigate = useNavigate();
   const { taskId = '' } = useParams({ strict: false }) as { taskId?: string };
-
+  const [tabValue, setTabValue] = useState(0);
 
   const query = useQuery({
     queryKey: ['userGetMapTask', taskId],
@@ -174,18 +178,20 @@ export default function MapDetails() {
           )}
         </Paper>
 
-        {/* Map section (unchanged) */}
-        <Paper variant="outlined" sx={{ p: 0, mb: 1 }}>
-          <Box sx={{ px: 2, py: 1, borderBottom: '1px solid', borderColor: 'divider', background: '#f5f7fa', display: 'flex', alignItems: 'center', gap: 1 }}>
-            <StarRoundedIcon color="primary" fontSize="small" />
-            <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-              Map
-            </Typography>
-          </Box>
-          <Box sx={{ p: 2 }}>
-            <Alert severity="info" sx={{ background: '#eaf6fb', color: '#1976d2' }}>
-              The map task status is pending / processing.
-            </Alert>
+        {/* Tabs for Map and Progress */}
+        <Paper variant="outlined" sx={{ p: 2, mb: 1 }}>
+          <Tabs
+            value={tabValue}
+            onChange={(_, v) => setTabValue(v)}
+            aria-label="Map details tabs"
+            sx={{ borderBottom: 1, borderColor: 'divider', px: 2 }}
+          >
+            <Tab label="Map" />
+            <Tab label="Progress" />
+          </Tabs>
+          <Box sx={{ p: 0 }}>
+            {tabValue === 0 && <MapTab />}
+            {tabValue === 1 && <ProgressTab />}
           </Box>
         </Paper>
 
