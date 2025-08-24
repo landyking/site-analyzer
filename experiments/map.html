@@ -9,6 +9,14 @@
 </head>
 <body>
   <div id="map" style="width: 100%; height: 600px;"></div>
+  <div id="legend">
+  <h4>Suitability Score</h4>
+  <img id="cmimg" src="" />
+  <div class="labels">
+    <span id="cmstart">-</span>
+    <span id="cmend">-</span>
+  </div>
+</div>
   <script>
     // Initialize the map with OpenStreetMap as the basemap
     var map = L.map('map').setView([0, 0], 2);
@@ -23,19 +31,12 @@
     //var titilerUrl = 'http://127.0.0.1:8000/tiles/WebMercatorQuad/{z}/{x}/{y}.png?colormap_name=prism&url=' + encodeURIComponent(rasterPath);
     var task = 24 ;
     var tag = "slope";
-    var titilerUrl = 'http://127.0.0.1:8000/tiles/WebMercatorQuad/{z}/{x}/{y}.png?colormap_name=prism&task='+task+'&tag='+tag;
-
-    // Add the TiTiler raster overlay with some transparency
-    L.tileLayer(titilerUrl, {
-      tileSize: 256,
-      opacity: 1,
-      maxZoom: 22
-    }).addTo(map);
-
+    var colorMap = 'viridis'; // terrain
+    
     // Fetch the raster's bounding box from TiTiler and adjust the map view accordingly
     //var boundsUrl = 'http://127.0.0.1:8000/bounds?url=' + encodeURIComponent(rasterPath);
     var boundsUrl = 'http://127.0.0.1:8000/bounds?task='+task+'&tag='+tag;
-    console.log(boundsUrl)
+    //console.log(boundsUrl)
     fetch(boundsUrl)
       .then(response => response.json())
       .then(data => {
@@ -51,6 +52,40 @@
         }
       })
       .catch(error => console.error("Error fetching bounds:", error));
+
+      fetch('http://127.0.0.1:8000/statistics?task='+task+'&tag='+tag)
+      .then(response => response.json())
+      .then(data => {
+        console.log("statistics data:", data);
+        
+        if (data && data.b1) {
+          // data.bounds is [minX, minY, maxX, maxY]
+          var b = data.b1;
+          // Convert to Leaflet bounds: [[southWest_lat, southWest_lng], [northEast_lat, northEast_lng]]
+          var min = b.min;
+          var max = b.max;
+          var rescale = `${b.min},${b.max}`;
+          console.log(rescale)
+          
+          var titilerUrl = 'http://127.0.0.1:8000/tiles/WebMercatorQuad/{z}/{x}/{y}.png?colormap_name='+colorMap+'&task='+task+'&tag='+tag+'&rescale='+rescale;
+
+          // Add the TiTiler raster overlay with some transparency
+          L.tileLayer(titilerUrl, {
+            tileSize: 256,
+            opacity: 0.8,
+            maxZoom: 22
+          }).addTo(map);
+
+          document.getElementById("cmimg").src = ("http://localhost:8000/colorMaps/"+colorMap+"?format=png&min="+min+"&max="+max+"&width=256&height=20")
+          document.getElementById("cmstart").innerText = min;
+          document.getElementById("cmend").innerText = max;
+        } else {
+          console.error("No bounds returned from TiTiler.");
+        } 
+      })
+      .catch(error => console.error("Error fetching bounds:", error));
+
+      
 
   </script>
 </body>

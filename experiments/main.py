@@ -5,7 +5,7 @@
 import os
 from typing import Annotated
 from fastapi import FastAPI, Query
-from titiler.core.factory import TilerFactory
+from titiler.core.factory import TilerFactory, ColorMapFactory
 
 from starlette.middleware.cors import CORSMiddleware
 
@@ -22,9 +22,11 @@ app.add_middleware(
 
 # Create a TilerFactory for Cloud-Optimized GeoTIFFs
 cog = TilerFactory()
+colormap = ColorMapFactory()
 
 # Register all the COG endpoints automatically
 app.include_router(cog.router, tags=["Cloud Optimized GeoTIFF"])
+app.include_router(colormap.router, tags=["Cloud Optimized GeoTIFF"])
 root_dir = os.path.abspath(f"..")
 
 def DatasetPathParams2(task: Annotated[str, Query(description="task id")], tag: Annotated[str, Query(description="tag")]) -> str:
