@@ -95,7 +95,8 @@ def RPL_ExtractByMask(input_raster, mask_shapefile, output_raster):
         # Copy the metadata
         out_meta = src.meta.copy()
         out_meta.update({
-            "driver": "GTiff",
+            # "driver": "GTiff",
+            "driver": "COG",
             "height": out_image.shape[1],
             "width": out_image.shape[2],
             "transform": out_transform,
@@ -149,7 +150,7 @@ def RPL_PolygonToRaster_conversion(input_shp, output_raster, template_raster):
     with rasterio.open(
         output_raster,
         'w',
-        driver='GTiff',
+        driver='COG',
         height=out_shape[0],
         width=out_shape[1],
         count=1,
@@ -195,7 +196,7 @@ def RPL_DistanceAccumulation(input_raster,output_raster):
         distance_in_meters[nodata_mask] = np.nan
 
         # Save the result to a new raster file
-        with rasterio.open(output_raster, 'w', driver='GTiff', height=src.height, width=src.width,
+        with rasterio.open(output_raster, 'w', driver='COG', height=src.height, width=src.width,
                            count=1, dtype='float32', crs=src.crs, transform=src.transform,
                             nodata=np.nan,compress='lzw',
                            ) as dst:
@@ -252,7 +253,7 @@ def RPL_Reclassify(input_raster, output_raster, remap_range):
             reclassified_data[mask] = new_val
 
         # Save the reclassified raster
-        with rasterio.open(output_raster, 'w', driver='GTiff', height=src.height, width=src.width,
+        with rasterio.open(output_raster, 'w', driver='COG', height=src.height, width=src.width,
                            nodata=src.nodata,
                            compress='lzw',
                            count=1, dtype=reclassified_data.dtype, crs=src.crs, transform=src.transform) as dst:
@@ -273,7 +274,7 @@ def RPL_Combine_rasters(inputs, output_raster):
     with rasterio.open(first_file) as src:
         out_meta = src.meta.copy()
         out_meta.update({
-            "driver": "GTiff",
+            "driver": "COG",
             "count": 1,
             "dtype": "float32",
             "compress": "lzw"
