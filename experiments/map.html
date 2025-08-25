@@ -6,19 +6,54 @@
   <meta charset="utf-8">
   <meta name="viewport" content="initial-scale=1.0">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="stylesheet" href="./jslib/leaflet.groupedlayercontrol.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="./jslib/leaflet.groupedlayercontrol.js"></script>
+  <style>
+    #map {
+      height: 100vh;
+    }
+
+    .legend {
+      background: white;
+      padding: 8px;
+      font-size: 12px;
+      box-shadow: 0 0 8px rgba(0, 0, 0, 0.3);
+      border-radius: 6px;
+      text-align: center;
+      width: 45px;
+    }
+
+    .legend img {
+      display: block;
+      margin: 5px auto;
+      width: 20px;
+      height: 150px;
+    }
+
+    .legend-scale {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      font-size: 11px;
+    }
+
+    .legend-scale span {
+      margin: 2px 0;
+    }
+  </style>
 </head>
 
 <body>
   <div id="map" style="width: 100%; height: 600px;"></div>
-  <div id="legend">
+  <!-- <div id="legend">
     <h4>Suitability Score</h4>
     <img id="cmimg" src="" />
     <div class="labels">
       <span id="cmstart">-</span>
       <span id="cmend">-</span>
     </div>
-  </div>
+  </div> -->
   <script>
     function mapBuilding(bounds) {
       var osmStandard = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -50,7 +85,7 @@
       });
 
       var emptyLayer = L.tileLayer('', {
-        attribution: '', 
+        attribution: '',
         // bounds: bounds,
         // noWrap: true
       });
@@ -70,9 +105,42 @@
         "Carto Light": cartoLight,
         "Carto Dark": cartoDark,
       };
+      var options = {
+        // Make the "Landmarks" group exclusive (use radio inputs)
+        exclusiveGroups: ["Results"],
+        // Show a checkbox next to non-exclusive group labels for toggling all
+        //groupCheckboxes: true
+      };
+      const layerControl = L.control.groupedLayers(baseMaps, null, options).addTo(map);
 
-      const layerControl = L.control.layers(baseMaps).addTo(map);
-      return [map, layerControl]
+
+      var legend = L.control({ position: 'bottomleft' });
+
+      legend.onAdd = function () {
+        var div = L.DomUtil.create('div', 'legend');
+        div.id = "legend-content";  // 方便后续替换
+        div.innerHTML = `<div>No legend</div>`;
+        return div;
+      };
+
+      legend.addTo(map);
+
+      // 动态更新 legend 的函数 (纵向布局)
+      function updateLegend(min, max, imgUrl) {
+        var div = document.getElementById("legend-content");
+        if (!div) return;
+
+        div.innerHTML = `
+        <div><strong>Score</strong></div>
+        <div class="legend-scale">
+          <span>${max}</span>
+          <img src="${imgUrl}" alt="legend"/>
+          <span>${min}</span>
+        </div>
+      `;
+      }
+
+      return [map, layerControl, updateLegend]
     }
 
     async function boundsLoading(task, tag) {
@@ -127,20 +195,9 @@
           // maxZoom: 22
         });
 
-        layerControl.addOverlay(temp, tag)
+        layerControl.addOverlay(temp, tag, "Results");
 
-
-        const gen = () => {
-          const _colorMap = colorMap;
-          const _min = min;
-          const _max = max;
-          return () => {
-            document.getElementById("cmimg").src = ("http://localhost:8000/colorMaps/" + _colorMap + "?format=png&min=" + _min + "&max=" + _max + "&width=256&height=20")
-            document.getElementById("cmstart").innerText = _min;
-            document.getElementById("cmend").innerText = _max;
-          }
-        }
-        colorMapMapping[tag] = gen();
+        colorMapMapping[tag] = [colorMap, min, max]
 
         if (def) {
           temp.addTo(map);
@@ -160,12 +217,14 @@
     async function execute() {
       const bounds = await boundsLoading(task, tag)
       if (bounds) {
-        const [map, layerControl] = mapBuilding(bounds);
+        const [map, layerControl, updateLegend] = mapBuilding(bounds);
         const colorMapMapping = {}
         map.on('overlayadd', function (e) {
-          const func = colorMapMapping[e.name];
-          if (func) {
-            func();
+          const mapping = colorMapMapping[e.name];
+          if (mapping) {
+            const [colorMap, min, max] = mapping;
+            const url = "http://localhost:8000/colorMaps/" + colorMap + "?orientation=vertical&format=png&min=" + min + "&max=" + max + "&width=20&height=150"
+            updateLegend(min, max, url)
             // map.fitBounds(bounds)
           }
         });
