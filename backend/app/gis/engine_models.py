@@ -31,3 +31,20 @@ class TaskMonitor(Protocol):
     def record_error(self, error_msg: str, phase: Optional[str] = None, percent: Optional[int] = None, description: Optional[str] = None) -> None:  # pragma: no cover - interface
         """Record an error event with optional phase, percent and description."""
         ...
+    
+    def record_file(self, file_type:str, file_path: str) -> None:   # pragma: no cover - interface
+        """Record a generated file with type and path."""
+        ...
+
+class EmptyTaskMonitor():
+    def is_cancelled(self) -> bool:
+        return False
+
+    def update_progress(self, percent: int, phase: Optional[str] = None, description: Optional[str] = None) -> None:
+        pass
+
+    def record_error(self, error_msg: str, phase: Optional[str] = None, percent: Optional[int] = None, description: Optional[str] = None) -> None:
+        pass
+    
+    def record_file(self, file_type:str, file_path: str) -> None:
+        pass

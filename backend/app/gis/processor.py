@@ -10,7 +10,7 @@ from sqlmodel import Session, select
 
 from app.core.config import settings
 from app.core.db import engine as db_engine
-from app.models import MapTaskDB, MapTaskStatus, MapTaskProgressDB
+from app.models import MapTaskDB, MapTaskFileDB, MapTaskStatus, MapTaskProgressDB
 from app.gis.engine import SiteSuitabilityEngine
 from app.gis.engine_models import EngineConfigs, RestrictedFactor, SuitabilityFactor, TaskMonitor
 
@@ -86,6 +86,20 @@ class MapTaskMonitor:
 				session.commit()
 		except Exception as e:
 			logger.debug("record_error failed for task %s: %s", self.task_id, e)
+	
+	def record_file(self, file_type:str, file_path: str) -> None: 
+		try:
+			with Session(db_engine) as session:
+				row = MapTaskFileDB(
+					map_task_id=self.task_id,
+					user_id=self.user_id,
+					file_type=file_type,
+					file_path=file_path
+				)
+				session.add(row)
+				session.commit()
+		except Exception as e:
+			logger.debug("record_file failed for task %s: %s", self.task_id, e)
 
 
 def _quick_update_task(task_id: int, **fields) -> None:
