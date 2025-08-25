@@ -164,8 +164,8 @@ def delete_map_task(*, session: Session, user_id: int, task_id: int) -> MapTaskD
 
     # Clean up related rows in batch (best-effort; no FKs defined)
     try:
-        session.exec(delete(MapTaskFileDB).where(MapTaskFileDB.map_task_id == db_obj.id))
-        session.exec(delete(MapTaskProgressDB).where(MapTaskProgressDB.map_task_id == db_obj.id))
+        session.exec(delete(MapTaskFileDB).where(MapTaskFileDB.user_id == user_id, MapTaskFileDB.map_task_id == db_obj.id))
+        session.exec(delete(MapTaskProgressDB).where(MapTaskProgressDB.user_id == user_id,MapTaskProgressDB.map_task_id == db_obj.id))
     except Exception:
         # If cleanup fails, still attempt to delete the task to honor API contract
         pass
@@ -211,9 +211,10 @@ def duplicate_map_task(
 
 def get_map_task_progress(*, session: Session, user_id: int, task_id: int) -> list[MapTaskProgressDB]:
     """Get the progress rows for a specific map task."""
-    task = get_map_task(session=session, user_id=user_id, task_id=task_id)
-    if not task:
-        return []
-    statement = select(MapTaskProgressDB).where(MapTaskProgressDB.map_task_id == task_id).order_by(MapTaskProgressDB.created_at.asc())
+    # task = get_map_task(session=session, user_id=user_id, task_id=task_id)
+    # if not task:
+    #     return []
+    statement = select(MapTaskProgressDB).where(MapTaskProgressDB.user_id == user_id, 
+                                                MapTaskProgressDB.map_task_id == task_id).order_by(MapTaskProgressDB.created_at.asc())
     rows = session.exec(statement).all()
     return rows

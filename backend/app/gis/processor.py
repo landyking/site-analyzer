@@ -24,9 +24,10 @@ class MapTaskMonitor:
 	- update_progress(): throttled insert into t_map_task_progress
 	"""
 
-	def __init__(self, task_id: int, min_interval: float = 1.0) -> None:
+	def __init__(self, task_id: int, user_id: int, min_interval: float = 1.0) -> None:
 		# min_interval kept for signature compatibility but unused (no throttling)
 		self.task_id = task_id
+		self.user_id = user_id
 
 	@staticmethod
 	def _clamp_percent(v: int) -> int:
@@ -54,6 +55,7 @@ class MapTaskMonitor:
 			with Session(db_engine) as session:
 				row = MapTaskProgressDB(
 					map_task_id=self.task_id,
+					user_id=self.user_id,
 					percent=p,
 					description=desc,
 					phase=ph,
@@ -74,6 +76,7 @@ class MapTaskMonitor:
 			with Session(db_engine) as session:
 				row = MapTaskProgressDB(
 					map_task_id=self.task_id,
+					user_id=self.user_id,
 					percent=p if p is not None else 0,
 					description=desc,
 					phase=ph,
@@ -130,10 +133,11 @@ def process_map_task(task_id: int) -> None:
 		started_at=task.started_at or datetime.now(timezone.utc),
 		error_msg=None,
 	)
-
+	user_id = 0
 	try:
 		# Reload current snapshot (avoid holding session for long)
 		task = _load_task(task_id)
+		user_id = task.user_id
 		if not task:
 			raise RuntimeError("Task disappeared during processing")
 		if task.status == MapTaskStatus.CANCELLED:
@@ -187,7 +191,7 @@ def process_map_task(task_id: int) -> None:
 		# Run engine for the selected district code
 		engine = SiteSuitabilityEngine(str(data_dir), str(task_out), configs)
 		selected = [task.district]
-		monitor = MapTaskMonitor(task_id)
+		monitor = MapTaskMonitor(task_id,user_id)
 		monitor.update_progress(0, "init", "Starting")
 		results = engine.run(selected_districts=selected, monitor=monitor)
 		if not monitor.is_cancelled():
@@ -205,7 +209,7 @@ def process_map_task(task_id: int) -> None:
 			msg = msg[:247] + "..."
 		logger.exception("MapTask %s failed: %s", task_id, msg)
 		try:
-			MapTaskMonitor(task_id).record_error(msg, phase="error", description="Failed")
+			MapTaskMonitor(task_id, user_id).record_error(msg, phase="error", description="Failed")
 		except Exception:
 			pass
 		_quick_update_task(

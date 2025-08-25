@@ -378,6 +378,7 @@ class MapTaskProgressDB(SQLModel, table=True):
     __tablename__ = "t_map_task_progress"
 
     id: int | None = Field(default=None, sa_column=Column(BigInteger, primary_key=True, autoincrement=True))
+    user_id: int = Field(sa_type=BigInteger)
     map_task_id: int = Field(sa_type=BigInteger)
     percent: int = Field(default=0)  # 0-100
     description: str | None = Field(default=None, max_length=255)

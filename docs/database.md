@@ -61,16 +61,17 @@ This document describes the database for the `Solar Power Site Suitability Analy
 
 **Table Name: `t_map_task_progress`**
 
-| Column Name   | Data Type    | Constraints                                           | Description                                                                 |
-| ------------- | ------------ | ----------------------------------------------------- | --------------------------------------------------------------------------- |
-| id            | BIGINT       | PRIMARY KEY, AUTO_INCREMENT                           | Unique progress record identifier                                           |
-| map_task_id   | BIGINT       | NOT NULL                                              | Related map task identifier                                                 |
-| percent       | TINYINT      | NOT NULL, DEFAULT 0                                   | Progress percentage (0–100)                                                 |
-| description   | VARCHAR(255) | NULL                                                  | Brief progress description (e.g., current phase or action)                  |
-| phase         | VARCHAR(50)  | NULL                                                  | Optional phase tag (e.g., 'restrict', 'score', 'combine')                   |
-| error_msg     | VARCHAR(255) | NULL                                                  | Optional error information for failure/cancel events                        |
-| created_at    | DATETIME     | DEFAULT CURRENT_TIMESTAMP                             | Progress record creation timestamp                                          |
-| updated_at    | DATETIME     | DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP | Last modification timestamp                                                 |
+| Column Name | Data Type    | Constraints                                           | Description                                                |
+| ----------- | ------------ | ----------------------------------------------------- | ---------------------------------------------------------- |
+| id          | BIGINT       | PRIMARY KEY, AUTO_INCREMENT                           | Unique progress record identifier                          |
+| user_id     | BIGINT       | NOT NULL                                              | Reference to the user who created the map task             |
+| map_task_id | BIGINT       | NOT NULL                                              | Related map task identifier                                |
+| percent     | TINYINT      | NOT NULL, DEFAULT 0                                   | Progress percentage (0–100)                                |
+| description | VARCHAR(255) | NULL                                                  | Brief progress description (e.g., current phase or action) |
+| phase       | VARCHAR(50)  | NULL                                                  | Optional phase tag (e.g., 'restrict', 'score', 'combine')  |
+| error_msg   | VARCHAR(255) | NULL                                                  | Optional error information for failure/cancel events       |
+| created_at  | DATETIME     | DEFAULT CURRENT_TIMESTAMP                             | Progress record creation timestamp                         |
+| updated_at  | DATETIME     | DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP | Last modification timestamp                                |
 
 > Note: This table is append-only to preserve progress history. No foreign keys are defined (consistent with project policy). Consider indexing `(map_task_id, created_at)` for efficient retrieval of the latest progress entries.
 
