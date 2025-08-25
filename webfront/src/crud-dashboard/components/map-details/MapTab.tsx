@@ -2,7 +2,7 @@
 
 import Box from '@mui/material/Box';
 // import Alert from '@mui/material/Alert';
-import type { MapTaskDetails } from '../../client/types.gen';
+import type { MapTaskDetails } from '../../../client/types.gen';
 
 interface MapTabProps {
   mapTask?: MapTaskDetails | null;

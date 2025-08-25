@@ -10,8 +10,8 @@ import Chip from '@mui/material/Chip';
 import CircularProgress from '@mui/material/CircularProgress';
 import Alert from '@mui/material/Alert';
 import Tooltip from '@mui/material/Tooltip';
-import type { MapTaskDetails, MapTaskProgress } from '../../client/types.gen';
-import { UserService } from '../../client/sdk.gen';
+import type { MapTaskDetails, MapTaskProgress } from '../../../client/types.gen';
+import { UserService } from '../../../client/sdk.gen';
 
 interface ProgressTabProps {
 	mapTask?: MapTaskDetails | null;
