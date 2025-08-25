@@ -56,6 +56,14 @@ def get_user_by_id(*, session: Session, user_id: int) -> UserDB | None:
     statement = select(UserDB).where(UserDB.id == user_id)
     return session.exec(statement).first()
 
+def get_files_by_id(*, session: Session, user_id: int, map_task_id: int) -> list[MapTaskFileDB] | None:
+    """Fetch files for a specific map task."""
+    statement = select(MapTaskFileDB).where(
+        MapTaskFileDB.user_id == user_id,
+        MapTaskFileDB.map_task_id == map_task_id
+    )
+    return session.exec(statement).all()
+
 
 def authenticate(*, session: Session, email: str, password: str) -> UserDB | None:
     db_user = get_user_by_email(session=session, email=email)

@@ -3,6 +3,8 @@ from fastapi import APIRouter, HTTPException, BackgroundTasks
 from app.models import (
     CreateMapTaskReq,
     MapTaskDB,
+    MapTaskFile,
+    MapTaskFileDB,
     MapTaskProgressDB,
     MyMapTaskListResp,
     MyMapTaskResp,
@@ -51,9 +53,12 @@ def _to_map_task_details(session: SessionDep, data: MapTaskDB) -> MapTaskDetails
     except Exception:
         status_desc = None
 
+    db_files: list[MapTaskFileDB] = crud.get_files_by_id(session=session, user_id=data.user_id, map_task_id=data.id)
+    files: list[MapTaskFile] = [MapTaskFile(**file.model_dump()) for file in db_files]
     return MapTaskDetails(
         id=data.id,
         name=data.name,
+        files=files,
         constraint_factors=(
             json.loads(data.constraint_factors)
             if isinstance(data.constraint_factors, str)
