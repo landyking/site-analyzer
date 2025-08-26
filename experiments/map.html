@@ -29,6 +29,7 @@
       margin: 5px auto;
       width: 20px;
       height: 150px;
+      transform: rotate(180deg);
     }
 
     .legend-scale {
@@ -55,6 +56,7 @@
     </div>
   </div> -->
   <script>
+    const root_url = "http://127.0.0.1:8888";
     function mapBuilding(bounds) {
       var osmStandard = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '© OpenStreetMap contributors',
@@ -145,8 +147,8 @@
 
     async function boundsLoading(task, tag) {
       // Fetch the raster's bounding box from TiTiler and adjust the map view accordingly
-      //var boundsUrl = 'http://127.0.0.1:8000/bounds?url=' + encodeURIComponent(rasterPath);
-      var boundsUrl = 'http://127.0.0.1:8000/bounds?task=' + task + '&tag=' + tag;
+      //var boundsUrl = `${root_url}/bounds?url=` + encodeURIComponent(rasterPath);
+      var boundsUrl = `${root_url}/bounds?task=${task}&tag=${tag}`;
       //console.log(boundsUrl)
       try {
         const response = await fetch(boundsUrl);
@@ -170,7 +172,7 @@
     }
 
     const layerLoading = async (task, tag, colorMap, colorMapMapping, map, layerControl, bounds, def = false) => {
-      const response = await fetch('http://127.0.0.1:8000/statistics?task=' + task + '&tag=' + tag);
+      const response = await fetch(`${root_url}/statistics?task=${task}&tag=${tag}`);
       const data = await response.json();
 
       console.log(`${task}-${tag}. statistics data:`, data);
@@ -184,7 +186,7 @@
         var rescale = `${b.min},${b.max}`;
         console.log(rescale)
 
-        var titilerUrl = 'http://127.0.0.1:8000/tiles/WebMercatorQuad/{z}/{x}/{y}.png?colormap_name=' + colorMap + '&task=' + task + '&tag=' + tag + '&rescale=' + rescale;
+        var titilerUrl = `${root_url}/tiles/WebMercatorQuad/{z}/{x}/{y}.png?colormap_name=${colorMap}&task=${task}&tag=${tag}&rescale=${rescale}`;
 
         // Add the TiTiler raster overlay with some transparency
         const temp = L.tileLayer(titilerUrl, {
@@ -210,7 +212,7 @@
     // Replace with your own full GeoTIFF path - use the appropriate format for your OS.
     //var rasterPath = 'file:///tmp/slope-in-district.tif';
     //var titilerUrl = 'http://127.0.0.1:8000/tiles/WebMercatorQuad/{z}/{x}/{y}.png?colormap_name=prism&url=' + encodeURIComponent(rasterPath);
-    var task = 24;
+    var task = 5;
     var tag = "final";
     var colorMap = 'blues'; // terrain
 
@@ -223,14 +225,14 @@
           const mapping = colorMapMapping[e.name];
           if (mapping) {
             const [colorMap, min, max] = mapping;
-            const url = "http://localhost:8000/colorMaps/" + colorMap + "?orientation=vertical&format=png&min=" + min + "&max=" + max + "&width=20&height=150"
+            const url = `${root_url}/colorMaps/${colorMap}?orientation=vertical&format=png&min=${min}&max=${max}&width=20&height=150`
             updateLegend(min, max, url)
             // map.fitBounds(bounds)
           }
         });
 
         layerLoading(task, tag, colorMap, colorMapMapping, map, layerControl, bounds, true)
-        layerLoading(24, "slope", "viridis", colorMapMapping, map, layerControl, bounds)
+        layerLoading(task, "slope", "viridis", colorMapMapping, map, layerControl, bounds)
       }
     }
 

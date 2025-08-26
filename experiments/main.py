@@ -1,6 +1,6 @@
 ##
-## uvicorn main:app --reload
-## uv run uvicorn main:app --reload
+## uvicorn main:app --reload --port 8888
+## uv run uvicorn main:app --reload --port 8888
 ##
 import os
 from typing import Annotated
@@ -34,8 +34,10 @@ def DatasetPathParams2(task: Annotated[str, Query(description="task id")], tag: 
     url = f"file://{root_dir}/output-data/{task}/{tag}.tif"
     print(f"Using dataset path: {url}")
     mappings = {
-        "final": f"file://{root_dir}/output-data/engine/task-{task}/zone_masked_Auckland.tif",
-        "slope": f"file://{root_dir}/output-data/engine/task-{task}/score/score_slope_Auckland.tif",
+        "final": f"file://{root_dir}/output-data/engine/task-{task}/zone_masked.tif",
+        "slope": f"file://{root_dir}/output-data/engine/task-{task}/score/score_slope.tif",
+        "restricted": f"file://{root_dir}/output-data/engine/task-{task}/zone_restricted.tif",
+        "weighted": f"file://{root_dir}/output-data/engine/task-{task}/zone_weighted.tif",
     }
     return mappings.get(tag, url)
 
