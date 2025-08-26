@@ -12,6 +12,8 @@ from app.models import (
     MapTaskDetails,
     MapTaskStatus,
     BaseResp,
+    MyMapTaskTileSignature,
+    MyMapTaskTileSignatureResp,
     SelectOptionListResp,
     MapTaskProgress, MapTaskProgressListResp
 )
@@ -19,7 +21,9 @@ from app.api.deps import CurrentAdminUser, CurrentUser, SessionDep
 from app import crud
 import json
 from app.gis.consts import districts, constraint_factors
-from datetime import timezone
+from datetime import datetime, timedelta, timezone
+
+from app.core.security import gen_tile_signature
 
 router = APIRouter(tags=["User"])
 
@@ -123,6 +127,16 @@ async def user_cancel_map_task(session: SessionDep, current_user: CurrentUser, t
     if not data:
         raise HTTPException(status_code=404, detail="Task not found")
     return BaseResp(error=0)
+
+@router.get("/user/my-map-tasks/{taskId}/tile-signature", response_model=MyMapTaskTileSignatureResp, summary="Get a map task's tile signature")
+async def user_get_map_task_tile_signature(session: SessionDep, current_user: CurrentUser, taskId: int):
+    data: MapTaskDB | None = crud.get_map_task(session=session, user_id=current_user.id, task_id=taskId)
+    if not data:
+        raise HTTPException(status_code=404, detail="Task not found")
+    # generate 1 hour later timestamp
+    exp = int((datetime.now() + timedelta(hours=1)).timestamp())
+    sig = gen_tile_signature(current_user.id, taskId, exp)
+    return MyMapTaskTileSignatureResp(error=0, data=MyMapTaskTileSignature(exp=exp, task=taskId, sig=sig))
 
 
 @router.post("/user/my-map-tasks/{taskId}/duplicate", response_model=BaseResp, summary="Duplicate a map task")

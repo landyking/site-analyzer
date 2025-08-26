@@ -84,7 +84,13 @@ class PostLoginResp(BaseResp, LoginResult):
 # ----------------------
 # Map Task Schemas
 # ----------------------
+class MyMapTaskTileSignature(BaseModel):
+    exp: int
+    task: int
+    sig: str
 
+class MyMapTaskTileSignatureResp(BaseResp):
+    data: MyMapTaskTileSignature
 
 class MapTask(BaseModel):
     id: int

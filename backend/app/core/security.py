@@ -1,10 +1,11 @@
 from datetime import datetime, timedelta, timezone
 from typing import Any
-
 import jwt
 from passlib.context import CryptContext
-
 from app.core.config import settings
+import hmac
+import hashlib
+import base64
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
@@ -25,3 +26,13 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
 
 def get_password_hash(password: str) -> str:
     return pwd_context.hash(password)
+
+def gen_tile_signature(user: int, task: int, exp: int) -> str:
+    # Create a message string
+    message = f"{user}:{task}:{exp}".encode()
+    # Use SECRET_KEY as bytes
+    key = settings.SECRET_KEY.encode()
+    # HMAC-SHA256
+    signature = hmac.new(key, message, hashlib.sha256).digest()
+    # URL-safe base64 encode, remove trailing '=' for compactness
+    return base64.urlsafe_b64encode(signature).rstrip(b'=').decode()

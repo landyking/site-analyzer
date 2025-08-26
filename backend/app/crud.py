@@ -64,10 +64,9 @@ def get_files_by_id(*, session: Session, user_id: int, map_task_id: int) -> list
     )
     return session.exec(statement).all()
 
-def get_file_by_conditions(*, session: Session, user_id: int, map_task_id: int, file_type: str) -> MapTaskFileDB | None:
+def get_file_by_conditions(*, session: Session, map_task_id: int, file_type: str) -> MapTaskFileDB | None:
     """Fetch a specific file for a map task by tag."""
     statement = select(MapTaskFileDB).where(
-        MapTaskFileDB.user_id == user_id,
         MapTaskFileDB.map_task_id == map_task_id,
         MapTaskFileDB.file_type == file_type
     )
