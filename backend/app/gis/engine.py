@@ -205,7 +205,7 @@ class SiteSuitabilityEngine:
         key = factor['name']
         dataset = factor['dataset']
         logger.info(f"{district_name} # Clipping {key} data")
-        out_path = os.path.join(self.clip_dir, f"clip_{key}_{district_name}")
+        out_path = os.path.join(self.clip_dir, f"clip_{key}")
 
         if dataset.endswith(".shp"):
             out_path += ".shp"
@@ -235,10 +235,10 @@ class SiteSuitabilityEngine:
         distance = factor["buffer_distance"]
 
         logger.info(f"{district_name} # Creating buffer for {feature}...")
-        buffer_output = os.path.join(self.restrict_dir, f"buffer_{feature}_{district_name}.shp")
+        buffer_output = os.path.join(self.restrict_dir, f"buffer_{feature}.shp")
         RPL_Buffer_analysis(prepared_data[feature], buffer_output, distance)
 
-        buffer_clipped_output = os.path.join(self.restrict_dir, f"buffer_clipped_{feature}_{district_name}.shp")
+        buffer_clipped_output = os.path.join(self.restrict_dir, f"buffer_clipped_{feature}.shp")
         RPL_Clip_analysis(buffer_clipped_output, buffer_output, district_boundary_shp)
 
         return buffer_clipped_output
@@ -260,15 +260,15 @@ class SiteSuitabilityEngine:
         template_raster = prepared_data["slope"]
         
         # Create a binary raster from the vector
-        binary_raster = os.path.join(self.score_dir, f"binary_{factor['name']}_{district_name}.tif")
+        binary_raster = os.path.join(self.score_dir, f"binary_{factor['name']}.tif")
         RPL_PolygonToRaster_conversion(vector_path, binary_raster, template_raster)
         logger.info(f"range {binary_raster}: {tools.get_data_range(binary_raster)}")
         # Calculate distance
-        dist_raster = os.path.join(self.score_dir, f"distance_{factor['name']}_{district_name}.tif")
+        dist_raster = os.path.join(self.score_dir, f"distance_{factor['name']}.tif")
         RPL_DistanceAccumulation(binary_raster, dist_raster)
         logger.info(f"range {dist_raster}: {tools.get_data_range(dist_raster)}")
         # Reclassify distance to score
-        score_raster = os.path.join(self.score_dir, f"score_{factor['name']}_{district_name}.tif")
+        score_raster = os.path.join(self.score_dir, f"score_{factor['name']}.tif")
         RPL_Reclassify(dist_raster, score_raster, factor["evaluate_rules"])
         logger.info(f"range {score_raster}: {tools.get_data_range(score_raster)}")
         return score_raster
@@ -287,7 +287,7 @@ class SiteSuitabilityEngine:
         - Path to the score raster
         """
         slope_raster = prepared_data[factor['name']]
-        score_raster = os.path.join(self.score_dir, f"score_{factor['name']}_{district_name}.tif")
+        score_raster = os.path.join(self.score_dir, f"score_{factor['name']}.tif")
         logger.info(f"range {slope_raster}: {tools.get_data_range(slope_raster)}")
         RPL_Reclassify(slope_raster, score_raster, factor["evaluate_rules"])
         logger.info(f"range {score_raster}: {tools.get_data_range(score_raster)}")
@@ -307,7 +307,7 @@ class SiteSuitabilityEngine:
         - Path to the score raster
         """
         radiation_raster = prepared_data[factor['name']]
-        score_raster = os.path.join(self.score_dir, f"score_{factor['name']}_{district_name}.tif")
+        score_raster = os.path.join(self.score_dir, f"score_{factor['name']}.tif")
         logger.info(f"range {radiation_raster}: {tools.get_data_range(radiation_raster)}")
         RPL_Reclassify(radiation_raster, score_raster, factor["evaluate_rules"])
         logger.info(f"range {score_raster}: {tools.get_data_range(score_raster)}")
@@ -327,7 +327,7 @@ class SiteSuitabilityEngine:
         - Path to the score raster
         """
         temperature_raster = prepared_data[factor['name']]
-        score_raster = os.path.join(self.score_dir, f"score_{factor['name']}_{district_name}.tif")
+        score_raster = os.path.join(self.score_dir, f"score_{factor['name']}.tif")
         logger.info(f"range {temperature_raster}: {tools.get_data_range(temperature_raster)}")
         RPL_Reclassify(temperature_raster, score_raster, factor["evaluate_rules"])
         logger.info(f"range {score_raster}: {tools.get_data_range(score_raster)}")
@@ -353,7 +353,7 @@ class SiteSuitabilityEngine:
         self.template_raster = None
         
         # Select the district boundary
-        district_boundary_shp = os.path.join(self.output_dir, f"district_boundary_{district_name}.shp")
+        district_boundary_shp = os.path.join(self.output_dir, f"district_boundary.shp")
         RPL_Select_analysis(
             self.in_territorial_authority, 
             district_boundary_shp, 
@@ -400,11 +400,11 @@ class SiteSuitabilityEngine:
 
         # Union all restricted zones
         if restricted_zones:
-            restricted_union = os.path.join(self.restrict_dir, f"restricted_union_{district_name}.shp")
+            restricted_union = os.path.join(self.restrict_dir, f"restricted_union.shp")
             RPL_Union_analysis(restricted_zones, restricted_union)
             tools.show_file_info(restricted_union)
             # Convert the union to a raster mask
-            restricted_mask_raster = os.path.join(self.output_dir, f"zone_restricted_{district_name}.tif")
+            restricted_mask_raster = os.path.join(self.output_dir, f"zone_restricted.tif")
             RPL_PolygonToRaster_conversion(restricted_union, restricted_mask_raster, self.template_raster)
             tools.show_file_info(restricted_mask_raster)
             monitor.update_progress(50, "restrict", f"Restricted zones prepared: {district_name}")
@@ -441,14 +441,14 @@ class SiteSuitabilityEngine:
                 if factor["name"] in score_rasters and "score_weight" in factor:
                     weighted_rasters.append((score_rasters[factor["name"]], factor["score_weight"]))
 
-            weighted_sum_raster = os.path.join(self.output_dir, f"zone_weighted_{district_name}.tif")
+            weighted_sum_raster = os.path.join(self.output_dir, f"zone_weighted.tif")
             if weighted_rasters:
                 RPL_Combine_rasters(weighted_rasters, weighted_sum_raster)
                 monitor.record_file("weighted", weighted_sum_raster)
 
                 # Apply the restricted mask
                 if restricted_mask_raster:
-                    final_zone_raster = os.path.join(self.output_dir, f"zone_masked_{district_name}.tif")
+                    final_zone_raster = os.path.join(self.output_dir, f"zone_masked.tif")
                     RPL_Apply_mask(weighted_sum_raster, restricted_mask_raster, final_zone_raster)
                     monitor.update_progress(95, "combine", f"Finalizing: {district_name}")
                     monitor.record_file("final", final_zone_raster)
