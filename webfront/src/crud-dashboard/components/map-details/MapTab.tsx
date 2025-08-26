@@ -2,15 +2,26 @@
 
 import Box from '@mui/material/Box';
 import { useEffect, useRef } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import CircularProgress from '@mui/material/CircularProgress';
+import Alert from '@mui/material/Alert';
 import 'leaflet/dist/leaflet.css';
 import '../../../jslibs/leaflet.groupedlayercontrol.css';
 import { css } from '@emotion/react';
 import L from 'leaflet';
 import '../../../jslibs/leaflet.groupedlayercontrol.js';
-import type { MapTaskDetails } from '../../../client/types.gen';
+import type { GetBoundsResponse, GetStatisticsResponse, MapTaskDetails } from '../../../client/types.gen';
+import { OpenAPI } from '../../../client';
+import { request } from '@/client/core/request.js';
+import { UserService } from '../../../client/sdk.gen';
 
 interface MapTabProps {
-  mapTask?: MapTaskDetails | null;
+  mapTask: MapTaskDetails;
+}
+interface MapTabInnerProps {
+  mapTask: MapTaskDetails;
+  exp: number;
+  sig: string;
 }
 
 // Inline CSS for the legend, mimicking map.html
@@ -86,26 +97,35 @@ function updateLegend(min: number, max: number, imgUrl: string) {
   `;
 }
 
-const root_url: string = "http://127.0.0.1:8888"
-
-// Helper: fetch bounds from TiTiler
-async function fetchBounds(task: number, tag: string): Promise<L.LatLngBoundsExpression | null> {
-  const url = `${root_url}/bounds?task=${task}&tag=${tag}`;
+// Helper: fetch bounds from TiTiler using generated client SDK
+async function fetchBounds(task: number, tag: string,  sig: string, exp: number): Promise<L.LatLngBoundsExpression | null> {
   try {
-    const resp = await fetch(url);
-    const data = await resp.json();
+    const datasetUrl = `${task}-${tag}`;
+    // If your backend expects a file path or a different URL, adjust accordingly
+    const data: GetBoundsResponse =  await request(OpenAPI,{
+			method: "GET",
+			url: "/api/v1/titiler/bounds",
+			query: {
+				url: datasetUrl,
+				exp: exp,
+        sig: sig
+			},
+			errors: {
+				422: "Validation Error",
+			},
+		})
+    // const data = await CloudOptimizedGeoTiffService.getBounds({ url: datasetUrl });
     if (data && data.bounds) {
       const b = data.bounds;
       return [ [b[1], b[0]], [b[3], b[2]] ];
     }
   } catch (e) {
-    // eslint-disable-next-line no-console
     console.error('Error fetching bounds:', e);
   }
   return null;
 }
 
-// Helper: fetch raster stats and add overlay
+// Helper: fetch raster stats and add overlay using generated client
 async function addRasterOverlay(params: {
   task: number;
   tag: string;
@@ -115,35 +135,47 @@ async function addRasterOverlay(params: {
   bounds: L.LatLngBoundsExpression;
   colorMapMapping: Record<string, [string, number, number]>;
   def?: boolean;
+  sig: string;
+  exp: number;
 }) {
-  const { task, tag, colorMap, map, layerControl, bounds, colorMapMapping, def } = params;
-  const url = `${root_url}/statistics?task=${task}&tag=${tag}`;
+  const { task, tag, colorMap, map, layerControl, bounds, colorMapMapping, def,sig, exp } = params;
   try {
-    const resp = await fetch(url);
-    const data = await resp.json();
+    // Compose the dataset URL as used by your backend (adjust as needed)
+    const datasetUrl = `${task}-${tag}`;
+    const data: GetStatisticsResponse = await request(OpenAPI, {
+			method: "GET",
+			url: "/api/v1/titiler/statistics",
+			query: {
+				url: datasetUrl,
+        exp: exp,
+        sig: sig
+			},
+			errors: {
+				422: "Validation Error",
+			},
+		});
     if (data && data.b1) {
       const b = data.b1;
       const min = Math.floor(b.min);
       const max = Math.ceil(b.max);
       const rescale = `${min},${max}`;
-      const titilerUrl = `${root_url}/tiles/WebMercatorQuad/{z}/{x}/{y}.png?colormap_name=${colorMap}&task=${task}&tag=${tag}&rescale=${rescale}`;
+      const titilerUrl = `${OpenAPI.BASE}/api/v1/titiler/tiles/WebMercatorQuad/{z}/{x}/{y}.png?colormap_name=${colorMap}&url=${datasetUrl}&rescale=${rescale}&exp=${exp}&sig=${sig}`;
       const raster = createTileLayer(titilerUrl, {
         tileSize: 256,
         opacity: 0.8,
         bounds,
         noWrap: true,
       });
-      (layerControl as any).addOverlay(raster, tag, 'Results');
+      (layerControl as L.Control.Layers & { addOverlay: (layer: L.Layer, name: string, group: string) => void }).addOverlay(raster, tag, 'Results');
       colorMapMapping[tag] = [colorMap, min, max];
       if (def) raster.addTo(map);
     }
   } catch (e) {
-    // eslint-disable-next-line no-console
     console.error('Error fetching raster stats:', e);
   }
 }
-
-const MapTab: React.FC<MapTabProps> = ({ mapTask }) => {
+const MapInner:React.FC<MapTabInnerProps> = ({ mapTask, exp, sig }) => {
+  
   const mapRef = useRef<HTMLDivElement>(null);
   const leafletMapRef = useRef<L.Map | null>(null);
 
@@ -159,7 +191,7 @@ const MapTab: React.FC<MapTabProps> = ({ mapTask }) => {
       const tag = 'final';
 
       // 1. Fetch bounds
-      const bounds = await fetchBounds(task, tag);
+      const bounds = await fetchBounds(task, tag,sig, exp);
       if (!isMounted || !mapRef.current) return;
 
       // 2. Create base layers
@@ -193,7 +225,8 @@ const MapTab: React.FC<MapTabProps> = ({ mapTask }) => {
       const options = {
         exclusiveGroups: ['Results'],
       };
-      const layerControl = L.control.groupedLayers(baseMaps, null, options).addTo(map);
+  
+      const layerControl: L.Control.Layers & { addOverlay: (layer: L.Layer, name: string, group: string) => void } = L.control.groupedLayers(baseMaps, {}, options).addTo(map);
 
       // 5. Add legend
       const legend = createLegendControl();
@@ -201,11 +234,11 @@ const MapTab: React.FC<MapTabProps> = ({ mapTask }) => {
 
       // 6. Color map mapping for overlays
       const colorMapMapping: Record<string, [string, number, number]> = {};
-      map.on('overlayadd', (e: any) => {
+      map.on('overlayadd', (e: L.LayersControlEvent) => {
         const mapping = colorMapMapping[e.name];
         if (mapping) {
           const [cm, min, max] = mapping;
-          const url = `${root_url}/colorMaps/${cm}?orientation=vertical&format=png&min=${min}&max=${max}&width=20&height=150`;
+          const url = `${OpenAPI.BASE}/api/v1/titiler/colorMaps/${cm}?orientation=vertical&format=png&min=${min}&max=${max}&width=20&height=150`;
           updateLegend(min, max, url);
         }
       });
@@ -215,7 +248,10 @@ const MapTab: React.FC<MapTabProps> = ({ mapTask }) => {
 
       mapTask?.files?.forEach(file => {
         overlays.push(addRasterOverlay({
-          task, tag: file.file_type, colorMap: file_type_2_color_map(file.file_type), map, layerControl, bounds: bounds!, colorMapMapping, def: file.file_type === 'final'
+          task, tag: file.file_type, colorMap: file_type_2_color_map(file.file_type), 
+          map, layerControl, bounds: bounds!,
+           colorMapMapping, def: file.file_type === 'final',
+           sig, exp
         }));
       });
       await Promise.all(overlays);
@@ -228,7 +264,7 @@ const MapTab: React.FC<MapTabProps> = ({ mapTask }) => {
         leafletMapRef.current = null;
       }
     };
-  }, [mapTask]);
+  }, [mapTask, sig, exp]);
 
   return (
     <Box sx={{ p: 2 }}>
@@ -240,6 +276,35 @@ const MapTab: React.FC<MapTabProps> = ({ mapTask }) => {
       <style>{`.legend {${legendStyle.styles}}`}</style>
     </Box>
   );
+};
+
+const MapTab: React.FC<MapTabProps> = ({ mapTask }) => {
+  const taskId = mapTask.id;
+  const { data, isLoading, isError, error } = useQuery({
+    queryKey: ['userGetMapTaskTileSignature', taskId],
+    queryFn: () => UserService.userGetMapTaskTileSignature({ taskId: Number(taskId) }),
+    enabled: !!taskId,
+  });
+
+  if (isLoading) {
+    return (
+      <Box sx={{ p: 2, textAlign: 'center' }}>
+        <CircularProgress size={32} />
+        <div>Loading map signature…</div>
+      </Box>
+    );
+  }
+  if (isError || !data || data.error) {
+    return (
+      <Box sx={{ p: 2 }}>
+        <Alert severity="error">
+          Failed to load map signature. {error instanceof Error ? error.message : ''}
+        </Alert>
+      </Box>
+    );
+  }
+  const { exp, sig } = data.data || {};
+  return <MapInner mapTask={mapTask} exp={exp} sig={sig} />;
 };
 
 export default MapTab;
