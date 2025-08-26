@@ -81,6 +81,8 @@ import type {
 	UserUserDeleteMapTaskResponse,
 	UserUserCancelMapTaskData,
 	UserUserCancelMapTaskResponse,
+	UserUserGetMapTaskTileSignatureData,
+	UserUserGetMapTaskTileSignatureResponse,
 	UserUserDuplicateMapTaskData,
 	UserUserDuplicateMapTaskResponse,
 	UserUserGetDistrictSelectOptionsData,
@@ -1752,6 +1754,28 @@ export class UserService {
 		return __request(OpenAPI, {
 			method: "POST",
 			url: "/api/v1/user/my-map-tasks/{taskId}/cancel",
+			path: {
+				taskId: data.taskId,
+			},
+			errors: {
+				422: "Validation Error",
+			},
+		});
+	}
+
+	/**
+	 * Get a map task's tile signature
+	 * @param data The data for the request.
+	 * @param data.taskId
+	 * @returns MyMapTaskTileSignatureResp Successful Response
+	 * @throws ApiError
+	 */
+	public static userGetMapTaskTileSignature(
+		data: UserUserGetMapTaskTileSignatureData,
+	): CancelablePromise<UserUserGetMapTaskTileSignatureResponse> {
+		return __request(OpenAPI, {
+			method: "GET",
+			url: "/api/v1/user/my-map-tasks/{taskId}/tile-signature",
 			path: {
 				taskId: data.taskId,
 			},

@@ -610,6 +610,17 @@ export type MyMapTaskResp = {
 	data?: MapTaskDetails | null;
 };
 
+export type MyMapTaskTileSignature = {
+	exp: number;
+	task: number;
+	sig: string;
+};
+
+export type MyMapTaskTileSignatureResp = {
+	error?: number;
+	data: MyMapTaskTileSignature;
+};
+
 export type OidcInfoResp = {
 	login_url: string;
 };
@@ -6812,6 +6823,13 @@ export type UserUserCancelMapTaskData = {
 };
 
 export type UserUserCancelMapTaskResponse = BaseResp;
+
+export type UserUserGetMapTaskTileSignatureData = {
+	taskId: number;
+};
+
+export type UserUserGetMapTaskTileSignatureResponse =
+	MyMapTaskTileSignatureResp;
 
 export type UserUserDuplicateMapTaskData = {
 	taskId: number;
