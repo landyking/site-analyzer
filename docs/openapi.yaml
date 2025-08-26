@@ -251,6 +251,27 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/BaseResp"
+  /v1/user/my-map-tasks/{taskId}/tile-signature:
+    parameters:
+      - name: taskId
+        in: path
+        required: true
+        description: "The ID of the map task"
+        schema:
+          type: integer
+          format: int64
+    get:
+      summary: "Get user's map task tile signature"
+      operationId: "userGetMapTaskTileSignature"
+      tags:
+        - User
+      responses:
+        "200":
+          description: Successful retrieval of user's map task tile signature
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MyMapTaskTileSignatureResp"
   /v1/user/my-map-tasks/{taskId}/duplicate:
     post:
       summary: "Duplicate a map task"
@@ -721,6 +742,25 @@ components:
               type: array
               items:
                 $ref: "#/components/schemas/MapTask"
+    MyMapTaskTileSignature:
+      type: object
+      properties:
+        exp:
+          type: integer
+          description: Expiration time as a Unix timestamp
+        task:
+          type: integer
+          description: The ID of the map task
+        sig:
+          type: string
+          description: The tile signature
+    MyMapTaskTileSignatureResp:
+      allOf:
+        - $ref: "#/components/schemas/BaseResp"
+        - type: object
+          properties:
+            data:
+              $ref: "#/components/schemas/MyMapTaskTileSignature"
     MyMapTaskResp:
       allOf:
         - $ref: "#/components/schemas/BaseResp"
