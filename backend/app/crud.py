@@ -64,6 +64,14 @@ def get_files_by_id(*, session: Session, user_id: int, map_task_id: int) -> list
     )
     return session.exec(statement).all()
 
+def get_file_by_conditions(*, session: Session, user_id: int, map_task_id: int, file_type: str) -> MapTaskFileDB | None:
+    """Fetch a specific file for a map task by tag."""
+    statement = select(MapTaskFileDB).where(
+        MapTaskFileDB.user_id == user_id,
+        MapTaskFileDB.map_task_id == map_task_id,
+        MapTaskFileDB.file_type == file_type
+    )
+    return session.exec(statement).first()
 
 def authenticate(*, session: Session, email: str, password: str) -> UserDB | None:
     db_user = get_user_by_email(session=session, email=email)
