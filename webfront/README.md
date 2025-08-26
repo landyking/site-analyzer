@@ -4,7 +4,7 @@
 
 This frontend powers the Site Analyzer app. It includes a public marketing page and an authenticated dashboard for managing maps and tasks.
 
-- Stack: React + TypeScript + Vite, Material UI (MUI), TanStack Router (routing), TanStack Query (server state), Google OAuth (auth), and an auto-generated OpenAPI client.
+- Stack: React + TypeScript + Vite, Material UI (MUI), TanStack Router (routing), TanStack Query (server state), Google OAuth (auth), leafletjs(web map), and an auto-generated OpenAPI client.
 - Structure (key folders):
   - `src/main.tsx`: App bootstrap, GoogleOAuthProvider, QueryClient, global API error handling.
   - `src/App.tsx`: Route tree with protected routes using TanStack Router.
