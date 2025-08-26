@@ -22,6 +22,55 @@ import type {
 	AuthGetOidcTokenResponse,
 	AuthUserTokenRefreshResponse,
 	AuthUserLogoutResponse,
+	GetBoundsData,
+	GetBoundsResponse,
+	GetInfoData,
+	GetInfoResponse,
+	GetInfoGeoJsonData,
+	GetInfoGeoJsonResponse,
+	GetStatisticsData,
+	GetStatisticsResponse,
+	PostStatisticsForGeoJsonData,
+	PostStatisticsForGeoJsonResponse,
+	GetTileSetListData,
+	GetTileSetListResponse,
+	GetTileSetData,
+	GetTileSetResponse,
+	GetTileWithFormatAndScaleData,
+	GetTileWithFormatAndScaleResponse,
+	GetTileWithScaleData,
+	GetTileWithScaleResponse,
+	GetTileWithFormatData,
+	GetTileWithFormatResponse,
+	GetTileData,
+	GetTileResponse,
+	GetMapViewerData,
+	GetMapViewerResponse,
+	GetWmtsData,
+	GetWmtsResponse,
+	GetTileJsonData,
+	GetTileJsonResponse,
+	GetDataForPointData,
+	GetDataForPointResponse,
+	GetPreviewWithSizeAndFormatData,
+	GetPreviewWithSizeAndFormatResponse,
+	GetPreviewWithFormatData,
+	GetPreviewWithFormatResponse,
+	GetPreviewData,
+	GetPreviewResponse,
+	GetDataForBoundingBoxWithSizesAndFormatData,
+	GetDataForBoundingBoxWithSizesAndFormatResponse,
+	GetDataForBoundingBoxWithFormatData,
+	GetDataForBoundingBoxWithFormatResponse,
+	PostDataForGeoJsonWithSizesAndFormatData,
+	PostDataForGeoJsonWithSizesAndFormatResponse,
+	PostDataForGeoJsonWithFormatData,
+	PostDataForGeoJsonWithFormatResponse,
+	PostDataForGeoJsonData,
+	PostDataForGeoJsonResponse,
+	GetColorMapListResponse,
+	GetColorMapData,
+	GetColorMapResponse,
 	UserUserGetMyMapTasksData,
 	UserUserGetMyMapTasksResponse,
 	UserUserCreateMapTaskData,
@@ -255,6 +304,1349 @@ export class AuthService {
 		return __request(OpenAPI, {
 			method: "POST",
 			url: "/api/v1/user/logout",
+		});
+	}
+}
+
+export class CloudOptimizedGeoTiffService {
+	/**
+	 * Bounds
+	 * Return the bounds of the COG.
+	 * @param data The data for the request.
+	 * @param data.url Dataset URL
+	 * @param data.crs Coordinate Reference System.
+	 * @returns Bounds Return dataset's bounds.
+	 * @throws ApiError
+	 */
+	public static getBounds(
+		data: GetBoundsData,
+	): CancelablePromise<GetBoundsResponse> {
+		return __request(OpenAPI, {
+			method: "GET",
+			url: "/api/v1/titiler/bounds",
+			query: {
+				url: data.url,
+				crs: data.crs,
+			},
+			errors: {
+				422: "Validation Error",
+			},
+		});
+	}
+
+	/**
+	 * Info
+	 * Return dataset's basic info.
+	 * @param data The data for the request.
+	 * @param data.url Dataset URL
+	 * @returns Info Return dataset's basic info.
+	 * @throws ApiError
+	 */
+	public static getInfo(data: GetInfoData): CancelablePromise<GetInfoResponse> {
+		return __request(OpenAPI, {
+			method: "GET",
+			url: "/api/v1/titiler/info",
+			query: {
+				url: data.url,
+			},
+			errors: {
+				422: "Validation Error",
+			},
+		});
+	}
+
+	/**
+	 * Info Geojson
+	 * Return dataset's basic info as a GeoJSON feature.
+	 * @param data The data for the request.
+	 * @param data.url Dataset URL
+	 * @param data.crs Coordinate Reference System.
+	 * @returns Feature_Union_Polygon__MultiPolygon__Info_ Return dataset's basic info as a GeoJSON feature.
+	 * @throws ApiError
+	 */
+	public static getInfoGeoJson(
+		data: GetInfoGeoJsonData,
+	): CancelablePromise<GetInfoGeoJsonResponse> {
+		return __request(OpenAPI, {
+			method: "GET",
+			url: "/api/v1/titiler/info.geojson",
+			query: {
+				url: data.url,
+				crs: data.crs,
+			},
+			errors: {
+				422: "Validation Error",
+			},
+		});
+	}
+
+	/**
+	 * Statistics
+	 * Get Dataset statistics.
+	 * @param data The data for the request.
+	 * @param data.url Dataset URL
+	 * @param data.bidx Dataset band indexes
+	 * @param data.expression rio-tiler's band math expression
+	 * @param data.nodata Overwrite internal Nodata value
+	 * @param data.unscale Apply internal Scale/Offset. Defaults to `False`.
+	 * @param data.resampling RasterIO resampling algorithm. Defaults to `nearest`.
+	 * @param data.reproject WarpKernel resampling algorithm (only used when doing re-projection). Defaults to `nearest`.
+	 * @param data.maxSize
+	 * @param data.height
+	 * @param data.width
+	 * @param data.algorithm Algorithm name
+	 * @param data.algorithmParams Algorithm parameter
+	 * @param data.categorical Return statistics for categorical dataset. Defaults to `False`
+	 * @param data.c List of values for which to report counts.
+	 * @param data.p List of percentile values (default to [2, 98]).
+	 * @param data.histogramBins
+	 * Defines the number of equal-width bins in the given range (10, by default).
+	 *
+	 * If bins is a sequence (comma `,` delimited values), it defines a monotonically increasing array of bin edges, including the rightmost edge, allowing for non-uniform bin widths.
+	 *
+	 * link: https://numpy.org/doc/stable/reference/generated/numpy.histogram.html
+	 *
+	 * @param data.histogramRange
+	 * Comma `,` delimited range of the bins.
+	 *
+	 * The lower and upper range of the bins. If not provided, range is simply (a.min(), a.max()).
+	 *
+	 * Values outside the range are ignored. The first element of the range must be less than or equal to the second.
+	 * range affects the automatic bin computation as well.
+	 *
+	 * link: https://numpy.org/doc/stable/reference/generated/numpy.histogram.html
+	 *
+	 * @returns BandStatistics Return dataset's statistics.
+	 * @throws ApiError
+	 */
+	public static getStatistics(
+		data: GetStatisticsData,
+	): CancelablePromise<GetStatisticsResponse> {
+		return __request(OpenAPI, {
+			method: "GET",
+			url: "/api/v1/titiler/statistics",
+			query: {
+				url: data.url,
+				bidx: data.bidx,
+				expression: data.expression,
+				nodata: data.nodata,
+				unscale: data.unscale,
+				resampling: data.resampling,
+				reproject: data.reproject,
+				max_size: data.maxSize,
+				height: data.height,
+				width: data.width,
+				algorithm: data.algorithm,
+				algorithm_params: data.algorithmParams,
+				categorical: data.categorical,
+				c: data.c,
+				p: data.p,
+				histogram_bins: data.histogramBins,
+				histogram_range: data.histogramRange,
+			},
+			errors: {
+				422: "Validation Error",
+			},
+		});
+	}
+
+	/**
+	 * Geojson Statistics
+	 * Get Statistics from a geojson feature or featureCollection.
+	 * @param data The data for the request.
+	 * @param data.url Dataset URL
+	 * @param data.requestBody
+	 * @param data.coordCrs Coordinate Reference System of the input coords. Default to `epsg:4326`.
+	 * @param data.dstCrs Output Coordinate Reference System.
+	 * @param data.bidx Dataset band indexes
+	 * @param data.expression rio-tiler's band math expression
+	 * @param data.nodata Overwrite internal Nodata value
+	 * @param data.unscale Apply internal Scale/Offset. Defaults to `False`.
+	 * @param data.resampling RasterIO resampling algorithm. Defaults to `nearest`.
+	 * @param data.reproject WarpKernel resampling algorithm (only used when doing re-projection). Defaults to `nearest`.
+	 * @param data.maxSize
+	 * @param data.height
+	 * @param data.width
+	 * @param data.algorithm Algorithm name
+	 * @param data.algorithmParams Algorithm parameter
+	 * @param data.categorical Return statistics for categorical dataset. Defaults to `False`
+	 * @param data.c List of values for which to report counts.
+	 * @param data.p List of percentile values (default to [2, 98]).
+	 * @param data.histogramBins
+	 * Defines the number of equal-width bins in the given range (10, by default).
+	 *
+	 * If bins is a sequence (comma `,` delimited values), it defines a monotonically increasing array of bin edges, including the rightmost edge, allowing for non-uniform bin widths.
+	 *
+	 * link: https://numpy.org/doc/stable/reference/generated/numpy.histogram.html
+	 *
+	 * @param data.histogramRange
+	 * Comma `,` delimited range of the bins.
+	 *
+	 * The lower and upper range of the bins. If not provided, range is simply (a.min(), a.max()).
+	 *
+	 * Values outside the range are ignored. The first element of the range must be less than or equal to the second.
+	 * range affects the automatic bin computation as well.
+	 *
+	 * link: https://numpy.org/doc/stable/reference/generated/numpy.histogram.html
+	 *
+	 * @returns unknown Return dataset's statistics from feature or featureCollection.
+	 * @throws ApiError
+	 */
+	public static postStatisticsForGeoJson(
+		data: PostStatisticsForGeoJsonData,
+	): CancelablePromise<PostStatisticsForGeoJsonResponse> {
+		return __request(OpenAPI, {
+			method: "POST",
+			url: "/api/v1/titiler/statistics",
+			query: {
+				url: data.url,
+				coord_crs: data.coordCrs,
+				dst_crs: data.dstCrs,
+				bidx: data.bidx,
+				expression: data.expression,
+				nodata: data.nodata,
+				unscale: data.unscale,
+				resampling: data.resampling,
+				reproject: data.reproject,
+				max_size: data.maxSize,
+				height: data.height,
+				width: data.width,
+				algorithm: data.algorithm,
+				algorithm_params: data.algorithmParams,
+				categorical: data.categorical,
+				c: data.c,
+				p: data.p,
+				histogram_bins: data.histogramBins,
+				histogram_range: data.histogramRange,
+			},
+			body: data.requestBody,
+			mediaType: "application/json",
+			errors: {
+				422: "Validation Error",
+			},
+		});
+	}
+
+	/**
+	 * Retrieve a list of available raster tilesets for the specified dataset.
+	 * Retrieve a list of available raster tilesets for the specified dataset.
+	 * @param data The data for the request.
+	 * @param data.url Dataset URL
+	 * @param data.crs Coordinate Reference System.
+	 * @returns TileSetList Successful Response
+	 * @throws ApiError
+	 */
+	public static getTileSetList(
+		data: GetTileSetListData,
+	): CancelablePromise<GetTileSetListResponse> {
+		return __request(OpenAPI, {
+			method: "GET",
+			url: "/api/v1/titiler/tiles",
+			query: {
+				url: data.url,
+				crs: data.crs,
+			},
+			errors: {
+				422: "Validation Error",
+			},
+		});
+	}
+
+	/**
+	 * Retrieve the raster tileset metadata for the specified dataset and tiling scheme (tile matrix set).
+	 * Retrieve the raster tileset metadata for the specified dataset and tiling scheme (tile matrix set).
+	 * @param data The data for the request.
+	 * @param data.tileMatrixSetId Identifier selecting one of the TileMatrixSetId supported.
+	 * @param data.url Dataset URL
+	 * @returns TileSet Successful Response
+	 * @throws ApiError
+	 */
+	public static getTileSet(
+		data: GetTileSetData,
+	): CancelablePromise<GetTileSetResponse> {
+		return __request(OpenAPI, {
+			method: "GET",
+			url: "/api/v1/titiler/tiles/{tileMatrixSetId}",
+			path: {
+				tileMatrixSetId: data.tileMatrixSetId,
+			},
+			query: {
+				url: data.url,
+			},
+			errors: {
+				422: "Validation Error",
+			},
+		});
+	}
+
+	/**
+	 * Tile
+	 * Create map tile from a dataset.
+	 * @param data The data for the request.
+	 * @param data.z Identifier (Z) selecting one of the scales defined in the TileMatrixSet and representing the scaleDenominator the tile.
+	 * @param data.x Column (X) index of the tile on the selected TileMatrix. It cannot exceed the MatrixHeight-1 for the selected TileMatrix.
+	 * @param data.y Row (Y) index of the tile on the selected TileMatrix. It cannot exceed the MatrixWidth-1 for the selected TileMatrix.
+	 * @param data.tileMatrixSetId Identifier selecting one of the TileMatrixSetId supported.
+	 * @param data.scale
+	 * @param data.format
+	 * @param data.url Dataset URL
+	 * @param data.buffer Buffer on each side of the given tile. It must be a multiple of `0.5`. Output **tilesize** will be expanded to `tilesize + 2 * buffer` (e.g 0.5 = 257x257, 1.0 = 258x258).
+	 * @param data.padding Padding to apply to each tile edge. Helps reduce resampling artefacts along edges. Defaults to `0`.
+	 * @param data.bidx Dataset band indexes
+	 * @param data.expression rio-tiler's band math expression
+	 * @param data.nodata Overwrite internal Nodata value
+	 * @param data.unscale Apply internal Scale/Offset. Defaults to `False`.
+	 * @param data.resampling RasterIO resampling algorithm. Defaults to `nearest`.
+	 * @param data.reproject WarpKernel resampling algorithm (only used when doing re-projection). Defaults to `nearest`.
+	 * @param data.algorithm Algorithm name
+	 * @param data.algorithmParams Algorithm parameter
+	 * @param data.colormapName Colormap name
+	 * @param data.colormap JSON encoded custom Colormap
+	 * @param data.rescale comma (',') delimited Min,Max range. Can set multiple time for multiple bands.
+	 * @param data.colorFormula rio-color formula (info: https://github.com/mapbox/rio-color)
+	 * @param data.returnMask Add mask to the output data. Defaults to `True`
+	 * @returns unknown Return an image.
+	 * @throws ApiError
+	 */
+	public static getTileWithFormatAndScale(
+		data: GetTileWithFormatAndScaleData,
+	): CancelablePromise<GetTileWithFormatAndScaleResponse> {
+		return __request(OpenAPI, {
+			method: "GET",
+			url: "/api/v1/titiler/tiles/{tileMatrixSetId}/{z}/{x}/{y}@{scale}x.{format}",
+			path: {
+				z: data.z,
+				x: data.x,
+				y: data.y,
+				tileMatrixSetId: data.tileMatrixSetId,
+				scale: data.scale,
+				format: data.format,
+			},
+			query: {
+				url: data.url,
+				buffer: data.buffer,
+				padding: data.padding,
+				bidx: data.bidx,
+				expression: data.expression,
+				nodata: data.nodata,
+				unscale: data.unscale,
+				resampling: data.resampling,
+				reproject: data.reproject,
+				algorithm: data.algorithm,
+				algorithm_params: data.algorithmParams,
+				colormap_name: data.colormapName,
+				colormap: data.colormap,
+				rescale: data.rescale,
+				color_formula: data.colorFormula,
+				return_mask: data.returnMask,
+			},
+			errors: {
+				422: "Validation Error",
+			},
+		});
+	}
+
+	/**
+	 * Tile
+	 * Create map tile from a dataset.
+	 * @param data The data for the request.
+	 * @param data.z Identifier (Z) selecting one of the scales defined in the TileMatrixSet and representing the scaleDenominator the tile.
+	 * @param data.x Column (X) index of the tile on the selected TileMatrix. It cannot exceed the MatrixHeight-1 for the selected TileMatrix.
+	 * @param data.y Row (Y) index of the tile on the selected TileMatrix. It cannot exceed the MatrixWidth-1 for the selected TileMatrix.
+	 * @param data.tileMatrixSetId Identifier selecting one of the TileMatrixSetId supported.
+	 * @param data.scale
+	 * @param data.url Dataset URL
+	 * @param data.format
+	 * @param data.buffer Buffer on each side of the given tile. It must be a multiple of `0.5`. Output **tilesize** will be expanded to `tilesize + 2 * buffer` (e.g 0.5 = 257x257, 1.0 = 258x258).
+	 * @param data.padding Padding to apply to each tile edge. Helps reduce resampling artefacts along edges. Defaults to `0`.
+	 * @param data.bidx Dataset band indexes
+	 * @param data.expression rio-tiler's band math expression
+	 * @param data.nodata Overwrite internal Nodata value
+	 * @param data.unscale Apply internal Scale/Offset. Defaults to `False`.
+	 * @param data.resampling RasterIO resampling algorithm. Defaults to `nearest`.
+	 * @param data.reproject WarpKernel resampling algorithm (only used when doing re-projection). Defaults to `nearest`.
+	 * @param data.algorithm Algorithm name
+	 * @param data.algorithmParams Algorithm parameter
+	 * @param data.colormapName Colormap name
+	 * @param data.colormap JSON encoded custom Colormap
+	 * @param data.rescale comma (',') delimited Min,Max range. Can set multiple time for multiple bands.
+	 * @param data.colorFormula rio-color formula (info: https://github.com/mapbox/rio-color)
+	 * @param data.returnMask Add mask to the output data. Defaults to `True`
+	 * @returns unknown Return an image.
+	 * @throws ApiError
+	 */
+	public static getTileWithScale(
+		data: GetTileWithScaleData,
+	): CancelablePromise<GetTileWithScaleResponse> {
+		return __request(OpenAPI, {
+			method: "GET",
+			url: "/api/v1/titiler/tiles/{tileMatrixSetId}/{z}/{x}/{y}@{scale}x",
+			path: {
+				z: data.z,
+				x: data.x,
+				y: data.y,
+				tileMatrixSetId: data.tileMatrixSetId,
+				scale: data.scale,
+			},
+			query: {
+				format: data.format,
+				url: data.url,
+				buffer: data.buffer,
+				padding: data.padding,
+				bidx: data.bidx,
+				expression: data.expression,
+				nodata: data.nodata,
+				unscale: data.unscale,
+				resampling: data.resampling,
+				reproject: data.reproject,
+				algorithm: data.algorithm,
+				algorithm_params: data.algorithmParams,
+				colormap_name: data.colormapName,
+				colormap: data.colormap,
+				rescale: data.rescale,
+				color_formula: data.colorFormula,
+				return_mask: data.returnMask,
+			},
+			errors: {
+				422: "Validation Error",
+			},
+		});
+	}
+
+	/**
+	 * Tile
+	 * Create map tile from a dataset.
+	 * @param data The data for the request.
+	 * @param data.z Identifier (Z) selecting one of the scales defined in the TileMatrixSet and representing the scaleDenominator the tile.
+	 * @param data.x Column (X) index of the tile on the selected TileMatrix. It cannot exceed the MatrixHeight-1 for the selected TileMatrix.
+	 * @param data.y Row (Y) index of the tile on the selected TileMatrix. It cannot exceed the MatrixWidth-1 for the selected TileMatrix.
+	 * @param data.tileMatrixSetId Identifier selecting one of the TileMatrixSetId supported.
+	 * @param data.format
+	 * @param data.url Dataset URL
+	 * @param data.scale
+	 * @param data.buffer Buffer on each side of the given tile. It must be a multiple of `0.5`. Output **tilesize** will be expanded to `tilesize + 2 * buffer` (e.g 0.5 = 257x257, 1.0 = 258x258).
+	 * @param data.padding Padding to apply to each tile edge. Helps reduce resampling artefacts along edges. Defaults to `0`.
+	 * @param data.bidx Dataset band indexes
+	 * @param data.expression rio-tiler's band math expression
+	 * @param data.nodata Overwrite internal Nodata value
+	 * @param data.unscale Apply internal Scale/Offset. Defaults to `False`.
+	 * @param data.resampling RasterIO resampling algorithm. Defaults to `nearest`.
+	 * @param data.reproject WarpKernel resampling algorithm (only used when doing re-projection). Defaults to `nearest`.
+	 * @param data.algorithm Algorithm name
+	 * @param data.algorithmParams Algorithm parameter
+	 * @param data.colormapName Colormap name
+	 * @param data.colormap JSON encoded custom Colormap
+	 * @param data.rescale comma (',') delimited Min,Max range. Can set multiple time for multiple bands.
+	 * @param data.colorFormula rio-color formula (info: https://github.com/mapbox/rio-color)
+	 * @param data.returnMask Add mask to the output data. Defaults to `True`
+	 * @returns unknown Return an image.
+	 * @throws ApiError
+	 */
+	public static getTileWithFormat(
+		data: GetTileWithFormatData,
+	): CancelablePromise<GetTileWithFormatResponse> {
+		return __request(OpenAPI, {
+			method: "GET",
+			url: "/api/v1/titiler/tiles/{tileMatrixSetId}/{z}/{x}/{y}.{format}",
+			path: {
+				z: data.z,
+				x: data.x,
+				y: data.y,
+				tileMatrixSetId: data.tileMatrixSetId,
+				format: data.format,
+			},
+			query: {
+				scale: data.scale,
+				url: data.url,
+				buffer: data.buffer,
+				padding: data.padding,
+				bidx: data.bidx,
+				expression: data.expression,
+				nodata: data.nodata,
+				unscale: data.unscale,
+				resampling: data.resampling,
+				reproject: data.reproject,
+				algorithm: data.algorithm,
+				algorithm_params: data.algorithmParams,
+				colormap_name: data.colormapName,
+				colormap: data.colormap,
+				rescale: data.rescale,
+				color_formula: data.colorFormula,
+				return_mask: data.returnMask,
+			},
+			errors: {
+				422: "Validation Error",
+			},
+		});
+	}
+
+	/**
+	 * Tile
+	 * Create map tile from a dataset.
+	 * @param data The data for the request.
+	 * @param data.z Identifier (Z) selecting one of the scales defined in the TileMatrixSet and representing the scaleDenominator the tile.
+	 * @param data.x Column (X) index of the tile on the selected TileMatrix. It cannot exceed the MatrixHeight-1 for the selected TileMatrix.
+	 * @param data.y Row (Y) index of the tile on the selected TileMatrix. It cannot exceed the MatrixWidth-1 for the selected TileMatrix.
+	 * @param data.tileMatrixSetId Identifier selecting one of the TileMatrixSetId supported.
+	 * @param data.url Dataset URL
+	 * @param data.scale
+	 * @param data.format
+	 * @param data.buffer Buffer on each side of the given tile. It must be a multiple of `0.5`. Output **tilesize** will be expanded to `tilesize + 2 * buffer` (e.g 0.5 = 257x257, 1.0 = 258x258).
+	 * @param data.padding Padding to apply to each tile edge. Helps reduce resampling artefacts along edges. Defaults to `0`.
+	 * @param data.bidx Dataset band indexes
+	 * @param data.expression rio-tiler's band math expression
+	 * @param data.nodata Overwrite internal Nodata value
+	 * @param data.unscale Apply internal Scale/Offset. Defaults to `False`.
+	 * @param data.resampling RasterIO resampling algorithm. Defaults to `nearest`.
+	 * @param data.reproject WarpKernel resampling algorithm (only used when doing re-projection). Defaults to `nearest`.
+	 * @param data.algorithm Algorithm name
+	 * @param data.algorithmParams Algorithm parameter
+	 * @param data.colormapName Colormap name
+	 * @param data.colormap JSON encoded custom Colormap
+	 * @param data.rescale comma (',') delimited Min,Max range. Can set multiple time for multiple bands.
+	 * @param data.colorFormula rio-color formula (info: https://github.com/mapbox/rio-color)
+	 * @param data.returnMask Add mask to the output data. Defaults to `True`
+	 * @returns unknown Return an image.
+	 * @throws ApiError
+	 */
+	public static getTile(data: GetTileData): CancelablePromise<GetTileResponse> {
+		return __request(OpenAPI, {
+			method: "GET",
+			url: "/api/v1/titiler/tiles/{tileMatrixSetId}/{z}/{x}/{y}",
+			path: {
+				z: data.z,
+				x: data.x,
+				y: data.y,
+				tileMatrixSetId: data.tileMatrixSetId,
+			},
+			query: {
+				scale: data.scale,
+				format: data.format,
+				url: data.url,
+				buffer: data.buffer,
+				padding: data.padding,
+				bidx: data.bidx,
+				expression: data.expression,
+				nodata: data.nodata,
+				unscale: data.unscale,
+				resampling: data.resampling,
+				reproject: data.reproject,
+				algorithm: data.algorithm,
+				algorithm_params: data.algorithmParams,
+				colormap_name: data.colormapName,
+				colormap: data.colormap,
+				rescale: data.rescale,
+				color_formula: data.colorFormula,
+				return_mask: data.returnMask,
+			},
+			errors: {
+				422: "Validation Error",
+			},
+		});
+	}
+
+	/**
+	 * Map Viewer
+	 * Return TileJSON document for a dataset.
+	 * @param data The data for the request.
+	 * @param data.tileMatrixSetId Identifier selecting one of the TileMatrixSetId supported.
+	 * @param data.url Dataset URL
+	 * @param data.tileFormat Default will be automatically defined if the output image needs a mask (png) or not (jpeg).
+	 * @param data.tileScale Tile size scale. 1=256x256, 2=512x512...
+	 * @param data.minzoom Overwrite default minzoom.
+	 * @param data.maxzoom Overwrite default maxzoom.
+	 * @param data.buffer Buffer on each side of the given tile. It must be a multiple of `0.5`. Output **tilesize** will be expanded to `tilesize + 2 * buffer` (e.g 0.5 = 257x257, 1.0 = 258x258).
+	 * @param data.padding Padding to apply to each tile edge. Helps reduce resampling artefacts along edges. Defaults to `0`.
+	 * @param data.bidx Dataset band indexes
+	 * @param data.expression rio-tiler's band math expression
+	 * @param data.nodata Overwrite internal Nodata value
+	 * @param data.unscale Apply internal Scale/Offset. Defaults to `False`.
+	 * @param data.resampling RasterIO resampling algorithm. Defaults to `nearest`.
+	 * @param data.reproject WarpKernel resampling algorithm (only used when doing re-projection). Defaults to `nearest`.
+	 * @param data.algorithm Algorithm name
+	 * @param data.algorithmParams Algorithm parameter
+	 * @param data.colormapName Colormap name
+	 * @param data.colormap JSON encoded custom Colormap
+	 * @param data.rescale comma (',') delimited Min,Max range. Can set multiple time for multiple bands.
+	 * @param data.colorFormula rio-color formula (info: https://github.com/mapbox/rio-color)
+	 * @param data.returnMask Add mask to the output data. Defaults to `True`
+	 * @returns string Successful Response
+	 * @throws ApiError
+	 */
+	public static getMapViewer(
+		data: GetMapViewerData,
+	): CancelablePromise<GetMapViewerResponse> {
+		return __request(OpenAPI, {
+			method: "GET",
+			url: "/api/v1/titiler/{tileMatrixSetId}/map.html",
+			path: {
+				tileMatrixSetId: data.tileMatrixSetId,
+			},
+			query: {
+				tile_format: data.tileFormat,
+				tile_scale: data.tileScale,
+				minzoom: data.minzoom,
+				maxzoom: data.maxzoom,
+				url: data.url,
+				buffer: data.buffer,
+				padding: data.padding,
+				bidx: data.bidx,
+				expression: data.expression,
+				nodata: data.nodata,
+				unscale: data.unscale,
+				resampling: data.resampling,
+				reproject: data.reproject,
+				algorithm: data.algorithm,
+				algorithm_params: data.algorithmParams,
+				colormap_name: data.colormapName,
+				colormap: data.colormap,
+				rescale: data.rescale,
+				color_formula: data.colorFormula,
+				return_mask: data.returnMask,
+			},
+			errors: {
+				422: "Validation Error",
+			},
+		});
+	}
+
+	/**
+	 * Wmts
+	 * OGC WMTS endpoint.
+	 * @param data The data for the request.
+	 * @param data.tileMatrixSetId Identifier selecting one of the TileMatrixSetId supported.
+	 * @param data.url Dataset URL
+	 * @param data.tileFormat Output image type. Default is png.
+	 * @param data.tileScale Tile size scale. 1=256x256, 2=512x512...
+	 * @param data.minzoom Overwrite default minzoom.
+	 * @param data.maxzoom Overwrite default maxzoom.
+	 * @param data.useEpsg Use EPSG code, not opengis.net, for the ows:SupportedCRS in the TileMatrixSet (set to True to enable ArcMap compatability)
+	 * @param data.buffer Buffer on each side of the given tile. It must be a multiple of `0.5`. Output **tilesize** will be expanded to `tilesize + 2 * buffer` (e.g 0.5 = 257x257, 1.0 = 258x258).
+	 * @param data.padding Padding to apply to each tile edge. Helps reduce resampling artefacts along edges. Defaults to `0`.
+	 * @param data.bidx Dataset band indexes
+	 * @param data.expression rio-tiler's band math expression
+	 * @param data.nodata Overwrite internal Nodata value
+	 * @param data.unscale Apply internal Scale/Offset. Defaults to `False`.
+	 * @param data.resampling RasterIO resampling algorithm. Defaults to `nearest`.
+	 * @param data.reproject WarpKernel resampling algorithm (only used when doing re-projection). Defaults to `nearest`.
+	 * @param data.algorithm Algorithm name
+	 * @param data.algorithmParams Algorithm parameter
+	 * @param data.colormapName Colormap name
+	 * @param data.colormap JSON encoded custom Colormap
+	 * @param data.rescale comma (',') delimited Min,Max range. Can set multiple time for multiple bands.
+	 * @param data.colorFormula rio-color formula (info: https://github.com/mapbox/rio-color)
+	 * @param data.returnMask Add mask to the output data. Defaults to `True`
+	 * @returns string Successful Response
+	 * @throws ApiError
+	 */
+	public static getWmts(data: GetWmtsData): CancelablePromise<GetWmtsResponse> {
+		return __request(OpenAPI, {
+			method: "GET",
+			url: "/api/v1/titiler/{tileMatrixSetId}/WMTSCapabilities.xml",
+			path: {
+				tileMatrixSetId: data.tileMatrixSetId,
+			},
+			query: {
+				tile_format: data.tileFormat,
+				tile_scale: data.tileScale,
+				minzoom: data.minzoom,
+				maxzoom: data.maxzoom,
+				use_epsg: data.useEpsg,
+				url: data.url,
+				buffer: data.buffer,
+				padding: data.padding,
+				bidx: data.bidx,
+				expression: data.expression,
+				nodata: data.nodata,
+				unscale: data.unscale,
+				resampling: data.resampling,
+				reproject: data.reproject,
+				algorithm: data.algorithm,
+				algorithm_params: data.algorithmParams,
+				colormap_name: data.colormapName,
+				colormap: data.colormap,
+				rescale: data.rescale,
+				color_formula: data.colorFormula,
+				return_mask: data.returnMask,
+			},
+			errors: {
+				422: "Validation Error",
+			},
+		});
+	}
+
+	/**
+	 * Tilejson
+	 * Return TileJSON document for a dataset.
+	 * @param data The data for the request.
+	 * @param data.tileMatrixSetId Identifier selecting one of the TileMatrixSetId supported.
+	 * @param data.url Dataset URL
+	 * @param data.tileFormat Default will be automatically defined if the output image needs a mask (png) or not (jpeg).
+	 * @param data.tileScale Tile size scale. 1=256x256, 2=512x512...
+	 * @param data.minzoom Overwrite default minzoom.
+	 * @param data.maxzoom Overwrite default maxzoom.
+	 * @param data.buffer Buffer on each side of the given tile. It must be a multiple of `0.5`. Output **tilesize** will be expanded to `tilesize + 2 * buffer` (e.g 0.5 = 257x257, 1.0 = 258x258).
+	 * @param data.padding Padding to apply to each tile edge. Helps reduce resampling artefacts along edges. Defaults to `0`.
+	 * @param data.bidx Dataset band indexes
+	 * @param data.expression rio-tiler's band math expression
+	 * @param data.nodata Overwrite internal Nodata value
+	 * @param data.unscale Apply internal Scale/Offset. Defaults to `False`.
+	 * @param data.resampling RasterIO resampling algorithm. Defaults to `nearest`.
+	 * @param data.reproject WarpKernel resampling algorithm (only used when doing re-projection). Defaults to `nearest`.
+	 * @param data.algorithm Algorithm name
+	 * @param data.algorithmParams Algorithm parameter
+	 * @param data.colormapName Colormap name
+	 * @param data.colormap JSON encoded custom Colormap
+	 * @param data.rescale comma (',') delimited Min,Max range. Can set multiple time for multiple bands.
+	 * @param data.colorFormula rio-color formula (info: https://github.com/mapbox/rio-color)
+	 * @param data.returnMask Add mask to the output data. Defaults to `True`
+	 * @returns TileJSON Return a tilejson
+	 * @throws ApiError
+	 */
+	public static getTileJson(
+		data: GetTileJsonData,
+	): CancelablePromise<GetTileJsonResponse> {
+		return __request(OpenAPI, {
+			method: "GET",
+			url: "/api/v1/titiler/{tileMatrixSetId}/tilejson.json",
+			path: {
+				tileMatrixSetId: data.tileMatrixSetId,
+			},
+			query: {
+				tile_format: data.tileFormat,
+				tile_scale: data.tileScale,
+				minzoom: data.minzoom,
+				maxzoom: data.maxzoom,
+				url: data.url,
+				buffer: data.buffer,
+				padding: data.padding,
+				bidx: data.bidx,
+				expression: data.expression,
+				nodata: data.nodata,
+				unscale: data.unscale,
+				resampling: data.resampling,
+				reproject: data.reproject,
+				algorithm: data.algorithm,
+				algorithm_params: data.algorithmParams,
+				colormap_name: data.colormapName,
+				colormap: data.colormap,
+				rescale: data.rescale,
+				color_formula: data.colorFormula,
+				return_mask: data.returnMask,
+			},
+			errors: {
+				422: "Validation Error",
+			},
+		});
+	}
+
+	/**
+	 * Point
+	 * Get Point value for a dataset.
+	 * @param data The data for the request.
+	 * @param data.lon Longitude
+	 * @param data.lat Latitude
+	 * @param data.url Dataset URL
+	 * @param data.coordCrs Coordinate Reference System of the input coords. Default to `epsg:4326`.
+	 * @param data.bidx Dataset band indexes
+	 * @param data.expression rio-tiler's band math expression
+	 * @param data.nodata Overwrite internal Nodata value
+	 * @param data.unscale Apply internal Scale/Offset. Defaults to `False`.
+	 * @param data.resampling RasterIO resampling algorithm. Defaults to `nearest`.
+	 * @param data.reproject WarpKernel resampling algorithm (only used when doing re-projection). Defaults to `nearest`.
+	 * @returns titiler__core__models__responses__Point Return a value for a point
+	 * @throws ApiError
+	 */
+	public static getDataForPoint(
+		data: GetDataForPointData,
+	): CancelablePromise<GetDataForPointResponse> {
+		return __request(OpenAPI, {
+			method: "GET",
+			url: "/api/v1/titiler/point/{lon},{lat}",
+			path: {
+				lon: data.lon,
+				lat: data.lat,
+			},
+			query: {
+				url: data.url,
+				coord_crs: data.coordCrs,
+				bidx: data.bidx,
+				expression: data.expression,
+				nodata: data.nodata,
+				unscale: data.unscale,
+				resampling: data.resampling,
+				reproject: data.reproject,
+			},
+			errors: {
+				422: "Validation Error",
+			},
+		});
+	}
+
+	/**
+	 * Preview
+	 * Create preview of a dataset.
+	 * @param data The data for the request.
+	 * @param data.format
+	 * @param data.height
+	 * @param data.width
+	 * @param data.url Dataset URL
+	 * @param data.bidx Dataset band indexes
+	 * @param data.expression rio-tiler's band math expression
+	 * @param data.nodata Overwrite internal Nodata value
+	 * @param data.unscale Apply internal Scale/Offset. Defaults to `False`.
+	 * @param data.resampling RasterIO resampling algorithm. Defaults to `nearest`.
+	 * @param data.reproject WarpKernel resampling algorithm (only used when doing re-projection). Defaults to `nearest`.
+	 * @param data.maxSize
+	 * @param data.dstCrs Output Coordinate Reference System.
+	 * @param data.algorithm Algorithm name
+	 * @param data.algorithmParams Algorithm parameter
+	 * @param data.colormapName Colormap name
+	 * @param data.colormap JSON encoded custom Colormap
+	 * @param data.rescale comma (',') delimited Min,Max range. Can set multiple time for multiple bands.
+	 * @param data.colorFormula rio-color formula (info: https://github.com/mapbox/rio-color)
+	 * @param data.returnMask Add mask to the output data. Defaults to `True`
+	 * @returns unknown Return an image.
+	 * @throws ApiError
+	 */
+	public static getPreviewWithSizeAndFormat(
+		data: GetPreviewWithSizeAndFormatData,
+	): CancelablePromise<GetPreviewWithSizeAndFormatResponse> {
+		return __request(OpenAPI, {
+			method: "GET",
+			url: "/api/v1/titiler/preview/{width}x{height}.{format}",
+			path: {
+				format: data.format,
+				height: data.height,
+				width: data.width,
+			},
+			query: {
+				url: data.url,
+				bidx: data.bidx,
+				expression: data.expression,
+				nodata: data.nodata,
+				unscale: data.unscale,
+				resampling: data.resampling,
+				reproject: data.reproject,
+				max_size: data.maxSize,
+				dst_crs: data.dstCrs,
+				algorithm: data.algorithm,
+				algorithm_params: data.algorithmParams,
+				colormap_name: data.colormapName,
+				colormap: data.colormap,
+				rescale: data.rescale,
+				color_formula: data.colorFormula,
+				return_mask: data.returnMask,
+			},
+			errors: {
+				422: "Validation Error",
+			},
+		});
+	}
+
+	/**
+	 * Preview
+	 * Create preview of a dataset.
+	 * @param data The data for the request.
+	 * @param data.format
+	 * @param data.url Dataset URL
+	 * @param data.bidx Dataset band indexes
+	 * @param data.expression rio-tiler's band math expression
+	 * @param data.nodata Overwrite internal Nodata value
+	 * @param data.unscale Apply internal Scale/Offset. Defaults to `False`.
+	 * @param data.resampling RasterIO resampling algorithm. Defaults to `nearest`.
+	 * @param data.reproject WarpKernel resampling algorithm (only used when doing re-projection). Defaults to `nearest`.
+	 * @param data.maxSize
+	 * @param data.height
+	 * @param data.width
+	 * @param data.dstCrs Output Coordinate Reference System.
+	 * @param data.algorithm Algorithm name
+	 * @param data.algorithmParams Algorithm parameter
+	 * @param data.colormapName Colormap name
+	 * @param data.colormap JSON encoded custom Colormap
+	 * @param data.rescale comma (',') delimited Min,Max range. Can set multiple time for multiple bands.
+	 * @param data.colorFormula rio-color formula (info: https://github.com/mapbox/rio-color)
+	 * @param data.returnMask Add mask to the output data. Defaults to `True`
+	 * @returns unknown Return an image.
+	 * @throws ApiError
+	 */
+	public static getPreviewWithFormat(
+		data: GetPreviewWithFormatData,
+	): CancelablePromise<GetPreviewWithFormatResponse> {
+		return __request(OpenAPI, {
+			method: "GET",
+			url: "/api/v1/titiler/preview.{format}",
+			path: {
+				format: data.format,
+			},
+			query: {
+				url: data.url,
+				bidx: data.bidx,
+				expression: data.expression,
+				nodata: data.nodata,
+				unscale: data.unscale,
+				resampling: data.resampling,
+				reproject: data.reproject,
+				max_size: data.maxSize,
+				height: data.height,
+				width: data.width,
+				dst_crs: data.dstCrs,
+				algorithm: data.algorithm,
+				algorithm_params: data.algorithmParams,
+				colormap_name: data.colormapName,
+				colormap: data.colormap,
+				rescale: data.rescale,
+				color_formula: data.colorFormula,
+				return_mask: data.returnMask,
+			},
+			errors: {
+				422: "Validation Error",
+			},
+		});
+	}
+
+	/**
+	 * Preview
+	 * Create preview of a dataset.
+	 * @param data The data for the request.
+	 * @param data.url Dataset URL
+	 * @param data.format
+	 * @param data.bidx Dataset band indexes
+	 * @param data.expression rio-tiler's band math expression
+	 * @param data.nodata Overwrite internal Nodata value
+	 * @param data.unscale Apply internal Scale/Offset. Defaults to `False`.
+	 * @param data.resampling RasterIO resampling algorithm. Defaults to `nearest`.
+	 * @param data.reproject WarpKernel resampling algorithm (only used when doing re-projection). Defaults to `nearest`.
+	 * @param data.maxSize
+	 * @param data.height
+	 * @param data.width
+	 * @param data.dstCrs Output Coordinate Reference System.
+	 * @param data.algorithm Algorithm name
+	 * @param data.algorithmParams Algorithm parameter
+	 * @param data.colormapName Colormap name
+	 * @param data.colormap JSON encoded custom Colormap
+	 * @param data.rescale comma (',') delimited Min,Max range. Can set multiple time for multiple bands.
+	 * @param data.colorFormula rio-color formula (info: https://github.com/mapbox/rio-color)
+	 * @param data.returnMask Add mask to the output data. Defaults to `True`
+	 * @returns unknown Return an image.
+	 * @throws ApiError
+	 */
+	public static getPreview(
+		data: GetPreviewData,
+	): CancelablePromise<GetPreviewResponse> {
+		return __request(OpenAPI, {
+			method: "GET",
+			url: "/api/v1/titiler/preview",
+			query: {
+				format: data.format,
+				url: data.url,
+				bidx: data.bidx,
+				expression: data.expression,
+				nodata: data.nodata,
+				unscale: data.unscale,
+				resampling: data.resampling,
+				reproject: data.reproject,
+				max_size: data.maxSize,
+				height: data.height,
+				width: data.width,
+				dst_crs: data.dstCrs,
+				algorithm: data.algorithm,
+				algorithm_params: data.algorithmParams,
+				colormap_name: data.colormapName,
+				colormap: data.colormap,
+				rescale: data.rescale,
+				color_formula: data.colorFormula,
+				return_mask: data.returnMask,
+			},
+			errors: {
+				422: "Validation Error",
+			},
+		});
+	}
+
+	/**
+	 * Bbox Image
+	 * Create image from a bbox.
+	 * @param data The data for the request.
+	 * @param data.minx Bounding box min X
+	 * @param data.miny Bounding box min Y
+	 * @param data.maxx Bounding box max X
+	 * @param data.maxy Bounding box max Y
+	 * @param data.format
+	 * @param data.height
+	 * @param data.width
+	 * @param data.url Dataset URL
+	 * @param data.bidx Dataset band indexes
+	 * @param data.expression rio-tiler's band math expression
+	 * @param data.nodata Overwrite internal Nodata value
+	 * @param data.unscale Apply internal Scale/Offset. Defaults to `False`.
+	 * @param data.resampling RasterIO resampling algorithm. Defaults to `nearest`.
+	 * @param data.reproject WarpKernel resampling algorithm (only used when doing re-projection). Defaults to `nearest`.
+	 * @param data.maxSize
+	 * @param data.dstCrs Output Coordinate Reference System.
+	 * @param data.coordCrs Coordinate Reference System of the input coords. Default to `epsg:4326`.
+	 * @param data.algorithm Algorithm name
+	 * @param data.algorithmParams Algorithm parameter
+	 * @param data.colormapName Colormap name
+	 * @param data.colormap JSON encoded custom Colormap
+	 * @param data.rescale comma (',') delimited Min,Max range. Can set multiple time for multiple bands.
+	 * @param data.colorFormula rio-color formula (info: https://github.com/mapbox/rio-color)
+	 * @param data.returnMask Add mask to the output data. Defaults to `True`
+	 * @returns unknown Return an image.
+	 * @throws ApiError
+	 */
+	public static getDataForBoundingBoxWithSizesAndFormat(
+		data: GetDataForBoundingBoxWithSizesAndFormatData,
+	): CancelablePromise<GetDataForBoundingBoxWithSizesAndFormatResponse> {
+		return __request(OpenAPI, {
+			method: "GET",
+			url: "/api/v1/titiler/bbox/{minx},{miny},{maxx},{maxy}/{width}x{height}.{format}",
+			path: {
+				minx: data.minx,
+				miny: data.miny,
+				maxx: data.maxx,
+				maxy: data.maxy,
+				format: data.format,
+				height: data.height,
+				width: data.width,
+			},
+			query: {
+				url: data.url,
+				bidx: data.bidx,
+				expression: data.expression,
+				nodata: data.nodata,
+				unscale: data.unscale,
+				resampling: data.resampling,
+				reproject: data.reproject,
+				max_size: data.maxSize,
+				dst_crs: data.dstCrs,
+				coord_crs: data.coordCrs,
+				algorithm: data.algorithm,
+				algorithm_params: data.algorithmParams,
+				colormap_name: data.colormapName,
+				colormap: data.colormap,
+				rescale: data.rescale,
+				color_formula: data.colorFormula,
+				return_mask: data.returnMask,
+			},
+			errors: {
+				422: "Validation Error",
+			},
+		});
+	}
+
+	/**
+	 * Bbox Image
+	 * Create image from a bbox.
+	 * @param data The data for the request.
+	 * @param data.minx Bounding box min X
+	 * @param data.miny Bounding box min Y
+	 * @param data.maxx Bounding box max X
+	 * @param data.maxy Bounding box max Y
+	 * @param data.format
+	 * @param data.url Dataset URL
+	 * @param data.bidx Dataset band indexes
+	 * @param data.expression rio-tiler's band math expression
+	 * @param data.nodata Overwrite internal Nodata value
+	 * @param data.unscale Apply internal Scale/Offset. Defaults to `False`.
+	 * @param data.resampling RasterIO resampling algorithm. Defaults to `nearest`.
+	 * @param data.reproject WarpKernel resampling algorithm (only used when doing re-projection). Defaults to `nearest`.
+	 * @param data.maxSize
+	 * @param data.height
+	 * @param data.width
+	 * @param data.dstCrs Output Coordinate Reference System.
+	 * @param data.coordCrs Coordinate Reference System of the input coords. Default to `epsg:4326`.
+	 * @param data.algorithm Algorithm name
+	 * @param data.algorithmParams Algorithm parameter
+	 * @param data.colormapName Colormap name
+	 * @param data.colormap JSON encoded custom Colormap
+	 * @param data.rescale comma (',') delimited Min,Max range. Can set multiple time for multiple bands.
+	 * @param data.colorFormula rio-color formula (info: https://github.com/mapbox/rio-color)
+	 * @param data.returnMask Add mask to the output data. Defaults to `True`
+	 * @returns unknown Return an image.
+	 * @throws ApiError
+	 */
+	public static getDataForBoundingBoxWithFormat(
+		data: GetDataForBoundingBoxWithFormatData,
+	): CancelablePromise<GetDataForBoundingBoxWithFormatResponse> {
+		return __request(OpenAPI, {
+			method: "GET",
+			url: "/api/v1/titiler/bbox/{minx},{miny},{maxx},{maxy}.{format}",
+			path: {
+				minx: data.minx,
+				miny: data.miny,
+				maxx: data.maxx,
+				maxy: data.maxy,
+				format: data.format,
+			},
+			query: {
+				url: data.url,
+				bidx: data.bidx,
+				expression: data.expression,
+				nodata: data.nodata,
+				unscale: data.unscale,
+				resampling: data.resampling,
+				reproject: data.reproject,
+				max_size: data.maxSize,
+				height: data.height,
+				width: data.width,
+				dst_crs: data.dstCrs,
+				coord_crs: data.coordCrs,
+				algorithm: data.algorithm,
+				algorithm_params: data.algorithmParams,
+				colormap_name: data.colormapName,
+				colormap: data.colormap,
+				rescale: data.rescale,
+				color_formula: data.colorFormula,
+				return_mask: data.returnMask,
+			},
+			errors: {
+				422: "Validation Error",
+			},
+		});
+	}
+
+	/**
+	 * Feature Image
+	 * Create image from a geojson feature.
+	 * @param data The data for the request.
+	 * @param data.format
+	 * @param data.height
+	 * @param data.width
+	 * @param data.url Dataset URL
+	 * @param data.requestBody
+	 * @param data.bidx Dataset band indexes
+	 * @param data.expression rio-tiler's band math expression
+	 * @param data.nodata Overwrite internal Nodata value
+	 * @param data.unscale Apply internal Scale/Offset. Defaults to `False`.
+	 * @param data.resampling RasterIO resampling algorithm. Defaults to `nearest`.
+	 * @param data.reproject WarpKernel resampling algorithm (only used when doing re-projection). Defaults to `nearest`.
+	 * @param data.maxSize
+	 * @param data.coordCrs Coordinate Reference System of the input coords. Default to `epsg:4326`.
+	 * @param data.dstCrs Output Coordinate Reference System.
+	 * @param data.algorithm Algorithm name
+	 * @param data.algorithmParams Algorithm parameter
+	 * @param data.colormapName Colormap name
+	 * @param data.colormap JSON encoded custom Colormap
+	 * @param data.rescale comma (',') delimited Min,Max range. Can set multiple time for multiple bands.
+	 * @param data.colorFormula rio-color formula (info: https://github.com/mapbox/rio-color)
+	 * @param data.returnMask Add mask to the output data. Defaults to `True`
+	 * @returns unknown Return an image.
+	 * @throws ApiError
+	 */
+	public static postDataForGeoJsonWithSizesAndFormat(
+		data: PostDataForGeoJsonWithSizesAndFormatData,
+	): CancelablePromise<PostDataForGeoJsonWithSizesAndFormatResponse> {
+		return __request(OpenAPI, {
+			method: "POST",
+			url: "/api/v1/titiler/feature/{width}x{height}.{format}",
+			path: {
+				format: data.format,
+				height: data.height,
+				width: data.width,
+			},
+			query: {
+				url: data.url,
+				bidx: data.bidx,
+				expression: data.expression,
+				nodata: data.nodata,
+				unscale: data.unscale,
+				resampling: data.resampling,
+				reproject: data.reproject,
+				max_size: data.maxSize,
+				coord_crs: data.coordCrs,
+				dst_crs: data.dstCrs,
+				algorithm: data.algorithm,
+				algorithm_params: data.algorithmParams,
+				colormap_name: data.colormapName,
+				colormap: data.colormap,
+				rescale: data.rescale,
+				color_formula: data.colorFormula,
+				return_mask: data.returnMask,
+			},
+			body: data.requestBody,
+			mediaType: "application/json",
+			errors: {
+				422: "Validation Error",
+			},
+		});
+	}
+
+	/**
+	 * Feature Image
+	 * Create image from a geojson feature.
+	 * @param data The data for the request.
+	 * @param data.format
+	 * @param data.url Dataset URL
+	 * @param data.requestBody
+	 * @param data.bidx Dataset band indexes
+	 * @param data.expression rio-tiler's band math expression
+	 * @param data.nodata Overwrite internal Nodata value
+	 * @param data.unscale Apply internal Scale/Offset. Defaults to `False`.
+	 * @param data.resampling RasterIO resampling algorithm. Defaults to `nearest`.
+	 * @param data.reproject WarpKernel resampling algorithm (only used when doing re-projection). Defaults to `nearest`.
+	 * @param data.maxSize
+	 * @param data.height
+	 * @param data.width
+	 * @param data.coordCrs Coordinate Reference System of the input coords. Default to `epsg:4326`.
+	 * @param data.dstCrs Output Coordinate Reference System.
+	 * @param data.algorithm Algorithm name
+	 * @param data.algorithmParams Algorithm parameter
+	 * @param data.colormapName Colormap name
+	 * @param data.colormap JSON encoded custom Colormap
+	 * @param data.rescale comma (',') delimited Min,Max range. Can set multiple time for multiple bands.
+	 * @param data.colorFormula rio-color formula (info: https://github.com/mapbox/rio-color)
+	 * @param data.returnMask Add mask to the output data. Defaults to `True`
+	 * @returns unknown Return an image.
+	 * @throws ApiError
+	 */
+	public static postDataForGeoJsonWithFormat(
+		data: PostDataForGeoJsonWithFormatData,
+	): CancelablePromise<PostDataForGeoJsonWithFormatResponse> {
+		return __request(OpenAPI, {
+			method: "POST",
+			url: "/api/v1/titiler/feature.{format}",
+			path: {
+				format: data.format,
+			},
+			query: {
+				url: data.url,
+				bidx: data.bidx,
+				expression: data.expression,
+				nodata: data.nodata,
+				unscale: data.unscale,
+				resampling: data.resampling,
+				reproject: data.reproject,
+				max_size: data.maxSize,
+				height: data.height,
+				width: data.width,
+				coord_crs: data.coordCrs,
+				dst_crs: data.dstCrs,
+				algorithm: data.algorithm,
+				algorithm_params: data.algorithmParams,
+				colormap_name: data.colormapName,
+				colormap: data.colormap,
+				rescale: data.rescale,
+				color_formula: data.colorFormula,
+				return_mask: data.returnMask,
+			},
+			body: data.requestBody,
+			mediaType: "application/json",
+			errors: {
+				422: "Validation Error",
+			},
+		});
+	}
+
+	/**
+	 * Feature Image
+	 * Create image from a geojson feature.
+	 * @param data The data for the request.
+	 * @param data.url Dataset URL
+	 * @param data.requestBody
+	 * @param data.format
+	 * @param data.bidx Dataset band indexes
+	 * @param data.expression rio-tiler's band math expression
+	 * @param data.nodata Overwrite internal Nodata value
+	 * @param data.unscale Apply internal Scale/Offset. Defaults to `False`.
+	 * @param data.resampling RasterIO resampling algorithm. Defaults to `nearest`.
+	 * @param data.reproject WarpKernel resampling algorithm (only used when doing re-projection). Defaults to `nearest`.
+	 * @param data.maxSize
+	 * @param data.height
+	 * @param data.width
+	 * @param data.coordCrs Coordinate Reference System of the input coords. Default to `epsg:4326`.
+	 * @param data.dstCrs Output Coordinate Reference System.
+	 * @param data.algorithm Algorithm name
+	 * @param data.algorithmParams Algorithm parameter
+	 * @param data.colormapName Colormap name
+	 * @param data.colormap JSON encoded custom Colormap
+	 * @param data.rescale comma (',') delimited Min,Max range. Can set multiple time for multiple bands.
+	 * @param data.colorFormula rio-color formula (info: https://github.com/mapbox/rio-color)
+	 * @param data.returnMask Add mask to the output data. Defaults to `True`
+	 * @returns unknown Return an image.
+	 * @throws ApiError
+	 */
+	public static postDataForGeoJson(
+		data: PostDataForGeoJsonData,
+	): CancelablePromise<PostDataForGeoJsonResponse> {
+		return __request(OpenAPI, {
+			method: "POST",
+			url: "/api/v1/titiler/feature",
+			query: {
+				format: data.format,
+				url: data.url,
+				bidx: data.bidx,
+				expression: data.expression,
+				nodata: data.nodata,
+				unscale: data.unscale,
+				resampling: data.resampling,
+				reproject: data.reproject,
+				max_size: data.maxSize,
+				height: data.height,
+				width: data.width,
+				coord_crs: data.coordCrs,
+				dst_crs: data.dstCrs,
+				algorithm: data.algorithm,
+				algorithm_params: data.algorithmParams,
+				colormap_name: data.colormapName,
+				colormap: data.colormap,
+				rescale: data.rescale,
+				color_formula: data.colorFormula,
+				return_mask: data.returnMask,
+			},
+			body: data.requestBody,
+			mediaType: "application/json",
+			errors: {
+				422: "Validation Error",
+			},
+		});
+	}
+}
+
+export class ColorMapService {
+	/**
+	 * Retrieve the list of available colormaps.
+	 * Retrieve the list of available colormaps.
+	 * @returns ColorMapsList Successful Response
+	 * @throws ApiError
+	 */
+	public static getColorMapList(): CancelablePromise<GetColorMapListResponse> {
+		return __request(OpenAPI, {
+			method: "GET",
+			url: "/api/v1/titiler/colorMaps",
+		});
+	}
+
+	/**
+	 * Retrieve the colorMap metadata or image.
+	 * Retrieve the metadata of the specified colormap.
+	 * @param data The data for the request.
+	 * @param data.colorMapId ColorMap name
+	 * @param data.format Return colorMap as Image.
+	 * @param data.orientation Image Orientation.
+	 * @param data.height Image Height (default to 20px for horizontal or 256px for vertical).
+	 * @param data.width Image Width (default to 256px for horizontal or 20px for vertical).
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static getColorMap(
+		data: GetColorMapData,
+	): CancelablePromise<GetColorMapResponse> {
+		return __request(OpenAPI, {
+			method: "GET",
+			url: "/api/v1/titiler/colorMaps/{colorMapId}",
+			path: {
+				colorMapId: data.colorMapId,
+			},
+			query: {
+				format: data.format,
+				orientation: data.orientation,
+				height: data.height,
+				width: data.width,
+			},
+			errors: {
+				422: "Validation Error",
+			},
 		});
 	}
 }
