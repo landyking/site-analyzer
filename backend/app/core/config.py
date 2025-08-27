@@ -81,6 +81,14 @@ class Settings(BaseSettings):
     INPUT_DATA_DIR: Annotated[Path, BeforeValidator(parse_abs_path)]
     OUTPUT_DATA_DIR: Annotated[Path, BeforeValidator(parse_abs_path)]
 
+    STORAGE_ENABLED: bool = False
+    STORAGE_ENDPOINT: str
+    STORAGE_ACCESS_KEY: str
+    STORAGE_SECRET_KEY: str
+    STORAGE_BUCKET: str
+    STORAGE_REGION: str
+    STORAGE_SIGN_EXPIRE_SECONDS: int = 3600  # 1 hour
+
     @computed_field  # type: ignore[prop-decorator]
     @property
     def SQLALCHEMY_DATABASE_URI(self) -> MySQLDsn:
