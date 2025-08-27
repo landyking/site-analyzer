@@ -3,6 +3,20 @@ import InsertDriveFileRoundedIcon from '@mui/icons-material/InsertDriveFileRound
 import DownloadRoundedIcon from '@mui/icons-material/DownloadRounded';
 import type { UserUserGetMapTaskResponse } from '../../../client/types.gen';
 
+function getExpirationTime(filePath: string): string {
+  try {
+    const url = new URL(filePath);
+    const expires = url.searchParams.get('Expires');
+    if (!expires) return '';
+    const epoch = Number(expires);
+    if (!Number.isFinite(epoch)) return '';
+    const date = new Date(epoch * 1000);
+    return `Expires: ${date.toLocaleString()}`;
+  } catch {
+    return '';
+  }
+}
+
 export default function FilesTab({ mapTask }: { mapTask: NonNullable<UserUserGetMapTaskResponse['data']> }) {
   const files = Array.isArray(mapTask.files) ? mapTask.files : [];
   if (!files.length) {
@@ -28,7 +42,7 @@ export default function FilesTab({ mapTask }: { mapTask: NonNullable<UserUserGet
             </ListItemIcon>
             <ListItemText
               primary={file.file_type}
-              secondary={undefined}
+              secondary={getExpirationTime(file.file_path)}
             />
           </ListItem>
         ))}
