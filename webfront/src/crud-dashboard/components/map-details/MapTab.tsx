@@ -218,8 +218,9 @@ const MapInner:React.FC<MapTabInnerProps> = ({ mapTask, exp, sig }) => {
       });
 
       // 7. Add raster overlays
+      const emptyLayer2 = createTileLayer('', { attribution: '', opacity: 0 });
+      (layerControl as L.Control.Layers & { addOverlay: (layer: L.Layer, name: string, group: string) => void }).addOverlay(emptyLayer2, 'none', 'Results');
       const overlays: Promise<void>[] = []
-
       mapTask?.files?.forEach(file => {
         overlays.push(addRasterOverlay({
           task, tag: file.file_type, colorMap: file_type_2_color_map(file.file_type), 
