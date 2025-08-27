@@ -18,14 +18,13 @@ import Button from '@mui/material/Button';
 import IconButton from '@mui/material/IconButton';
 import RefreshRoundedIcon from '@mui/icons-material/RefreshRounded';
 import VisibilityRoundedIcon from '@mui/icons-material/VisibilityRounded';
-import DownloadRoundedIcon from '@mui/icons-material/DownloadRounded';
 import CancelRoundedIcon from '@mui/icons-material/CancelRounded';
 import DeleteRoundedIcon from '@mui/icons-material/DeleteRounded';
 import ContentCopyRoundedIcon from '@mui/icons-material/ContentCopyRounded';
 import CircularProgress from '@mui/material/CircularProgress';
 
 import PageContainer from './PageContainer';
-import { OpenAPI, UserService, type MapTaskDetails } from '../../client';
+import { UserService, type MapTaskDetails } from '../../client';
 import useNotifications from '../hooks/useNotifications/useNotifications';
 import { useDialogs } from '../hooks/useDialogs/useDialogs';
 import { isAdmin } from '../../utils/auth';
@@ -68,15 +67,6 @@ function statusColor(desc?: string | null): 'default' | 'success' | 'error' | 'w
   if (label.includes('fail') || label.includes('error')) return 'error';
   if (label.includes('cancel')) return 'warning';
   return 'default';
-}
-
-function getFirstFileUrl(task: MapTaskDetails): string | null {
-  const f = task.files && task.files.length > 0 ? task.files[0] : null;
-  if (!f) return null;
-  const p = f.file_path || '';
-  if (/^https?:\/\//i.test(p)) return p;
-  // If server returns a relative path, prefix with API BASE
-  return `${OpenAPI.BASE ?? ''}${p.startsWith('/') ? p : `/${p}`}`;
 }
 
 function Section({ title, actions, children }: { title: string; actions?: React.ReactNode; children: React.ReactNode }) {
@@ -299,7 +289,6 @@ export default function MyMaps() {
                   </TableRow>
                 ) : (
                   completedRows.map((row) => {
-                    const downloadUrl = getFirstFileUrl(row);
                     return (
                       <TableRow key={row.id} hover>
                         <TableCell>{row.name}</TableCell>
@@ -312,15 +301,6 @@ export default function MyMaps() {
                         </TableCell>
                         <TableCell align="right">
                           <Stack direction="row" spacing={1} justifyContent="flex-end">
-                            {downloadUrl ? (
-                              <Button size="small" startIcon={<DownloadRoundedIcon />} component="a" href={downloadUrl} target="_blank" rel="noreferrer">
-                                Download
-                              </Button>
-                            ) : (
-                              <Button size="small" startIcon={<DownloadRoundedIcon />} disabled>
-                                Download
-                              </Button>
-                            )}
                             {admin && (
                               <Button size="small" startIcon={<ContentCopyRoundedIcon />} disabled={duplicateMutation.isPending} onClick={() => handleDuplicate(row)}>
                                 Duplicate

@@ -19,6 +19,7 @@ import Tab from '@mui/material/Tab';
 import { useState } from 'react';
 import MapTab from './map-details/MapTab';
 import ProgressTab from './map-details/ProgressTab';
+import FilesTab from './map-details/FilesTab';
 import { useNavigate, useParams } from '@tanstack/react-router';
 import { useQuery } from '@tanstack/react-query';
 import { UserService } from '../../client/sdk.gen';
@@ -160,6 +161,14 @@ function MapTabs({ mapTask, isOngoing }: { mapTask: NonNullable<UserUserGetMapTa
   // If files are missing/empty or status !== 3, show a tip instead of the Map tab
   const noMapToDisplay = !Array.isArray(mapTask.files) || mapTask.files.length === 0 || mapTask.status !== 3;
 
+  // Tabs: Map, Progress, Files (Files only if noMapToDisplay is false)
+  const tabs = [
+    { label: 'Map', show: true },
+    { label: 'Progress', show: true },
+    { label: 'Files', show: !noMapToDisplay },
+  ];
+  const visibleTabs = tabs.filter(t => t.show);
+
   return (
     <>
       <Tabs
@@ -168,11 +177,13 @@ function MapTabs({ mapTask, isOngoing }: { mapTask: NonNullable<UserUserGetMapTa
         aria-label="Map details tabs"
         sx={{ borderBottom: 1, borderColor: 'divider', px: 2 }}
       >
-        <Tab label="Map" />
-        <Tab label="Progress" />
+        {visibleTabs.map((tab, idx) => (
+          <Tab key={tab.label} label={tab.label} />
+        ))}
       </Tabs>
       <Box sx={{ p: 0 }}>
-        {tabValue === 0 && (
+        {/* Map Tab */}
+        {tabValue === visibleTabs.findIndex(t => t.label === 'Map') && (
           noMapToDisplay ? (
             <Box sx={{ p: 3, textAlign: 'center' }}>
               <Typography color="text.secondary">
@@ -183,7 +194,12 @@ function MapTabs({ mapTask, isOngoing }: { mapTask: NonNullable<UserUserGetMapTa
             <MapTab mapTask={mapTask} />
           )
         )}
-        {tabValue === 1 && <ProgressTab mapTask={mapTask} />}
+        {/* Progress Tab */}
+        {tabValue === visibleTabs.findIndex(t => t.label === 'Progress') && <ProgressTab mapTask={mapTask} />}
+        {/* Files Tab */}
+        {visibleTabs.some(t => t.label === 'Files') && tabValue === visibleTabs.findIndex(t => t.label === 'Files') && (
+          <FilesTab mapTask={mapTask} />
+        )}
       </Box>
     </>
   );
