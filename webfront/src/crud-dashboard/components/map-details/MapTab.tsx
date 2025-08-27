@@ -12,8 +12,7 @@ import L from 'leaflet';
 import '../../../jslibs/leaflet.groupedlayercontrol.js';
 import type { GetBoundsResponse, GetStatisticsResponse, MapTaskDetails } from '../../../client/types.gen';
 import { OpenAPI } from '../../../client';
-import { request } from '@/client/core/request.js';
-import { UserService } from '../../../client/sdk.gen';
+import { CloudOptimizedGeoTiffService, UserService } from '../../../client/sdk.gen';
 
 interface MapTabProps {
   mapTask: MapTaskDetails;
@@ -98,22 +97,9 @@ function updateLegend(min: number, max: number, imgUrl: string) {
 }
 
 // Helper: fetch bounds from TiTiler using generated client SDK
-async function fetchBounds(task: number, tag: string,  sig: string, exp: number): Promise<L.LatLngBoundsExpression | null> {
+async function fetchBounds(url: string): Promise<L.LatLngBoundsExpression | null> {
   try {
-    const datasetUrl = `${task}-${tag}`;
-    // If your backend expects a file path or a different URL, adjust accordingly
-    const data: GetBoundsResponse =  await request(OpenAPI,{
-			method: "GET",
-			url: "/api/v1/titiler/bounds",
-			query: {
-				url: datasetUrl,
-				exp: exp,
-        sig: sig
-			},
-			errors: {
-				422: "Validation Error",
-			},
-		})
+    const data: GetBoundsResponse =  await CloudOptimizedGeoTiffService.getBounds({ url });
     // const data = await CloudOptimizedGeoTiffService.getBounds({ url: datasetUrl });
     if (data && data.bounds) {
       const b = data.bounds;
@@ -135,31 +121,17 @@ async function addRasterOverlay(params: {
   bounds: L.LatLngBoundsExpression;
   colorMapMapping: Record<string, [string, number, number]>;
   def?: boolean;
-  sig: string;
-  exp: number;
+  url: string;
 }) {
-  const { task, tag, colorMap, map, layerControl, bounds, colorMapMapping, def,sig, exp } = params;
+  const { tag, colorMap, map, layerControl, bounds, colorMapMapping, def, url } = params;
   try {
-    // Compose the dataset URL as used by your backend (adjust as needed)
-    const datasetUrl = `${task}-${tag}`;
-    const data: GetStatisticsResponse = await request(OpenAPI, {
-			method: "GET",
-			url: "/api/v1/titiler/statistics",
-			query: {
-				url: datasetUrl,
-        exp: exp,
-        sig: sig
-			},
-			errors: {
-				422: "Validation Error",
-			},
-		});
+    const data: GetStatisticsResponse = await CloudOptimizedGeoTiffService.getStatistics({ url });
     if (data && data.b1) {
       const b = data.b1;
       const min = Math.floor(b.min);
       const max = Math.ceil(b.max);
       const rescale = `${min},${max}`;
-      const titilerUrl = `${OpenAPI.BASE}/api/v1/titiler/tiles/WebMercatorQuad/{z}/{x}/{y}.png?colormap_name=${colorMap}&url=${datasetUrl}&rescale=${rescale}&exp=${exp}&sig=${sig}`;
+      const titilerUrl = `${OpenAPI.BASE}/api/v1/titiler/tiles/WebMercatorQuad/{z}/{x}/{y}.png?colormap_name=${colorMap}&url=${encodeURIComponent(url)}&rescale=${rescale}`;
       const raster = createTileLayer(titilerUrl, {
         tileSize: 256,
         opacity: 0.8,
@@ -187,11 +159,13 @@ const MapInner:React.FC<MapTabInnerProps> = ({ mapTask, exp, sig }) => {
     // Example: mimic the map.html logic
     (async () => {
       // Demo task/tag/colormap
-      const task = mapTask?.id || 0;
-      const tag = 'final';
+      const task = mapTask.id;
+      // filter mapTask files to find type is "final"
+      const finalFile = mapTask.files?.find(file => file.file_type === 'final');
+      const finalUrl = (finalFile?.file_path || ''); //encodeURIComponent(finalFile?.file_path || '');
 
       // 1. Fetch bounds
-      const bounds = await fetchBounds(task, tag,sig, exp);
+      const bounds = await fetchBounds(finalUrl);
       if (!isMounted || !mapRef.current) return;
 
       // 2. Create base layers
@@ -251,7 +225,7 @@ const MapInner:React.FC<MapTabInnerProps> = ({ mapTask, exp, sig }) => {
           task, tag: file.file_type, colorMap: file_type_2_color_map(file.file_type), 
           map, layerControl, bounds: bounds!,
            colorMapMapping, def: file.file_type === 'final',
-           sig, exp
+           url: file.file_path
         }));
       });
       await Promise.all(overlays);
