@@ -24,6 +24,7 @@ from app.gis.consts import districts, constraint_factors
 from datetime import datetime, timedelta, timezone
 
 from app.core.security import gen_tile_signature
+from app.core import storage
 
 router = APIRouter(tags=["User"])
 
@@ -59,6 +60,8 @@ def _to_map_task_details(session: SessionDep, data: MapTaskDB) -> MapTaskDetails
 
     db_files: list[MapTaskFileDB] = crud.get_files_by_id(session=session, user_id=data.user_id, map_task_id=data.id)
     files: list[MapTaskFile] = [MapTaskFile(**file.model_dump()) for file in db_files]
+    for f in files:
+        f.file_path = storage.generate_presigned_url(f.file_path)
     return MapTaskDetails(
         id=data.id,
         name=data.name,

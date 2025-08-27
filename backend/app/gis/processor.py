@@ -6,6 +6,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import List, Tuple
 
+from app.core import storage
 from sqlmodel import Session, select
 
 from app.core.config import settings
@@ -64,7 +65,7 @@ class MapTaskMonitor:
 				session.commit()
 		except Exception as e:
 			# Log and continue; progress persistence shouldn't crash the worker
-			logger.debug("progress insert failed for task %s: %s", self.task_id, e)
+			logger.error("progress insert failed for task %s: %s", self.task_id, e)
 
 	def record_error(self, error_msg: str, phase: str | None = None, percent: int | None = None, description: str | None = None) -> None:
 		ph = (phase or "").strip() or None
@@ -85,21 +86,23 @@ class MapTaskMonitor:
 				session.add(row)
 				session.commit()
 		except Exception as e:
-			logger.debug("record_error failed for task %s: %s", self.task_id, e)
+			logger.error("record_error failed for task %s: %s", self.task_id, e)
 	
-	def record_file(self, file_type:str, file_path: str) -> None: 
+	def record_file(self, file_type:str, file_path: str) -> None:
+		new_file_path = storage.save_task_file(file_path, self.user_id, self.task_id)
 		try:
 			with Session(db_engine) as session:
 				row = MapTaskFileDB(
 					map_task_id=self.task_id,
 					user_id=self.user_id,
 					file_type=file_type,
-					file_path=file_path
+					file_path=new_file_path
 				)
 				session.add(row)
 				session.commit()
 		except Exception as e:
-			logger.debug("record_file failed for task %s: %s", self.task_id, e)
+			logger.error("record_file failed for task %s: %s", self.task_id, e)
+			raise RuntimeError("record_file failed")
 
 
 def _quick_update_task(task_id: int, **fields) -> None:
