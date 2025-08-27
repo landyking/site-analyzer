@@ -11,3 +11,29 @@ services:
       MYSQL_PASSWORD: 2x8#219mdn
     volumes:
       - "./docs/mysql.sql:/docker-entrypoint-initdb.d/init.sql"
+  minio:
+    image: quay.io/minio/minio
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      MINIO_ROOT_USER: rootname
+      MINIO_ROOT_PASSWORD: changethis
+    volumes:
+      - "./output-data/minio/data:/data"
+    command: server /data --console-address ":9001"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9001"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+  minio-setup:
+    image: minio/mc
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: >
+      /bin/sh -c "
+      mc alias set local http://minio:9000 rootname changethis &&
+      mc mb -p local/site-analyzer || true
+      "
