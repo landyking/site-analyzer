@@ -86,6 +86,9 @@ function createLegendControl(): L.Control {
 function updateLegend(min: number, max: number, imgUrl: string) {
   const div = document.getElementById('legend-content');
   if (!div) return;
+  if(!imgUrl){
+    div.innerHTML=`<div>No legend</div>`;
+  }else{
   div.innerHTML = `
     <div><strong>Score</strong></div>
     <div class="legend-scale">
@@ -93,7 +96,7 @@ function updateLegend(min: number, max: number, imgUrl: string) {
       <img src="${imgUrl}" alt="legend"/>
       <span>${min}</span>
     </div>
-  `;
+  `;}
 }
 
 // Helper: fetch bounds from TiTiler using generated client SDK
@@ -214,6 +217,8 @@ const MapInner:React.FC<MapTabInnerProps> = ({ mapTask, exp, sig }) => {
           const [cm, min, max] = mapping;
           const url = `${OpenAPI.BASE}/api/v1/titiler/colorMaps/${cm}?orientation=vertical&format=png&min=${min}&max=${max}&width=20&height=150`;
           updateLegend(min, max, url);
+        }else{
+          updateLegend(0,0,'');
         }
       });
 
