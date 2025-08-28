@@ -5,8 +5,6 @@ import logging
 from app.gis.engine_models import (
     EmptyTaskMonitor,
     EngineConfigs,
-    RestrictedFactor, 
-    SuitabilityFactor,
     TaskMonitor,
 )
 from app.gis.functions import (
@@ -20,6 +18,7 @@ from app.gis.functions import (
     RPL_Reclassify,
     RPL_Combine_rasters,
     RPL_Apply_mask,
+    gen_bounding_box
 )
 
 logger = logging.getLogger(__name__)
@@ -189,7 +188,7 @@ class SiteSuitabilityEngine:
         
         self.factors = apply_factors
     
-    def _clip_data(self, factor, prepared_data, district_name, district_boundary_shp):
+    def _clip_data(self, factor, prepared_data, district_name, district_boundary_shp, district_boundary_bbox_shp):
         """
         Clips the data to the district boundary.
         
@@ -198,7 +197,8 @@ class SiteSuitabilityEngine:
         - prepared_data: Dictionary of already prepared data
         - district_name: Name of the district
         - district_boundary_shp: Path to the district boundary shapefile
-        
+        - district_boundary_bbox_shp: Path to the district boundary bounding box shapefile
+
         Returns:
         - Path to the clipped data
         """
@@ -209,7 +209,7 @@ class SiteSuitabilityEngine:
 
         if dataset.endswith(".shp"):
             out_path += ".shp"
-            RPL_Clip_analysis(out_path, dataset, district_boundary_shp)
+            RPL_Clip_analysis(out_path, dataset, district_boundary_bbox_shp)
         elif dataset.endswith(".tif"):
             out_path += ".tif"
             logger.info(f"range {dataset}: {tools.get_data_range(dataset)}")
@@ -217,8 +217,8 @@ class SiteSuitabilityEngine:
             logger.info(f"range {out_path}: {tools.get_data_range(out_path)}")
 
         return out_path
-    
-    def _create_restricted_area(self, factor, prepared_data, district_name, district_boundary_shp):
+
+    def _create_restricted_area(self, factor, prepared_data, district_name, district_boundary_shp, district_boundary_bbox_shp):
         """
         Creates a buffer around the feature and clips it to the district boundary.
         
@@ -227,7 +227,8 @@ class SiteSuitabilityEngine:
         - prepared_data: Dictionary of already prepared data
         - district_name: Name of the district
         - district_boundary_shp: Path to the district boundary shapefile
-        
+        - district_boundary_bbox_shp: Path to the district boundary bounding box shapefile
+
         Returns:
         - Path to the clipped buffered data
         """
@@ -239,7 +240,7 @@ class SiteSuitabilityEngine:
         RPL_Buffer_analysis(prepared_data[feature], buffer_output, distance)
 
         buffer_clipped_output = os.path.join(self.restrict_dir, f"buffer_clipped_{feature}.shp")
-        RPL_Clip_analysis(buffer_clipped_output, buffer_output, district_boundary_shp)
+        RPL_Clip_analysis(buffer_clipped_output, buffer_output, district_boundary_bbox_shp)
 
         return buffer_clipped_output
     
@@ -359,8 +360,11 @@ class SiteSuitabilityEngine:
             district_boundary_shp, 
             f"TA2025_V1_ == '{district_code}'"
         )
-        
         monitor.update_progress(10, "district", f"Boundary prepared: {district_name}")
+
+        district_boundary_bbox_shp = os.path.join(self.output_dir, f"district_boundary_bbox.shp")
+        gen_bounding_box(district_boundary_shp, district_boundary_bbox_shp)
+        monitor.update_progress(11, "district", f"Boundary Bounding Box prepared: {district_name}")
         # show_shapefile_info(district_boundary_shp)
 
         
@@ -368,7 +372,7 @@ class SiteSuitabilityEngine:
         prepared_data = {}
         for factor in self.factors:
             prepared_data[factor["name"]] = factor["method_prepare"](
-                factor, prepared_data, district_name, district_boundary_shp
+                factor, prepared_data, district_name, district_boundary_shp, district_boundary_bbox_shp
             )
             if monitor.is_cancelled():
                 logger.info("Processing cancelled for district %s during data preparation; aborting.", district_name)
@@ -385,7 +389,7 @@ class SiteSuitabilityEngine:
         restricted_zones = []
         for factor in self.factors:
             zone = factor["method_restricted_zone"](
-                factor, prepared_data, district_name, district_boundary_shp
+                factor, prepared_data, district_name, district_boundary_shp, district_boundary_bbox_shp
             )
             if zone is not None:
                 restricted_zones.append(zone)
@@ -402,11 +406,13 @@ class SiteSuitabilityEngine:
         if restricted_zones:
             restricted_union = os.path.join(self.restrict_dir, f"restricted_union.shp")
             RPL_Union_analysis(restricted_zones, restricted_union)
-            tools.show_file_info(restricted_union)
+            # tools.show_file_info(restricted_union)
+
             # Convert the union to a raster mask
             restricted_mask_raster = os.path.join(self.output_dir, f"zone_restricted.tif")
             RPL_PolygonToRaster_conversion(restricted_union, restricted_mask_raster, self.template_raster)
-            tools.show_file_info(restricted_mask_raster)
+            # tools.show_file_info(restricted_mask_raster)
+
             monitor.update_progress(50, "restrict", f"Restricted zones prepared: {district_name}")
             monitor.record_file("restricted", restricted_mask_raster)
         else:
@@ -496,37 +502,3 @@ class SiteSuitabilityEngine:
         #     monitor.update_progress(100, "success", "All districts processed")
         print("All selected districts processed successfully.")
         return results
-
-
-# Example usage
-# Run this script by `cd backend && python -m app.gis.engine`
-if __name__ == "__main__":
-    # Set your data directory and output directory
-    root_dir = os.path.abspath('../')
-    data_dir = os.path.join(root_dir, "test-data")
-    output_dir = os.path.join(root_dir, "output-data", "engine")
-
-    # Initialize the engine
-    engine = SiteSuitabilityEngine(data_dir, output_dir, EngineConfigs(
-        restricted_factors=[RestrictedFactor(
-            kind="coastlines",
-            buffer_distance=500),RestrictedFactor(
-            kind="residential",
-            buffer_distance=3000)],
-        suitability_factors=[SuitabilityFactor(
-            kind="slope",
-            weight=1.5,
-            ranges=None
-        )]
-    ))
-
-    # Run the analysis for all districts
-    # results = engine.run()
-    
-    # Or run for specific districts
-    results = engine.run(selected_districts=["001"])
-
-    # Visualize results
-    for district_name, result_path in results.items():
-        if result_path:
-            tools.show_raster_plot(result_path, title=f"Suitability for {district_name}")

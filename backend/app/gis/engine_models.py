@@ -2,6 +2,9 @@ from enum import Enum
 from typing import List, Optional, Protocol
 from datetime import datetime
 from pydantic import BaseModel, EmailStr
+import logging
+
+logger = logging.getLogger(__name__)
 
 class RestrictedFactor(BaseModel):
     kind: str
@@ -41,10 +44,10 @@ class EmptyTaskMonitor():
         return False
 
     def update_progress(self, percent: int, phase: Optional[str] = None, description: Optional[str] = None) -> None:
-        pass
+        logger.info(f"Progress update: {percent}% - Phase: {phase} - Description: {description}")
 
     def record_error(self, error_msg: str, phase: Optional[str] = None, percent: Optional[int] = None, description: Optional[str] = None) -> None:
-        pass
-    
+        logger.error(f"Error occurred: {error_msg} - Phase: {phase} - Percent: {percent} - Description: {description}")
+
     def record_file(self, file_type:str, file_path: str) -> None:
-        pass
+        logger.info(f"File recorded: {file_type} - Path: {file_path}")
