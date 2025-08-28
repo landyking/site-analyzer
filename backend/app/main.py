@@ -5,7 +5,6 @@ from starlette.middleware.cors import CORSMiddleware
 from app.api.main import api_router
 from app.core.config import settings
 from app import initial_data
-from app.api.routes.titiler import customize_application
 from app.core.storage import log_bucket_meta_info
 
 def custom_generate_unique_id(route: APIRoute) -> str:
@@ -28,8 +27,6 @@ if settings.all_cors_origins:
     )
 
 app.include_router(api_router, prefix=settings.API_V1_STR)
-
-customize_application(app)
 
 log_bucket_meta_info()
 

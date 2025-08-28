@@ -1,27 +1,21 @@
-
-
 import Box from '@mui/material/Box';
 import { useEffect, useRef } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import CircularProgress from '@mui/material/CircularProgress';
-import Alert from '@mui/material/Alert';
 import 'leaflet/dist/leaflet.css';
 import '../../../jslibs/leaflet.groupedlayercontrol.css';
 import { css } from '@emotion/react';
 import L from 'leaflet';
 import '../../../jslibs/leaflet.groupedlayercontrol.js';
-import type { GetBoundsResponse, GetStatisticsResponse, MapTaskDetails } from '../../../client/types.gen';
-import { OpenAPI } from '../../../client';
-import { CloudOptimizedGeoTiffService, UserService } from '../../../client/sdk.gen';
+import type { MapTaskDetails } from '../../../client/types.gen';
+import axios from 'axios';
 
 interface MapTabProps {
   mapTask: MapTaskDetails;
 }
 interface MapTabInnerProps {
   mapTask: MapTaskDetails;
-  exp: number;
-  sig: string;
 }
+
+const TITILER_URL: string = import.meta.env.VITE_TITILER_URL;
 
 // Inline CSS for the legend, mimicking map.html
 const legendStyle = css`
@@ -72,7 +66,7 @@ function file_type_2_color_map (file_type: string): string {
 
 // Helper: create a legend control
 function createLegendControl(): L.Control {
-  const legend = L.control({ position: 'bottomleft' });
+  const legend = new L.Control({ position: 'bottomleft' });
   legend.onAdd = function () {
     const div = L.DomUtil.create('div', 'legend');
     div.id = 'legend-content';
@@ -99,11 +93,14 @@ function updateLegend(min: number, max: number, imgUrl: string) {
   `;}
 }
 
-// Helper: fetch bounds from TiTiler using generated client SDK
+// Helper: fetch bounds from TiTiler using plain axios
 async function fetchBounds(url: string): Promise<L.LatLngBoundsExpression | null> {
   try {
-    const data: GetBoundsResponse =  await CloudOptimizedGeoTiffService.getBounds({ url });
-    // const data = await CloudOptimizedGeoTiffService.getBounds({ url: datasetUrl });
+    const resp = await axios.get(`${TITILER_URL}/titiler/bounds`, {
+      params: { url },
+    });
+    // Expecting: { bounds: [minX, minY, maxX, maxY] }
+    const data = resp.data as { bounds?: [number, number, number, number] };
     if (data && data.bounds) {
       const b = data.bounds;
       return [ [b[1], b[0]], [b[3], b[2]] ];
@@ -114,7 +111,7 @@ async function fetchBounds(url: string): Promise<L.LatLngBoundsExpression | null
   return null;
 }
 
-// Helper: fetch raster stats and add overlay using generated client
+// Helper: fetch raster stats and add overlay using plain axios
 async function addRasterOverlay(params: {
   task: number;
   tag: string;
@@ -128,13 +125,17 @@ async function addRasterOverlay(params: {
 }) {
   const { tag, colorMap, map, layerControl, bounds, colorMapMapping, def, url } = params;
   try {
-    const data: GetStatisticsResponse = await CloudOptimizedGeoTiffService.getStatistics({ url });
+    const resp = await axios.get(`${TITILER_URL}/titiler/statistics`, {
+      params: { url },
+    });
+    // Expecting: { b1: { min: number, max: number, ... } }
+    const data = resp.data as { b1?: { min: number; max: number } };
     if (data && data.b1) {
       const b = data.b1;
       const min = Math.floor(b.min);
       const max = Math.ceil(b.max);
       const rescale = `${min},${max}`;
-      const titilerUrl = `${OpenAPI.BASE}/api/v1/titiler/tiles/WebMercatorQuad/{z}/{x}/{y}.png?colormap_name=${colorMap}&url=${encodeURIComponent(url)}&rescale=${rescale}`;
+      const titilerUrl = `${TITILER_URL}/titiler/tiles/WebMercatorQuad/{z}/{x}/{y}.png?colormap_name=${colorMap}&url=${encodeURIComponent(url)}&rescale=${rescale}`;
       const raster = createTileLayer(titilerUrl, {
         tileSize: 256,
         opacity: 0.8,
@@ -149,7 +150,7 @@ async function addRasterOverlay(params: {
     console.error('Error fetching raster stats:', e);
   }
 }
-const MapInner:React.FC<MapTabInnerProps> = ({ mapTask, exp, sig }) => {
+const MapInner:React.FC<MapTabInnerProps> = ({ mapTask }) => {
   
   const mapRef = useRef<HTMLDivElement>(null);
   const leafletMapRef = useRef<L.Map | null>(null);
@@ -215,7 +216,7 @@ const MapInner:React.FC<MapTabInnerProps> = ({ mapTask, exp, sig }) => {
         const mapping = colorMapMapping[e.name];
         if (mapping) {
           const [cm, min, max] = mapping;
-          const url = `${OpenAPI.BASE}/api/v1/titiler/colorMaps/${cm}?orientation=vertical&format=png&min=${min}&max=${max}&width=20&height=150`;
+          const url = `${TITILER_URL}/titiler/colorMaps/${cm}?orientation=vertical&format=png&min=${min}&max=${max}&width=20&height=150`;
           updateLegend(min, max, url);
         }else{
           updateLegend(0,0,'');
@@ -244,7 +245,7 @@ const MapInner:React.FC<MapTabInnerProps> = ({ mapTask, exp, sig }) => {
         leafletMapRef.current = null;
       }
     };
-  }, [mapTask, sig, exp]);
+  }, [mapTask]);
 
   return (
     <Box sx={{ p: 2 }}>
@@ -259,32 +260,7 @@ const MapInner:React.FC<MapTabInnerProps> = ({ mapTask, exp, sig }) => {
 };
 
 const MapTab: React.FC<MapTabProps> = ({ mapTask }) => {
-  const taskId = mapTask.id;
-  const { data, isLoading, isError, error } = useQuery({
-    queryKey: ['userGetMapTaskTileSignature', taskId],
-    queryFn: () => UserService.userGetMapTaskTileSignature({ taskId: Number(taskId) }),
-    enabled: !!taskId,
-  });
-
-  if (isLoading) {
-    return (
-      <Box sx={{ p: 2, textAlign: 'center' }}>
-        <CircularProgress size={32} />
-        <div>Loading map signature…</div>
-      </Box>
-    );
-  }
-  if (isError || !data || data.error) {
-    return (
-      <Box sx={{ p: 2 }}>
-        <Alert severity="error">
-          Failed to load map signature. {error instanceof Error ? error.message : ''}
-        </Alert>
-      </Box>
-    );
-  }
-  const { exp, sig } = data.data || {};
-  return <MapInner mapTask={mapTask} exp={exp} sig={sig} />;
+  return <MapInner mapTask={mapTask}/>;
 };
 
 export default MapTab;

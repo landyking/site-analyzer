@@ -16,5 +16,4 @@ dependencies = [
     "requests>=2.32.4",
     "scipy>=1.16.1",
     "sqlmodel>=0.0.24",
-    "titiler-core>=0.22.4",
 ]
