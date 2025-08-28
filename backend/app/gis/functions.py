@@ -4,6 +4,7 @@ from rasterio.mask import mask
 from scipy.ndimage import distance_transform_edt
 import pandas as pd
 import numpy as np
+from shapely import box
 
 def RPL_Select_analysis(input_shp, output_shp, conditions_expression):
     """
@@ -20,6 +21,16 @@ def RPL_Select_analysis(input_shp, output_shp, conditions_expression):
     gdf = gpd.read_file(input_shp)
     selected_gdf = gdf.query(conditions_expression)
     selected_gdf.to_file(output_shp)
+
+def gen_bounding_box(input_shp, output_shp):
+    """
+    Generates a bounding box for the features in the input shapefile and saves it to the output shapefile.
+    """
+    gdf = gpd.read_file(input_shp)
+    minx, miny, maxx, maxy = gdf.total_bounds
+    bbox = box(minx, miny, maxx, maxy)
+    bbox_gdf = gpd.GeoDataFrame({'geometry': [bbox]}, crs=gdf.crs)
+    bbox_gdf.to_file(output_shp)
 
 def RPL_Clip_analysis(output, whole_area, boundary):
     """
