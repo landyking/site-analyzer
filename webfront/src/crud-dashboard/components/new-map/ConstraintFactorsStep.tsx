@@ -43,6 +43,9 @@ const ConstraintFactorsStep = forwardRef<ConstraintFactorsStepHandle, Constraint
           } else if (it.value <= 0) {
             ek.value = 'Value must be greater than 0';
             ok = false;
+          } else if (it.value > 100000) {
+            ek.value = 'Value must be less than or equal to 100000';
+            ok = false;
           }
           if (ek.value) nextErrors[it.kind] = ek;
         }
@@ -132,7 +135,7 @@ const ConstraintFactorsStep = forwardRef<ConstraintFactorsStepHandle, Constraint
                       }}
                       error={Boolean(err)}
                       helperText={err}
-                      inputProps={{ step: 'any', min: 0 }}
+                      inputProps={{ step: 'any', min: 1, max: 100000 }}
                       InputProps={{
                         startAdornment: (
                           <InputAdornment position="start">
