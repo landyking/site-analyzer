@@ -56,7 +56,7 @@ function file_type_2_color_map (file_type: string): string {
     case 'slope':
       return 'greens';// "terrain",
     case 'restricted':
-      return 'reds';
+      return 'reds_r';
     case 'weighted':
       return 'greens';
     default:

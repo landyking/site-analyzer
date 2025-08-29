@@ -119,7 +119,7 @@ def RPL_ExtractByMask(input_raster, mask_shapefile, output_raster):
     with rasterio.open(output_raster, "w", **out_meta) as dest:
         dest.write(out_image)
 
-def RPL_PolygonToRaster_conversion(input_shp, output_raster, template_raster):
+def RPL_PolygonToRaster_conversion(input_shp, output_raster, template_raster, fill_nodata = False):
     """
     Convert a polygon shapefile to a raster format according to a template raster. 
     Cells in polygons will be set to 1, others to 0.
@@ -144,12 +144,12 @@ def RPL_PolygonToRaster_conversion(input_shp, output_raster, template_raster):
     
     gdf = gpd.read_file(input_shp)
     shapes = [(geom, 1) for geom in gdf.geometry]
-
+    fill = src.nodata if fill_nodata else 0
     rasterized = rasterio.features.rasterize(
             shapes=shapes,
             out_shape=out_shape,
             transform=transform,
-            fill=0,
+            fill=fill,
             nodata=src.nodata,
             dtype='uint8',
             all_touched=True,
@@ -329,7 +329,7 @@ def RPL_Apply_mask(value_raster, mask_raster, output_path):
         mask_data = src_mask.read(1)
         
         masked_data = value_data.copy()
-        masked_data[mask_data == 1] = 0
+        masked_data[mask_data == 1] = src_value.nodata
     
         out_meta = src_value.meta.copy()
         out_meta.update({

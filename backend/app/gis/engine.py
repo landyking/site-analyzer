@@ -410,7 +410,7 @@ class SiteSuitabilityEngine:
 
             # Convert the union to a raster mask
             restricted_mask_raster = os.path.join(self.output_dir, f"zone_restricted.tif")
-            RPL_PolygonToRaster_conversion(restricted_union, restricted_mask_raster, self.template_raster)
+            RPL_PolygonToRaster_conversion(restricted_union, restricted_mask_raster, self.template_raster, fill_nodata=True)
             # tools.show_file_info(restricted_mask_raster)
 
             monitor.update_progress(50, "restrict", f"Restricted zones prepared: {district_name}")
