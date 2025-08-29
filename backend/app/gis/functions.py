@@ -6,6 +6,8 @@ import pandas as pd
 import numpy as np
 from shapely import box
 
+DISTANCE_NODATA = -9999
+
 def RPL_Select_analysis(input_shp, output_shp, conditions_expression):
     """
     Selects features from the input shapefile based on a given expression and saves them to an output shapefile.
@@ -204,12 +206,12 @@ def RPL_DistanceAccumulation(input_raster,output_raster):
         distance_in_meters = distance * pixel_size
 
         # Set the nodata values in the distance raster
-        distance_in_meters[nodata_mask] = np.nan
+        distance_in_meters[nodata_mask] = DISTANCE_NODATA
 
         # Save the result to a new raster file
         with rasterio.open(output_raster, 'w', driver='COG', height=src.height, width=src.width,
                            count=1, dtype='float32', crs=src.crs, transform=src.transform,
-                            nodata=np.nan,compress='lzw',
+                            nodata=DISTANCE_NODATA,compress='lzw',
                            ) as dst:
             dst.write(distance_in_meters.astype('float32'), 1)
 
@@ -302,8 +304,8 @@ def RPL_Combine_rasters(inputs, output_raster):
                 weighted_sum += data.astype(np.float32) * weight
         
         if nodata_mask is not None:
-            weighted_sum[nodata_mask] = np.nan
-            out_meta['nodata'] = np.nan
+            weighted_sum[nodata_mask] = DISTANCE_NODATA
+            out_meta['nodata'] = DISTANCE_NODATA
         
         with rasterio.open(output_raster, 'w', **out_meta) as dest:
             dest.write(weighted_sum, 1)
