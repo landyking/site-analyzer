@@ -333,6 +333,7 @@ def RPL_Apply_mask(value_raster, mask_raster, output_path):
     
         out_meta = src_value.meta.copy()
         out_meta.update({
+            "driver": "COG",
             "compress": "lzw",
         })
         with rasterio.open(output_path, 'w', **out_meta) as dst:
