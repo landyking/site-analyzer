@@ -1,5 +1,6 @@
 import { forwardRef, useImperativeHandle, useMemo, useState } from 'react';
 import TextField from '@mui/material/TextField';
+import Slider from '@mui/material/Slider';
 import Stack from '@mui/material/Stack';
 import FormControl from '@mui/material/FormControl';
 import FormHelperText from '@mui/material/FormHelperText';
@@ -11,7 +12,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import Typography from '@mui/material/Typography';
 import Paper from '@mui/material/Paper';
 import Divider from '@mui/material/Divider';
-import InputAdornment from '@mui/material/InputAdornment';
+
 
 export type SuitabilityFactorRangeItem = { start: number; end: number; points: number };
 export type SuitabilityFactorItem = { kind: string; weight: number; ranges: SuitabilityFactorRangeItem[] };
@@ -82,7 +83,7 @@ const SuitabilityFactorsStep = forwardRef<SuitabilityFactorsStepHandle, Suitabil
       const idx = value.findIndex((v) => v.kind === kind);
       const next = [...value];
       if (checked && idx === -1) {
-        next.push({ kind, weight: Number.NaN, ranges: [{ start: Number.NaN, end: Number.NaN, points: Number.NaN }] });
+        next.push({ kind, weight: 1, ranges: [{ start: Number.NaN, end: Number.NaN, points: Number.NaN }] });
   setSelectionError(undefined);
       } else if (!checked && idx >= 0) {
         next.splice(idx, 1);
@@ -146,21 +147,24 @@ const SuitabilityFactorsStep = forwardRef<SuitabilityFactorsStepHandle, Suitabil
                 />
 
                 {selected && (
-          <FormControl error={Boolean(err?.weight)} sx={{ maxWidth: 320, minWidth: 220 }}>
-                    <TextField
-                      required
-                      type="number"
-                      value={Number.isFinite(selected.weight) ? selected.weight : ''}
-                      onChange={(e) => updateWeight(opt.code, e.target.value === '' ? '' : Number(e.target.value))}
-                      error={Boolean(err?.weight)}
-                      helperText={err?.weight}
-            inputProps={{ step: 'any', min: 0, max: 10 }}
-                      InputProps={{
-                        startAdornment: (
-                          <InputAdornment position="start">Weight</InputAdornment>
-                        ),
-                      }}
-                    />
+                  <FormControl error={Boolean(err?.weight)} sx={{ maxWidth: 400, minWidth: 260, pl: 2, pr: 2 }}>
+                    <Stack direction="row" alignItems="center" spacing={2} sx={{ width: '100%' }}>
+                      <Typography sx={{ whiteSpace: 'nowrap' }}>Weight: {Number.isFinite(selected.weight) ? selected.weight : ''}</Typography>
+                      <Slider
+                        value={Number.isFinite(selected.weight) ? selected.weight : 1}
+                        min={1}
+                        max={10}
+                        step={1}
+                        marks
+                        valueLabelDisplay="auto"
+                        onChange={(_, newValue) => updateWeight(opt.code, Number(newValue))}
+                        sx={{ flex: 1, minWidth: 120 }}
+                        defaultValue={1}
+                      />
+                    </Stack>
+                    {err?.weight && (
+                      <FormHelperText>{err.weight}</FormHelperText>
+                    )}
                   </FormControl>
                 )}
               </Stack>
