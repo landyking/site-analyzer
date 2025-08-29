@@ -173,7 +173,11 @@ const SuitabilityFactorsStep = forwardRef<SuitabilityFactorsStepHandle, Suitabil
                 <Stack spacing={2} sx={{ pl: 5, pt: 1 }}>
                   <Divider flexItem />
                   <Typography variant="subtitle2">Scoring rules</Typography>
-
+                  {selected.ranges.length === 0 && err?.ranges && (
+                    <FormHelperText error sx={{ mb: 1, color: 'error.main' }}>
+                      At least one scoring rule is required. Please add one.
+                    </FormHelperText>
+                  )}
                   <Stack spacing={1}>
                     {selected.ranges.map((r, idx) => {
                       const re = err?.ranges?.[idx] || {};
