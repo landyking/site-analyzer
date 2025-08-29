@@ -334,6 +334,28 @@ class SiteSuitabilityEngine:
         logger.info(f"range {score_raster}: {tools.get_data_range(score_raster)}")
         return score_raster
 
+    def _raster_template(self, prepared_data, district_boundary_shp):
+        """
+        Determines the template raster for analysis based on available data.
+        If a suitable raster is found in the prepared_data dictionary, its path is returned.
+        Otherwise, a new template raster is created by masking the solar radiation raster.
+
+        Parameters:
+        - prepared_data (dict): Dictionary containing paths to prepared raster files, keyed by data type.
+        - district_boundary_shp (str): Path to the shapefile defining the district boundary.
+
+        Returns:
+        - str: Path to the selected or newly created template raster file.
+        """
+        for it in ['solar','temperature','slope']:
+            file = prepared_data.get(it)
+            if file is not None and os.path.exists(file):
+                logger.info(f"Using existing {it} raster as template")
+                return file
+        logger.info("No suitable raster found for template; using solar radiation raster by default")
+        template_raster_file = os.path.join(self.output_dir, f"template_raster.tif")
+        RPL_ExtractByMask(self.in_solar_radiation, district_boundary_shp, template_raster_file)
+        return template_raster_file
 
     def process_district(self, district_code, district_name, monitor: TaskMonitor = EmptyTaskMonitor()):
         """
@@ -378,8 +400,8 @@ class SiteSuitabilityEngine:
                 logger.info("Processing cancelled for district %s during data preparation; aborting.", district_name)
                 return None
 
-        self.template_raster = prepared_data["slope"]  # Use slope as template for raster operations
-
+        self.template_raster = self._raster_template(prepared_data, district_boundary_shp)
+        monitor.update_progress(20, "template", f"Template raster prepared: {district_name}")
         # print(f"prepared_data: {prepared_data}")
         # for k,v in prepared_data.items():
             # print(f"{k}: {v}")
