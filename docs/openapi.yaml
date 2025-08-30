@@ -164,6 +164,21 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/SelectOptionListResp"
+  /v1/user/districts/{districtCode}/histograms:
+    get:
+      summary: "Get district input data histograms"
+      operationId: "userGetDistrictHistograms"
+      tags:
+        - User
+      parameters:
+        - $ref: "#/components/parameters/queryKind"
+      responses:
+        "200":
+          description: Successful retrieval of select options
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DistrictHistogramsResp"
   /v1/user/select-options/constraint-factors:
     get:
       summary: "Get constraint factors select options"
@@ -481,6 +496,13 @@ components:
       schema:
         type: integer
         default: 50
+    queryKind:
+      name: kind
+      in: query
+      description: "Kind of the data"
+      required: false
+      schema:
+        type: string
     queryCurrentPage:
       name: current_page
       in: query
@@ -531,6 +553,47 @@ components:
               type: array
               items:
                 $ref: "#/components/schemas/SelectOptionItem"
+    DistrictHistogram:
+      type: object
+      properties:
+        frequency:
+          type: array
+          items:
+            type: integer
+          description: List of frequency counts for each bin
+        edges:
+          type: array
+          items:
+            type: number
+          description: List of bin edges
+        min:
+          type: number
+          description: Minimum value in the data
+        max:
+          type: number
+          description: Maximum value in the data
+      required:
+        - frequency
+        - edges
+        - min
+        - max
+    DistrictHistogramItem:
+      type: object
+      properties:
+        kind:
+          type: string
+          description: The kind of the data
+        histogram:
+          $ref: "#/components/schemas/DistrictHistogram"
+    DistrictHistogramsResp:
+      allOf:
+        - $ref: "#/components/schemas/BaseResp"
+        - type: object
+          properties:
+            list:
+              type: array
+              items:
+                $ref: "#/components/schemas/DistrictHistogramItem"
     LoginResult:
       type: object
       properties:
