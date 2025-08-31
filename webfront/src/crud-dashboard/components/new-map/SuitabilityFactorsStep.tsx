@@ -1,5 +1,10 @@
 import { forwardRef, useImperativeHandle, useMemo, useState } from 'react';
-import { VictoryChart, VictoryHistogram, VictoryAxis, VictoryTheme } from 'victory';
+import { useQuery } from '@tanstack/react-query';
+import { UserService } from '../../../client/sdk.gen';
+import type { DistrictHistogram } from '../../../client/types.gen';
+
+import HistogramCanvas from './HistogramCanvas';
+// --- Canvas Histogram Component ---
 import TextField from '@mui/material/TextField';
 import Slider from '@mui/material/Slider';
 import Stack from '@mui/material/Stack';
@@ -28,19 +33,14 @@ export interface SuitabilityFactorsStepProps {
 export type SuitabilityFactorsStepHandle = { validate: () => boolean };
 
 const ALL_FACTORS = [
-  { code: 'solar', label: 'Annual solar radiation' },
-  { code: 'temperature', label: 'Annual temperature' },
+  { code: 'solar', label: 'Mean annual solar radiation' },
+  { code: 'temperature', label: 'Mean annual temperature' },
+  { code: 'slope', label: 'Slope' },
   { code: 'roads', label: 'Proximity to roads' },
   { code: 'powerlines', label: 'Proximity to powerlines' },
-  { code: 'slope', label: 'Slope' },
 ];
 
-// Static histogram data for demonstration
-const HISTOGRAM_DATA: Record<string, number[]> = {
-  solar: [3, 4, 5, 6, 7, 8, 8, 7, 6, 5, 4, 3, 2, 2, 1, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 9, 8, 7, 6, 5],
-  temperature: [10, 12, 13, 15, 18, 20, 22, 23, 22, 20, 18, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 2, 3, 4, 5],
-  slope: [1, 2, 2, 3, 4, 5, 6, 7, 8, 8, 7, 6, 5, 4, 3, 2, 1, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 9, 8, 7],
-};
+
 
 
 // --- Subcomponents ---
@@ -85,36 +85,33 @@ function FactorWeight({
   );
 }
 
-function FactorHistogram({ code }: { code: string }) {
+function FactorHistogram({ code, histogram }: { code: string; histogram?: DistrictHistogram }) {
   if (!(code === 'solar' || code === 'temperature' || code === 'slope')) return null;
+  if (!histogram) return null;
+  const { frequency, edges } = histogram;
+  // Add tips for interpreting the data values
+  let tip = '';
+  if (code === 'temperature') {
+    tip = 'Tip: A value of -70 means -7°C, 120 means 12°C.';
+  } else if (code === 'solar') {
+    tip = 'Tip: A value of 115 means 11.5 MJ/m²/day.';
+  } else if (code === 'slope') {
+    tip = 'Tip: Slope values are in degrees (0–90).';
+  }
   return (
-    <Stack spacing={1} alignItems="flex-start">
-      <Typography variant="subtitle2" sx={{ fontWeight: 500, mb: 0.5 }}>
-        Data distribution
-      </Typography>
-      <Paper variant="outlined" sx={{ p: 1, background: '#fafbfc', maxWidth: 620 }}>
-        <VictoryChart
-          theme={VictoryTheme.material}
-          domainPadding={{ x: 10 }}
-          height={160}
-          width={600}
-          padding={{ top: 20, bottom: 40, left: 50, right: 20 }}
-        >
-          <VictoryAxis
-            label="Value"
-            style={{ axisLabel: { padding: 28, fontSize: 12 } }}
-          />
-          <VictoryAxis
-            dependentAxis
-            label="Count"
-            style={{ axisLabel: { padding: 32, fontSize: 12 } }}
-          />
-          <VictoryHistogram
-            data={HISTOGRAM_DATA[code].map((x) => ({ x }))}
-            bins={10}
-            style={{ data: { fill: '#1976d2', opacity: 0.7 } }}
-          />
-        </VictoryChart>
+    <Stack spacing={0.5} alignItems="flex-start">
+      <Stack direction="row" alignItems="center" spacing={1}>
+        <Typography variant="subtitle2" sx={{ fontWeight: 500 }}>
+          Data distribution
+        </Typography>
+        {tip && (
+          <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+            {tip}
+          </Typography>
+        )}
+      </Stack>
+      <Paper variant="outlined" sx={{ p: 1, background: '#fafbfc', maxWidth: 620, mt: 0.5 }}>
+        <HistogramCanvas frequency={frequency} edges={edges} />
       </Paper>
     </Stack>
   );
@@ -179,7 +176,7 @@ function FactorScoringRules({
                   onChange={(e) => onUpdate(idx, { points: e.target.value === '' ? Number.NaN : Number(e.target.value) })}
                   error={Boolean(re.points)}
                   helperText={re.points}
-                  inputProps={{ step: 1 }}
+                  inputProps={{ step: 1, min: 1, max: 10 }}
                 />
               </FormControl>
               <IconButton aria-label="delete" onClick={() => onRemove(idx)}>
@@ -302,10 +299,10 @@ function useSuitabilitySelection(value: SuitabilityFactorsValue, onChange: (v: S
 }
 
 
-const SuitabilityFactorsStepInner = forwardRef<SuitabilityFactorsStepHandle, SuitabilityFactorsStepProps>(
-  ({ value, onChange, districtCode }, ref) => {
+const SuitabilityFactorsStepInner = forwardRef<SuitabilityFactorsStepHandle, SuitabilityFactorsStepProps & { histograms?: Record<string, DistrictHistogram> }>(
+  ({ value, onChange, histograms }, ref) => {
     const { errors, selectionError, validate, clearWeightError, clearRangeError } = useSuitabilityErrors(value);
-    const { toggle, updateWeight, addRange, removeRange, updateRange } = useSuitabilitySelection(value, onChange, (e) => {});
+  const { toggle, updateWeight, addRange, removeRange, updateRange } = useSuitabilitySelection(value, onChange, () => {});
     const selectedMap = useMemo(() => new Map(value.map((v) => [v.kind, v])), [value]);
 
     function handleToggle(kind: string, checked: boolean) {
@@ -344,7 +341,7 @@ const SuitabilityFactorsStepInner = forwardRef<SuitabilityFactorsStepHandle, Sui
               {selected && (
                 <Stack spacing={2} sx={{ pl: 5, pt: 1 }}>
                   <Divider flexItem />
-                  <FactorHistogram code={opt.code} />
+                  <FactorHistogram code={opt.code} histogram={histograms?.[opt.code]} />
                   <FactorScoringRules
                     ranges={selected.ranges}
                     error={err?.ranges}
@@ -362,8 +359,33 @@ const SuitabilityFactorsStepInner = forwardRef<SuitabilityFactorsStepHandle, Sui
   },
 );
 
+
 const SuitabilityFactorsStep = forwardRef<SuitabilityFactorsStepHandle, SuitabilityFactorsStepProps>((props, ref) => {
-  return <SuitabilityFactorsStepInner {...props} ref={ref} />;
+  const { districtCode } = props;
+  const { data, isLoading, error } = useQuery({
+    queryKey: ['district-histograms', districtCode],
+    queryFn: async () => {
+      return await UserService.userGetDistrictHistograms({ districtCode });
+    },
+    enabled: !!districtCode,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  // Map histograms by kind for easy access
+  const histograms: Record<string, DistrictHistogram> = useMemo(() => {
+    if (!data || !('list' in data) || !data.list) return {};
+    const map: Record<string, DistrictHistogram> = {};
+    for (const item of data.list) {
+      map[item.kind] = item.histogram;
+    }
+    return map;
+  }, [data]);
+
+  // Optionally, show loading or error states
+  if (isLoading) return <Typography>Loading histograms...</Typography>;
+  if (error) return <Typography color="error">Failed to load histograms</Typography>;
+
+  return <SuitabilityFactorsStepInner {...props} ref={ref} histograms={histograms} />;
 });
 
 export default SuitabilityFactorsStep;
