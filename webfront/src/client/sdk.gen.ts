@@ -42,6 +42,8 @@ import type {
 	UserUserGetConstraintFactorsSelectOptionsResponse,
 	UserUserGetMapTaskProgressData,
 	UserUserGetMapTaskProgressResponse,
+	UserUserGetDistrictHistogramsData,
+	UserUserGetDistrictHistogramsResponse,
 } from "./types.gen";
 
 export class AdminService {
@@ -478,6 +480,32 @@ export class UserService {
 			url: "/api/v1/user/my-map-tasks/{taskId}/progress",
 			path: {
 				taskId: data.taskId,
+			},
+			errors: {
+				422: "Validation Error",
+			},
+		});
+	}
+
+	/**
+	 * Get district input data histograms
+	 * @param data The data for the request.
+	 * @param data.districtCode
+	 * @param data.kind
+	 * @returns DistrictHistogramsResp Successful Response
+	 * @throws ApiError
+	 */
+	public static userGetDistrictHistograms(
+		data: UserUserGetDistrictHistogramsData,
+	): CancelablePromise<UserUserGetDistrictHistogramsResponse> {
+		return __request(OpenAPI, {
+			method: "GET",
+			url: "/api/v1/user/districts/{districtCode}/histograms",
+			path: {
+				districtCode: data.districtCode,
+			},
+			query: {
+				kind: data.kind,
 			},
 			errors: {
 				422: "Validation Error",

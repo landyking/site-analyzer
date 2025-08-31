@@ -35,6 +35,23 @@ export type CreateMapTaskReq = {
 	suitability_factors: Array<SuitabilityFactor>;
 };
 
+export type DistrictHistogram = {
+	frequency: Array<number>;
+	edges: Array<number>;
+	min: number;
+	max: number;
+};
+
+export type DistrictHistogramItem = {
+	kind: string;
+	histogram: DistrictHistogram;
+};
+
+export type DistrictHistogramsResp = {
+	error?: number;
+	list?: Array<DistrictHistogramItem>;
+};
+
 export type HTTPValidationError = {
 	detail?: Array<ValidationError>;
 };
@@ -324,3 +341,10 @@ export type UserUserGetMapTaskProgressData = {
 };
 
 export type UserUserGetMapTaskProgressResponse = MapTaskProgressListResp;
+
+export type UserUserGetDistrictHistogramsData = {
+	districtCode: string;
+	kind?: string | null;
+};
+
+export type UserUserGetDistrictHistogramsResponse = DistrictHistogramsResp;
