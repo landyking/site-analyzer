@@ -1,4 +1,5 @@
 import { forwardRef, useImperativeHandle, useMemo, useState } from 'react';
+import { VictoryChart, VictoryHistogram, VictoryAxis, VictoryTheme } from 'victory';
 import TextField from '@mui/material/TextField';
 import Slider from '@mui/material/Slider';
 import Stack from '@mui/material/Stack';
@@ -32,6 +33,13 @@ const ALL_FACTORS = [
   { code: 'powerlines', label: 'Proximity to powerlines' },
   { code: 'slope', label: 'Slope' },
 ];
+
+// Static histogram data for demonstration
+const HISTOGRAM_DATA: Record<string, number[]> = {
+  solar: [3, 4, 5, 6, 7, 8, 8, 7, 6, 5, 4, 3, 2, 2, 1, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 9, 8, 7, 6, 5],
+  temperature: [10, 12, 13, 15, 18, 20, 22, 23, 22, 20, 18, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 2, 3, 4, 5],
+  slope: [1, 2, 2, 3, 4, 5, 6, 7, 8, 8, 7, 6, 5, 4, 3, 2, 1, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 9, 8, 7],
+};
 
 const SuitabilityFactorsStep = forwardRef<SuitabilityFactorsStepHandle, SuitabilityFactorsStepProps>(
   ({ value, onChange }, ref) => {
@@ -172,7 +180,39 @@ const SuitabilityFactorsStep = forwardRef<SuitabilityFactorsStepHandle, Suitabil
               {selected && (
                 <Stack spacing={2} sx={{ pl: 5, pt: 1 }}>
                   <Divider flexItem />
-                  <Typography variant="subtitle2">Scoring rules</Typography>
+                  {/* Histogram for solar, temperature, slope */}
+                  {(opt.code === 'solar' || opt.code === 'temperature' || opt.code === 'slope') && (
+                    <Stack spacing={1} alignItems="flex-start">
+                      <Typography variant="subtitle2" sx={{ fontWeight: 500, mb: 0.5 }}>
+                        Data distribution
+                      </Typography>
+                      <Paper variant="outlined" sx={{ p: 1, background: '#fafbfc', maxWidth: 620 }}>
+                        <VictoryChart
+                          theme={VictoryTheme.material}
+                          domainPadding={{ x: 10 }}
+                          height={160}
+                          width={600}
+                          padding={{ top: 20, bottom: 40, left: 50, right: 20 }}
+                        >
+                          <VictoryAxis
+                            label="Value"
+                            style={{ axisLabel: { padding: 28, fontSize: 12 } }}
+                          />
+                          <VictoryAxis
+                            dependentAxis
+                            label="Count"
+                            style={{ axisLabel: { padding: 32, fontSize: 12 } }}
+                          />
+                          <VictoryHistogram
+                            data={HISTOGRAM_DATA[opt.code].map((x) => ({ x }))}
+                            bins={10}
+                            style={{ data: { fill: '#1976d2', opacity: 0.7 } }}
+                          />
+                        </VictoryChart>
+                      </Paper>
+                    </Stack>
+                  )}
+                  <Typography variant="subtitle2" sx={{ mt: 1 }}>Scoring rules</Typography>
                   {selected.ranges.length === 0 && err?.ranges && (
                     <FormHelperText error sx={{ mb: 1, color: 'error.main' }}>
                       At least one scoring rule is required. Please add one.
