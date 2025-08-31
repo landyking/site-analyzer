@@ -48,6 +48,23 @@ class SelectOptionListResp(BaseResp):
 
 
 # ----------------------
+# District Histogram Schemas
+# ----------------------
+
+class DistrictHistogram(BaseModel):
+    frequency: list[int]
+    edges: list[float]
+    min: float
+    max: float
+
+class DistrictHistogramItem(BaseModel):
+    kind: str
+    histogram: DistrictHistogram
+
+class DistrictHistogramsResp(BaseResp):
+    list: List[DistrictHistogramItem] = []
+
+# ----------------------
 # Auth Schemas
 # ----------------------
 

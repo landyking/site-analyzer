@@ -15,7 +15,8 @@ from app.models import (
     MyMapTaskTileSignature,
     MyMapTaskTileSignatureResp,
     SelectOptionListResp,
-    MapTaskProgress, MapTaskProgressListResp
+    MapTaskProgress, MapTaskProgressListResp,
+    DistrictHistogram, DistrictHistogramItem, DistrictHistogramsResp
 )
 from app.api.deps import CurrentAdminUser, CurrentUser, SessionDep
 from app import crud
@@ -194,3 +195,13 @@ async def user_get_map_task_progress(session: SessionDep, current_user: CurrentU
         row.updated_at = _as_aware_utc(row.updated_at)
     progress_list = [MapTaskProgress.model_validate(row.model_dump()) for row in rows]
     return MapTaskProgressListResp(error=0, list=progress_list)
+
+@router.get("/user/districts/{districtCode}/histograms", response_model=DistrictHistogramsResp, summary="Get district input data histograms")
+async def user_get_district_histograms(
+    session: SessionDep,
+    current_user: CurrentUser,
+    districtCode: str,
+    kind: str | None = None,
+):
+    # Implementation will be added later
+    pass
