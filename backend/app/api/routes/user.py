@@ -22,6 +22,7 @@ from app.api.deps import CurrentAdminUser, CurrentUser, SessionDep
 from app import crud
 import json
 from app.gis.consts import districts, constraint_factors
+from app.gis.district_histograms import HISTOGRAMS
 from datetime import datetime, timedelta, timezone
 
 from app.core.security import gen_tile_signature
@@ -203,5 +204,21 @@ async def user_get_district_histograms(
     districtCode: str,
     kind: str | None = None,
 ):
-    # Implementation will be added later
-    pass
+    # Look up histograms for the district
+    district_data = HISTOGRAMS.get(districtCode)
+    if not district_data:
+        raise HTTPException(status_code=404, detail="District not found or no histogram data available")
+
+    items = []
+    if kind:
+        # Only return the specified kind if present
+        hist = district_data.get(kind)
+        if not hist:
+            raise HTTPException(status_code=404, detail=f"Histogram kind '{kind}' not found for district {districtCode}")
+        items.append(DistrictHistogramItem(kind=kind, histogram=DistrictHistogram(**hist)))
+    else:
+        # Return all available kinds for the district
+        for k, hist in district_data.items():
+            items.append(DistrictHistogramItem(kind=k, histogram=DistrictHistogram(**hist)))
+
+    return DistrictHistogramsResp(error=0, list=items)
