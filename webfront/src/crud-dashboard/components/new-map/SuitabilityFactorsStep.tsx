@@ -22,6 +22,7 @@ export type SuitabilityFactorsValue = SuitabilityFactorItem[];
 export interface SuitabilityFactorsStepProps {
   value: SuitabilityFactorsValue;
   onChange: (value: SuitabilityFactorsValue) => void;
+  districtCode: string;
 }
 
 export type SuitabilityFactorsStepHandle = { validate: () => boolean };
@@ -42,7 +43,7 @@ const HISTOGRAM_DATA: Record<string, number[]> = {
 };
 
 const SuitabilityFactorsStep = forwardRef<SuitabilityFactorsStepHandle, SuitabilityFactorsStepProps>(
-  ({ value, onChange }, ref) => {
+  ({ value, onChange, districtCode }, ref) => {
   const [errors, setErrors] = useState<Record<string, { weight?: string; ranges?: Array<{ start?: string; end?: string; points?: string }> }>>({});
   const [selectionError, setSelectionError] = useState<string | undefined>();
 

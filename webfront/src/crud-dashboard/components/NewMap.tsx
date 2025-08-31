@@ -132,6 +132,7 @@ export default function NewMap() {
             ref={suitabilityRef}
             value={form.suitability}
             onChange={(v) => setForm((f) => ({ ...f, suitability: v }))}
+            districtCode={form.district}
           />
         );
       case 3:
