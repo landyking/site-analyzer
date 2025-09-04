@@ -283,7 +283,11 @@ def RPL_Combine_rasters(inputs, output_raster):
     Returns:
     - None
     """
-    first_file, first_weight = inputs[0]
+    all_weights = [weight for _, weight in inputs]
+    total_weight = sum(all_weights)
+    normalized_weights = [weight / total_weight for weight in all_weights]
+    data_and_weight = list(zip([file for file, _ in inputs], normalized_weights))
+    first_file, first_weight = data_and_weight[0]
     with rasterio.open(first_file) as src:
         out_meta = src.meta.copy()
         out_meta.update({
@@ -298,7 +302,7 @@ def RPL_Combine_rasters(inputs, output_raster):
         if raster_nodata is not None:
             nodata_mask = (first_data == src.nodata)
         weighted_sum = first_data.astype(np.float32) * first_weight
-        for file, weight in inputs[1:]:
+        for file, weight in data_and_weight[1:]:
             with rasterio.open(file) as src:
                 data = src.read(1)
                 weighted_sum += data.astype(np.float32) * weight
