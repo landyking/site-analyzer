@@ -44,6 +44,24 @@ const HistogramCanvas: React.FC<HistogramCanvasProps> = ({ frequency, edges, wid
     ctx.lineTo(width - PAD_RIGHT, height - 20.5);
     ctx.stroke();
 
+    // y axis
+    ctx.beginPath();
+    ctx.moveTo(PAD_LEFT + 0.5, height - 20);
+    ctx.lineTo(PAD_LEFT + 0.5, 10);
+    ctx.stroke();
+
+    // y axis title (count)
+  ctx.save();
+  ctx.font = '12px sans-serif';
+  ctx.fillStyle = '#444';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'bottom';
+  // Move the title closer to the y-axis (smaller offset)
+  ctx.translate(PAD_LEFT - 8, height / 2);
+  ctx.rotate(-Math.PI / 2);
+  ctx.fillText('frequency', 0, 0);
+  ctx.restore();
+
     // Draw x-axis labels (bin edges)
     ctx.font = '11px sans-serif';
     ctx.fillStyle = '#444';
