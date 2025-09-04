@@ -382,26 +382,30 @@ class SiteSuitabilityEngine:
             district_boundary_shp, 
             f"TA2025_V1_ == '{district_code}'"
         )
-        monitor.update_progress(10, "district", f"Boundary prepared: {district_name}")
+        monitor.update_progress(10, "prepare", f"District boundary prepared")
 
         district_boundary_bbox_shp = os.path.join(self.output_dir, f"district_boundary_bbox.shp")
         gen_bounding_box(district_boundary_shp, district_boundary_bbox_shp)
-        monitor.update_progress(11, "district", f"Boundary Bounding Box prepared: {district_name}")
+        monitor.update_progress(15, "prepare", f"District boundary bounding box prepared")
         # show_shapefile_info(district_boundary_shp)
 
         
         # Prepare data for each factor
+        progress_num = 15
         prepared_data = {}
         for factor in self.factors:
             prepared_data[factor["name"]] = factor["method_prepare"](
                 factor, prepared_data, district_name, district_boundary_shp, district_boundary_bbox_shp
             )
+            progress_num = progress_num + 1
+            monitor.update_progress(progress_num, "prepare", f"Prepared factor: {factor['name']}")
             if monitor.is_cancelled():
                 logger.info("Processing cancelled for district %s during data preparation; aborting.", district_name)
                 return None
 
+        progress_num = 30
         self.template_raster = self._raster_template(prepared_data, district_boundary_shp)
-        monitor.update_progress(20, "template", f"Template raster prepared: {district_name}")
+        monitor.update_progress(progress_num, "prepare", f"Raster template prepared")
         # print(f"prepared_data: {prepared_data}")
         # for k,v in prepared_data.items():
             # print(f"{k}: {v}")
@@ -415,6 +419,8 @@ class SiteSuitabilityEngine:
             )
             if zone is not None:
                 restricted_zones.append(zone)
+                progress_num = progress_num + 1
+                monitor.update_progress(progress_num, "restrict", f"Restricted zone created: {factor['name']}")
             if monitor.is_cancelled():
                 logger.info("Processing cancelled for district %s during restricted zone creation; aborting.", district_name)
                 return None
@@ -423,7 +429,6 @@ class SiteSuitabilityEngine:
         # for v in restricted_zones:
         #     print(f"{v}")
         #     show_file_info(v)
-
         # Union all restricted zones
         if restricted_zones:
             restricted_union = os.path.join(self.restrict_dir, f"restricted_union.shp")
@@ -435,13 +440,14 @@ class SiteSuitabilityEngine:
             RPL_PolygonToRaster_conversion(restricted_union, restricted_mask_raster, self.template_raster, fill_nodata=True)
             # tools.show_file_info(restricted_mask_raster)
 
-            monitor.update_progress(50, "restrict", f"Restricted zones prepared: {district_name}")
+            monitor.update_progress(50, "restrict", f"Restricted zones combined")
             monitor.record_file("restricted", restricted_mask_raster)
         else:
             logger.info(f"Warning: No restricted zones for {district_name}")
             # Create an empty mask if no restricted zones
             restricted_mask_raster = None
         
+        progress_num = 60
         # Evaluate and score each factor
         score_rasters = {}
         for factor in self.factors:
@@ -453,10 +459,12 @@ class SiteSuitabilityEngine:
                 if score_raster is not None:
                     score_rasters[factor["name"]] = score_raster
                     monitor.record_file(factor["name"], score_raster)
+                    progress_num = progress_num + 1
+                    monitor.update_progress(progress_num, "score", f"Factor scored: {factor['name']}")
             if monitor.is_cancelled():
                 logger.info("Processing cancelled for district %s during factor evaluation; aborting.", district_name)
                 return None
-        monitor.update_progress(80, "score", f"Factors scored: {district_name}")
+        monitor.update_progress(70, "score", f"All factors scored")
         # for k,v in score_rasters.items():
         #     print(f"{k}: {v}")
         #     show_file_info(v)
@@ -472,17 +480,18 @@ class SiteSuitabilityEngine:
             weighted_sum_raster = os.path.join(self.output_dir, f"zone_weighted.tif")
             if weighted_rasters:
                 RPL_Combine_rasters(weighted_rasters, weighted_sum_raster)
+                monitor.update_progress(80, "weight", f"All factors weighted and combined")
                 monitor.record_file("weighted", weighted_sum_raster)
 
                 # Apply the restricted mask
                 if restricted_mask_raster:
                     final_zone_raster = os.path.join(self.output_dir, f"zone_masked.tif")
                     RPL_Apply_mask(weighted_sum_raster, restricted_mask_raster, final_zone_raster)
-                    monitor.update_progress(95, "combine", f"Finalizing: {district_name}")
+                    monitor.update_progress(90, "mask", f"Mask applied to weighted raster")
                     monitor.record_file("final", final_zone_raster)
                     return final_zone_raster
                 else:
-                    monitor.update_progress(95, "combine", f"Finalizing: {district_name}")
+                    # monitor.update_progress(90, "combine", f"Finalizing: {district_name}")
                     return weighted_sum_raster
             else:
                 print(f"Warning: No weighted rasters for {district_name}")
