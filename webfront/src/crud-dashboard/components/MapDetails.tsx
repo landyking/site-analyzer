@@ -66,7 +66,7 @@ function SuitabilityList({ suitability }: { suitability: { kind: string; weight:
     <List dense>
       {suitability.map((sf) => {
         const label = SUITABILITY_LABELS[sf.kind] ?? sf.kind;
-        const header = `${label} – Weight: ${Number.isFinite(sf.weight) ? sf.weight : '0'}%`;
+        const header = `${label} – Weight: ${Number.isFinite(sf.weight) ? sf.weight : '0'}`;
         return (
           <ListItem key={sf.kind} alignItems="flex-start" sx={{ display: 'block', py: 0 }}>
             <Typography component="div" sx={{ fontWeight: 500, mb: 0.5, color: 'primary.main' }}>
