@@ -6,7 +6,11 @@ import pandas as pd
 import numpy as np
 from shapely import box
 
+# from app.gis import tools
+
 DISTANCE_NODATA = -9999
+Reclassify_NODATA = 255
+SCORED_NODATA = 255
 
 def RPL_Select_analysis(input_shp, output_shp, conditions_expression):
     """
@@ -266,14 +270,17 @@ def RPL_Reclassify(input_raster, output_raster, remap_range):
         for min_val, max_val, new_val in remap_range:
             mask = (data >= min_val) & (data < max_val)
             reclassified_data[mask] = new_val
-            
-        reclassified_data[nodata_mask] = nodata_value
+            # print(f"Reclassifying values in range [{min_val}, {max_val}) to {new_val}")
+
+        reclassified_data[nodata_mask] = Reclassify_NODATA
+        result_data = reclassified_data.astype(np.uint8)
         # Save the reclassified raster
         with rasterio.open(output_raster, 'w', driver='COG', height=src.height, width=src.width,
-                           nodata=src.nodata,
+                           nodata=Reclassify_NODATA,
                            compress='lzw',
-                           count=1, dtype=reclassified_data.dtype, crs=src.crs, transform=src.transform) as dst:
-            dst.write(reclassified_data, 1)
+                           count=1, dtype=result_data.dtype, crs=src.crs, transform=src.transform) as dst:
+            dst.write(result_data, 1)
+        # print(tools.get_data_range(output_raster))
 
 def RPL_Combine_rasters(inputs, output_raster):
     """
@@ -293,12 +300,7 @@ def RPL_Combine_rasters(inputs, output_raster):
     first_file, first_weight = data_and_weight[0]
     with rasterio.open(first_file) as src:
         out_meta = src.meta.copy()
-        out_meta.update({
-            "driver": "COG",
-            "count": 1,
-            "dtype": "float32",
-            "compress": "lzw"
-        })
+        
         first_data = src.read(1)
         raster_nodata = src.nodata
         nodata_mask = None
@@ -311,11 +313,17 @@ def RPL_Combine_rasters(inputs, output_raster):
                 weighted_sum += data.astype(np.float32) * weight
         
         if nodata_mask is not None:
-            weighted_sum[nodata_mask] = DISTANCE_NODATA
-            out_meta['nodata'] = DISTANCE_NODATA
-        
+            weighted_sum[nodata_mask] = SCORED_NODATA
+            out_meta['nodata'] = SCORED_NODATA
+        result_data = weighted_sum.astype(np.uint8)
+        out_meta.update({
+            "driver": "COG",
+            "count": 1,
+            "dtype": result_data.dtype,
+            "compress": "lzw"
+        })
         with rasterio.open(output_raster, 'w', **out_meta) as dest:
-            dest.write(weighted_sum, 1)
+            dest.write(result_data, 1)
 
 def RPL_Apply_mask(value_raster, mask_raster, output_path):
     """
