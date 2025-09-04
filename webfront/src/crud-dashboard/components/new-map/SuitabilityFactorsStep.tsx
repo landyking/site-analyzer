@@ -65,22 +65,25 @@ function FactorWeight({
   onChange: (w: number | '') => void;
 }) {
   return (
-    <FormControl error={Boolean(error)} sx={{ maxWidth: 400, minWidth: 260, pl: 2, pr: 2 }}>
-      <Stack direction="row" alignItems="center" spacing={2} sx={{ width: '100%' }}>
-        <Typography sx={{ whiteSpace: 'nowrap' }}>Weight: {Number.isFinite(selected.weight) ? selected.weight : ''}</Typography>
-        <Slider
-          value={Number.isFinite(selected.weight) ? selected.weight : 1}
-          min={1}
-          max={10}
-          step={1}
-          marks
-          valueLabelDisplay="auto"
-          onChange={(_, newValue) => onChange(Number(newValue))}
-          sx={{ flex: 1, minWidth: 120 }}
-          defaultValue={1}
-        />
-      </Stack>
-      {error && <FormHelperText>{error}</FormHelperText>}
+        <FormControl error={Boolean(error)} sx={{ maxWidth: 400, minWidth: 260, pl: 2, pr: 2 }}>
+          <Stack direction="row" alignItems="center" spacing={2} sx={{ width: '100%' }}>
+            <Typography sx={{ whiteSpace: 'nowrap' }}>Weight: {Number.isFinite(selected.weight) ? selected.weight : ''}</Typography>
+            <Slider
+              value={Number.isFinite(selected.weight) ? selected.weight : 1}
+              min={1}
+              max={10}
+              step={1}
+              marks
+              valueLabelDisplay="auto"
+              onChange={(_, newValue) => onChange(Number(newValue))}
+              sx={{ flex: 1, minWidth: 120 }}
+              defaultValue={1}
+            />
+            <Typography variant="body2" color="textSecondary" sx={{ ml: 2, minWidth: 300, whiteSpace: 'nowrap' }}>
+              The weight of this factor among all selected factors.
+            </Typography>
+          </Stack>
+          {error && <FormHelperText error>{error}</FormHelperText>}
     </FormControl>
   );
 }
