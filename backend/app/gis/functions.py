@@ -241,13 +241,16 @@ def RPL_Reclassify(input_raster, output_raster, remap_range):
         remap_min = min([r[0] for r in remap_range])
         remap_max = max([r[1] for r in remap_range])
 
-        without_nodata = data.copy()
+        nodata_mask =  None
         if nodata_value is not None:
             # Ensure remap ranges do not include the nodata value (if nodata is not NaN)
             if not np.isnan(nodata_value) and (nodata_value >= remap_min and nodata_value <= remap_max):
                 raise ValueError(f"Nodata value {nodata_value} is outside the remap range [{remap_min}, {remap_max}]")
-
-            without_nodata = data[without_nodata != nodata_value]
+            nodata_mask = (data == nodata_value)
+        else:
+            nodata_mask = np.zeros_like(data, dtype=bool)
+        
+        without_nodata = data[~nodata_mask]
         min_value = np.nanmin(without_nodata)
         max_value = np.nanmax(without_nodata)
 
@@ -259,12 +262,12 @@ def RPL_Reclassify(input_raster, output_raster, remap_range):
 
         # Create a copy of the data to reclassify
         reclassified_data = np.copy(data)
-
         # Apply the reclassification
         for min_val, max_val, new_val in remap_range:
             mask = (data >= min_val) & (data < max_val)
             reclassified_data[mask] = new_val
-
+            
+        reclassified_data[nodata_mask] = nodata_value
         # Save the reclassified raster
         with rasterio.open(output_raster, 'w', driver='COG', height=src.height, width=src.width,
                            nodata=src.nodata,
