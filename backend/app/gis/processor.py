@@ -200,7 +200,7 @@ def process_map_task(task_id: int) -> None:
 					EngineSuitabilityFactor(kind=kind, weight=weight, ranges=ranges or None)
 				)
 			except Exception as e:
-				logger.warning("Skip invalid suitability factor on task %s: %r (%s)", task_id, sf, e)
+				logger.error("Skip invalid suitability factor on task %s: %r (%s)", task_id, sf, e)
 
 		configs = EngineConfigs(restricted_factors=restricted, suitability_factors=suitables)
 
@@ -244,7 +244,7 @@ def process_map_task(task_id: int) -> None:
 def build_ranges(breakpoints: list[float], points: list[int]) -> List[Tuple[float, float, int]]:
     intervals = [-float("inf")] + breakpoints + [float("inf")]
     return [
-        Tuple(start=intervals[i], end=intervals[i+1], points=points[i])
+        tuple([intervals[i], intervals[i+1], points[i]])
         for i in range(len(points))
     ]
 

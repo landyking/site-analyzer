@@ -247,9 +247,6 @@ def RPL_Reclassify(input_raster, output_raster, remap_range):
 
         nodata_mask =  None
         if nodata_value is not None:
-            # Ensure remap ranges do not include the nodata value (if nodata is not NaN)
-            if not np.isnan(nodata_value) and (nodata_value >= remap_min and nodata_value <= remap_max):
-                raise ValueError(f"Nodata value {nodata_value} is outside the remap range [{remap_min}, {remap_max}]")
             nodata_mask = (data == nodata_value)
         else:
             nodata_mask = np.zeros_like(data, dtype=bool)
