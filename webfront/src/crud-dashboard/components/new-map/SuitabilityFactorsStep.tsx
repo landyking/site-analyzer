@@ -180,14 +180,22 @@ function BreakpointScoringRules({
       setInputError('Breakpoint already exists');
       return;
     }
-    // Browser will enforce min/max validation, but we keep this as a safety check
-    if (minValue !== -Infinity && v <= minValue) {
-      setInputError(`Value must be greater than ${minValue}`);
+    // For distance-related factors (when min/max are not available), ensure value is > 0
+    if (minValue === -Infinity && maxValue === Infinity && v <= 0) {
+      setInputError('Distance values must be greater than 0');
       return;
     }
-    if (maxValue !== Infinity && v >= maxValue) {
-      setInputError(`Value must be less than ${maxValue}`);
-      return;
+    // For factors with known ranges from API, use min/max validation
+    else {
+      // Browser will enforce min/max validation, but we keep this as a safety check
+      if (minValue !== -Infinity && v <= minValue) {
+        setInputError(`Value must be greater than ${minValue}`);
+        return;
+      }
+      if (maxValue !== Infinity && v >= maxValue) {
+        setInputError(`Value must be less than ${maxValue}`);
+        return;
+      }
     }
     onAddBreakpoint(v);
     setInput('');
@@ -221,7 +229,7 @@ function BreakpointScoringRules({
             placeholder="Enter value"
             inputProps={{ 
               step: 'any',
-              min: minValue !== -Infinity ? minValue : undefined,
+              min: minValue !== -Infinity ? minValue : 1,
               max: maxValue !== Infinity ? maxValue : undefined
             }}
           />
