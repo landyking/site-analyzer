@@ -1,5 +1,6 @@
 from __future__ import annotations
-
+import shutil
+import os
 import json
 import logging
 from datetime import datetime, timezone
@@ -240,7 +241,17 @@ def process_map_task(task_id: int) -> None:
 			error_msg=msg,
 			ended_at=datetime.now(timezone.utc),
 		)
-		
+	finally:
+		# Cleanup all files under task output dir.
+		try:
+			if os.path.exists(task_out):
+				shutil.rmtree(task_out)
+				logger.info(f"Temporary out directory '{task_out}' has been removed successfully")
+			else:
+				logger.warning(f"Temporary out directory '{task_out}' does not exist")
+		except Exception as e:
+			logger.warning(f" Temporary out directory '{task_out}' cleanup error: {e}")
+
 def build_ranges(breakpoints: list[float], points: list[int]) -> List[Tuple[float, float, int]]:
     intervals = [-float("inf")] + breakpoints + [float("inf")]
     return [
