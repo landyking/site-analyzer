@@ -277,7 +277,7 @@ function BreakpointScoringRules({
                     onChange={e => onPointsChange(idx, e.target.value === '' ? NaN : Number(e.target.value))}
                     error={!!(error?.points && error.points[idx])}
                     helperText={error?.points && error.points[idx]}
-                    inputProps={{ step: 1, min: 1, max: 10 }}
+                    inputProps={{ step: 1, min: 0, max: 10 }}
                     size="small"
                   />
                 </FormControl>
@@ -327,8 +327,8 @@ function useSuitabilityErrors(value: SuitabilityFactorsValue) {
           if (r.start !== -Infinity && r.start !== null && !Number.isFinite(r.start)) re.start = 'Required';
           if (r.end !== Infinity && r.end !== null && !Number.isFinite(r.end)) re.end = 'Required';
           if (!Number.isFinite(r.points)) re.points = 'Required';
-          else if (r.points < 1 || r.points > 10) re.points = 'Points must be between 1 and 10';
-          
+          else if (r.points < 0 || r.points > 10) re.points = 'Points must be between 0 and 10';
+
           // Debug log for this range
           /* console.log('Range validation:', {
             start: r.start, 
