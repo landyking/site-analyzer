@@ -8,6 +8,7 @@ import ListItem from '@mui/material/ListItem';
 import ListItemText from '@mui/material/ListItemText';
 import type { ConstraintFactorsValue } from './ConstraintFactorsStep';
 import type { SuitabilityFactorsValue } from './SuitabilityFactorsStep';
+import ConstraintFactorsList from '../shared/ConstraintFactorsList';
 
 export interface ConfirmationData {
   name: string;
@@ -74,21 +75,7 @@ const ConfirmationStep = forwardRef<ConfirmationStepHandle, ConfirmationStepProp
             <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
               Constraints
             </Typography>
-            {data.constraints.length ? (
-              <List dense>
-                {data.constraints.map((cf) => {
-                  const label = cf.label || cf.kind;
-                  const text = `Distance from ${label}: ≥ ${Number.isFinite(cf.value) ? cf.value : 'x'} m`;
-                  return (
-                    <ListItem key={cf.kind} sx={{ py: 0 }}>
-                      <ListItemText primary={text} />
-                    </ListItem>
-                  );
-                })}
-              </List>
-            ) : (
-              <Typography color="text.secondary">No constraint factors selected</Typography>
-            )}
+            <ConstraintFactorsList items={data.constraints} />
           </Paper>
         </Box>
 

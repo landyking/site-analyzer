@@ -22,6 +22,7 @@ import FilesTab from './map-details/FilesTab';
 import { useNavigate, useParams } from '@tanstack/react-router';
 import { useQuery } from '@tanstack/react-query';
 import { UserService } from '../../client/sdk.gen';
+import ConstraintFactorsList from './shared/ConstraintFactorsList';
 
 // Reuse labels from ConfirmationStep
 const SUITABILITY_LABELS: Record<string, string> = {
@@ -42,48 +43,7 @@ function formatDateTime(dt?: string) {
 }
 
 
-function ConstraintList({ constraints }: { constraints: { kind: string; label?: string; value?: number }[] }) {
-  return constraints.length ? (
-    <List dense>
-      {constraints.map((cf) => {
-        const label = cf.label || cf.kind;
-        return (
-          <ListItem key={cf.kind} sx={{ py: 0.5 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center' }}>
-              <Typography 
-                component="span" 
-                sx={{ 
-                  fontSize: '0.875rem', 
-                  fontWeight: 500,
-                  color: 'text.secondary',
-                  bgcolor: 'action.hover',
-                  borderRadius: 1,
-                  px: 1,
-                  py: 0.2,
-                  mr: 1
-                }}
-              >
-                Distance from {label}
-              </Typography>
-              <Typography 
-                component="span" 
-                sx={{ 
-                  fontSize: '0.875rem',
-                  fontWeight: 600,
-                  color: 'success.main' 
-                }}
-              >
-                ≥ {Number.isFinite(cf.value) ? `${cf.value} m` : 'x m'}
-              </Typography>
-            </Box>
-          </ListItem>
-        );
-      })}
-    </List>
-  ) : (
-    <Typography color="text.secondary">No constraint factors selected</Typography>
-  );
-}
+// Constraint list moved to shared component
 
 function SuitabilityList({ suitability }: { suitability: { kind: string; weight: number; ranges: { start: number; end: number; points: number }[] }[] }) {
   return suitability.length ? (
@@ -359,7 +319,7 @@ function MapSettings({ mapTask }: { mapTask: NonNullable<UserUserGetMapTaskRespo
             Constraint Factors
           </Typography>
         </Box>
-        <ConstraintList constraints={constraints} />
+  <ConstraintFactorsList items={constraints} />
       </Paper>
       <Paper variant="outlined" sx={{ p: 2 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
