@@ -25,7 +25,15 @@ import Divider from '@mui/material/Divider';
 
 
 export type SuitabilityFactorRangeItem = { start: number; end: number; points: number };
-export type SuitabilityFactorItem = { kind: string; weight: number; ranges: SuitabilityFactorRangeItem[] };
+
+export type SuitabilityFactorItem = { 
+  kind: string; 
+  weight: number; 
+  ranges: SuitabilityFactorRangeItem[];
+
+  breakpoints?: number[];
+  points?: number[];
+};
 export type SuitabilityFactorsValue = SuitabilityFactorItem[];
 
 export interface SuitabilityFactorsStepProps {
@@ -363,7 +371,7 @@ function useSuitabilitySelection(value: SuitabilityFactorsValue, onChange: (v: S
     const idx = value.findIndex((v) => v.kind === kind);
     const next = [...value];
     if (checked && idx === -1) {
-      next.push({ kind, weight: 1, ranges: [{ start: Number.NaN, end: Number.NaN, points: Number.NaN }] });
+      next.push({ kind, weight: 1, ranges: [{ start: Number.NaN, end: Number.NaN, points: Number.NaN }], breakpoints: [], points: [] });
       setSelectionError(undefined);
     } else if (!checked && idx >= 0) {
       next.splice(idx, 1);
@@ -477,8 +485,13 @@ const SuitabilityFactorsStepInner = forwardRef<SuitabilityFactorsStepHandle, Sui
       // Debug log
       // console.log('Generated ranges:', JSON.stringify(ranges));
       
-      // Update value
-      const next = value.map(v => v.kind === kind ? { ...v, ranges } : v);
+      // Update value with both ranges and the new breakpoints/points format
+      const next = value.map(v => v.kind === kind ? { 
+        ...v, 
+        ranges, 
+        breakpoints: sorted,
+        points: points
+      } : v);
       onChange(next);
     }
 

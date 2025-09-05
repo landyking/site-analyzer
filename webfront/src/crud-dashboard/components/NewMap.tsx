@@ -88,11 +88,19 @@ export default function NewMap() {
       severity: 'warning',
     });
     if (!ok) return;
+    
+    const convertedSuitabilityFactors = form.suitability.map((s) => ({
+      kind: s.kind,
+      weight: s.weight,
+      breakpoints: s.breakpoints || [],
+      points: s.points || [],
+    }));
+    
     const payload: CreateMapTaskReq = {
       name: form.name,
       district_code: form.district,
       constraint_factors: form.constraints.map((c) => ({ kind: c.kind, value: c.value })),
-      suitability_factors: form.suitability.map((s) => ({ kind: s.kind, weight: s.weight, ranges: s.ranges })),
+      suitability_factors: convertedSuitabilityFactors,
     };
     try {
       setSubmitting(true);

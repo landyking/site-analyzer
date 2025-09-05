@@ -173,13 +173,8 @@ export type SelectOptionListResp = {
 export type SuitabilityFactor = {
 	kind: string;
 	weight: number;
-	ranges: Array<SuitabilityFactorRange>;
-};
-
-export type SuitabilityFactorRange = {
-	start: number;
-	end: number;
-	points: number;
+	breakpoints: Array<number>;
+	points: Array<number>;
 };
 
 export type Token = {

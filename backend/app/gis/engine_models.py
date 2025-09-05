@@ -6,18 +6,18 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-class RestrictedFactor(BaseModel):
+class EngineRestrictedFactor(BaseModel):
     kind: str
     buffer_distance: int
 
-class SuitabilityFactor(BaseModel):
+class EngineSuitabilityFactor(BaseModel):
     kind: str
     weight: float
     ranges: Optional[List[tuple[float, float, int]]] = None
 
 class EngineConfigs(BaseModel):
-    restricted_factors: List[RestrictedFactor]
-    suitability_factors: List[SuitabilityFactor]
+    restricted_factors: List[EngineRestrictedFactor]
+    suitability_factors: List[EngineSuitabilityFactor]
 
 
 class TaskMonitor(Protocol):

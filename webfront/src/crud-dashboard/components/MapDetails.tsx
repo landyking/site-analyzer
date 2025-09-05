@@ -11,7 +11,6 @@ import Paper from '@mui/material/Paper';
 import Alert from '@mui/material/Alert';
 import List from '@mui/material/List';
 import ListItem from '@mui/material/ListItem';
-import ListItemText from '@mui/material/ListItemText';
 import TuneRoundedIcon from '@mui/icons-material/TuneRounded';
 import StarRoundedIcon from '@mui/icons-material/StarRounded';
 import Tabs from '@mui/material/Tabs';
@@ -48,10 +47,35 @@ function ConstraintList({ constraints }: { constraints: { kind: string; label?: 
     <List dense>
       {constraints.map((cf) => {
         const label = cf.label || cf.kind;
-        const text = `Distance from ${label}: ≥ ${Number.isFinite(cf.value) ? cf.value : 'x'} m`;
         return (
-          <ListItem key={cf.kind} sx={{ py: 0 }}>
-            <ListItemText primary={text} />
+          <ListItem key={cf.kind} sx={{ py: 0.5 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+              <Typography 
+                component="span" 
+                sx={{ 
+                  fontSize: '0.875rem', 
+                  fontWeight: 500,
+                  color: 'text.secondary',
+                  bgcolor: 'action.hover',
+                  borderRadius: 1,
+                  px: 1,
+                  py: 0.2,
+                  mr: 1
+                }}
+              >
+                Distance from {label}
+              </Typography>
+              <Typography 
+                component="span" 
+                sx={{ 
+                  fontSize: '0.875rem',
+                  fontWeight: 600,
+                  color: 'success.main' 
+                }}
+              >
+                ≥ {Number.isFinite(cf.value) ? `${cf.value} m` : 'x m'}
+              </Typography>
+            </Box>
           </ListItem>
         );
       })}
@@ -69,17 +93,63 @@ function SuitabilityList({ suitability }: { suitability: { kind: string; weight:
         const header = `${label} – Weight: ${Number.isFinite(sf.weight) ? sf.weight : '0'}`;
         return (
           <ListItem key={sf.kind} alignItems="flex-start" sx={{ display: 'block', py: 0 }}>
-            <Typography component="div" sx={{ fontWeight: 500, mb: 0.5, color: 'primary.main' }}>
+            <Typography component="div" sx={{ fontWeight: 500, mb: 0.5, color: 'secondary.main' }}>
               • {header}
             </Typography>
             <List dense sx={{ pl: 3 }}>
-              {sf.ranges.map((r, idx) => (
-                <ListItem key={idx} sx={{ py: 0 }}>
-                  <ListItemText
-                    primary={`${Number.isFinite(r.start) ? r.start : 'x'}–${Number.isFinite(r.end) ? r.end : 'x'}: ${Number.isFinite(r.points) ? r.points : 'x'} points`}
-                  />
-                </ListItem>
-              ))}
+              {sf.ranges.map((r, idx) => {
+                // Format the range as a condition using comparison operators
+                let condition = '';
+                if (Number.isFinite(r.start) && Number.isFinite(r.end)) {
+                  // Both start and end are finite - show as a range
+                  condition = `${r.start} ≤ value < ${r.end}`;
+                } else if (Number.isFinite(r.start)) {
+                  // Only start is finite - show as greater than or equal
+                  condition = `value ≥ ${r.start}`;
+                } else if (Number.isFinite(r.end)) {
+                  // Only end is finite - show as less than
+                  condition = `value < ${r.end}`;
+                }
+                // If both are non-finite, we would have an empty condition
+                
+                return (
+                  <ListItem key={idx} sx={{ py: 0.5 }}>
+                    {condition ? (
+                      <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                        <Typography 
+                          component="span" 
+                          sx={{ 
+                            fontSize: '0.875rem', 
+                            fontWeight: 500,
+                            color: 'text.secondary',
+                            bgcolor: 'action.hover',
+                            borderRadius: 1,
+                            px: 1,
+                            py: 0.2,
+                            mr: 1
+                          }}
+                        >
+                          {condition}
+                        </Typography>
+                        <Typography 
+                          component="span" 
+                          sx={{ 
+                            fontSize: '0.875rem',
+                            fontWeight: 600,
+                            color: 'success.main' 
+                          }}
+                        >
+                          {Number.isFinite(r.points) ? `${r.points} points` : 'x points'}
+                        </Typography>
+                      </Box>
+                    ) : (
+                      <Typography sx={{ color: 'success.main', fontWeight: 500 }}>
+                        {Number.isFinite(r.points) ? `${r.points} points` : 'x points'}
+                      </Typography>
+                    )}
+                  </ListItem>
+                );
+              })}
             </List>
           </ListItem>
         );
@@ -177,7 +247,7 @@ function MapTabs({ mapTask, isOngoing }: { mapTask: NonNullable<UserUserGetMapTa
         aria-label="Map details tabs"
         sx={{ borderBottom: 1, borderColor: 'divider', px: 2 }}
       >
-        {visibleTabs.map((tab, idx) => (
+        {visibleTabs.map((tab) => (
           <Tab key={tab.label} label={tab.label} />
         ))}
       </Tabs>
@@ -205,9 +275,75 @@ function MapTabs({ mapTask, isOngoing }: { mapTask: NonNullable<UserUserGetMapTa
   );
 }
 
+// Define types for the suitability factors
+type NewSuitabilityFactor = {
+  kind: string;
+  weight: number;
+  ranges?: Array<{ start: number; end: number; points: number }>;
+  breakpoints?: number[];
+  points?: number[];
+};
+
+type OldSuitabilityFactor = {
+  kind: string;
+  weight: number;
+  ranges: Array<{ start: number; end: number; points: number }>;
+};
+
+// Convert new suitability factor format to old format
+function convertToOldSuitabilityFormat(suitabilityFactors: NewSuitabilityFactor[]): OldSuitabilityFactor[] {
+  if (!suitabilityFactors || !Array.isArray(suitabilityFactors)) return [];
+  
+  return suitabilityFactors.map(factor => {
+    // If already has ranges, return as-is with proper type
+    if (factor.ranges && Array.isArray(factor.ranges) && factor.ranges.length > 0) {
+      return {
+        kind: factor.kind,
+        weight: factor.weight,
+        ranges: factor.ranges
+      };
+    }
+    
+    // Convert from new breakpoints/points format to old ranges format
+    const { breakpoints, points, kind, weight } = factor;
+    
+    // If no breakpoints or points, return minimal structure
+    if (!Array.isArray(breakpoints) || !Array.isArray(points) || breakpoints.length === 0) {
+      return { kind, weight, ranges: [] };
+    }
+    
+    // Sort breakpoints to ensure correct order
+    const sortedBreakpoints = [...breakpoints].sort((a, b) => a - b);
+    
+    // Create ranges from breakpoints and points
+    const ranges: Array<{ start: number; end: number; points: number }> = [];
+    let lastPoint = -Infinity;
+    
+    // Create ranges for each interval
+    for (let i = 0; i < sortedBreakpoints.length; i++) {
+      ranges.push({
+        start: lastPoint,
+        end: sortedBreakpoints[i],
+        points: Number.isFinite(points[i]) ? points[i] : NaN
+      });
+      lastPoint = sortedBreakpoints[i];
+    }
+    
+    // Add the final range (after the last breakpoint)
+    ranges.push({
+      start: lastPoint,
+      end: Infinity,
+      points: Number.isFinite(points[points.length - 1]) ? points[points.length - 1] : NaN
+    });
+    
+    return { kind, weight, ranges };
+  });
+}
+
 function MapSettings({ mapTask }: { mapTask: NonNullable<UserUserGetMapTaskResponse['data']> }) {
   const constraints = mapTask.constraint_factors || [];
-  const suitability = mapTask.suitability_factors || [];
+  // Convert new suitability factor format to old format if needed
+  const suitability = convertToOldSuitabilityFormat(mapTask.suitability_factors || []);
   return (
     <Box
       sx={{

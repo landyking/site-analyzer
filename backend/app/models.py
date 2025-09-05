@@ -152,26 +152,12 @@ class ConstraintFactor(BaseModel):
         return v
 
 
-class SuitabilityFactorRange(BaseModel):
-    start: float
-    end: float
-    points: int
-
-    @model_validator(mode="after")
-    def _check_range(self) -> "SuitabilityFactorRange":
-        if not all(map(isfinite, (self.start, self.end))):
-            raise ValueError("range start/end must be finite numbers")
-        if self.start >= self.end:
-            raise ValueError("range start must be < end")
-        if self.points is None or self.points < 1:
-            raise ValueError("range points must be >= 1")
-        return self
-
 
 class SuitabilityFactor(BaseModel):
     kind: str
     weight: float
-    ranges: List[SuitabilityFactorRange]
+    breakpoints: list[float]
+    points: list[int]
 
     @field_validator("kind")
     @classmethod
@@ -187,6 +173,21 @@ class SuitabilityFactor(BaseModel):
             raise ValueError("weight must be in the interval (0, 10]")
         return v
 
+    @model_validator(mode="after")
+    def _check_breakpoints_points(self) -> SuitabilityFactor:
+        bps = self.breakpoints
+        pts = self.points
+        if not bps or not pts:
+            raise ValueError("breakpoints and points are required")
+        if sorted(bps) != bps:
+            raise ValueError("breakpoints must be in ascending order")
+        if len(pts) != len(bps) + 1:
+            raise ValueError("points count must be breakpoints+1")
+        if not all(isinstance(p, int) and 0 <= p <= 10 for p in pts):
+            raise ValueError("each point must be an integer in [0, 10]")
+        if not all(isfinite(bp) for bp in bps):
+            raise ValueError("breakpoints must be finite numbers")
+        return self
 
 class MapTaskDetails(MapTask):
     files: List[MapTaskFile] = []

@@ -13,7 +13,7 @@ from app.core.config import settings
 from app.core.db import engine as db_engine
 from app.models import MapTaskDB, MapTaskFileDB, MapTaskStatus, MapTaskProgressDB
 from app.gis.engine import SiteSuitabilityEngine
-from app.gis.engine_models import EngineConfigs, RestrictedFactor, SuitabilityFactor, TaskMonitor
+from app.gis.engine_models import EngineConfigs, EngineRestrictedFactor, EngineSuitabilityFactor, TaskMonitor
 
 logger = logging.getLogger(__name__)
 
@@ -171,28 +171,33 @@ def process_map_task(task_id: int) -> None:
 		except Exception:
 			suitability_factors = []
 
-		restricted: List[RestrictedFactor] = []
+		restricted: List[EngineRestrictedFactor] = []
 		for cf in constraint_factors:
 			try:
 				kind = str(cf.get("kind"))
 				value = cf.get("value")
 				buffer_distance = int(value) if value is not None else 0
-				restricted.append(RestrictedFactor(kind=kind, buffer_distance=buffer_distance))
+				restricted.append(EngineRestrictedFactor(kind=kind, buffer_distance=buffer_distance))
 			except Exception as e:
 				logger.warning("Skip invalid constraint factor on task %s: %r (%s)", task_id, cf, e)
 
-		suitables: List[SuitabilityFactor] = []
+		suitables: List[EngineSuitabilityFactor] = []
 		for sf in suitability_factors:
 			try:
 				kind = str(sf.get("kind"))
 				weight = float(sf.get("weight"))
-				ranges_src = sf.get("ranges") or []
-				ranges: List[Tuple[float, float, int]] = []
-				for r in ranges_src:
-					ranges.append((float(r.get("start")), float(r.get("end")), int(r.get("points"))))
+				breakpoints_src = sf.get("breakpoints") or []
+				breakpoints: List[float] = []
+				for r in breakpoints_src:
+					breakpoints.append(float(r))
+				points_src = sf.get("points") or []
+				points: List[int] = []
+				for r in points_src:
+					points.append(int(r))
+				ranges = build_ranges(breakpoints, points)
 				# allow None ranges if empty to defer to engine defaults
 				suitables.append(
-					SuitabilityFactor(kind=kind, weight=weight, ranges=ranges or None)
+					EngineSuitabilityFactor(kind=kind, weight=weight, ranges=ranges or None)
 				)
 			except Exception as e:
 				logger.warning("Skip invalid suitability factor on task %s: %r (%s)", task_id, sf, e)
@@ -235,3 +240,11 @@ def process_map_task(task_id: int) -> None:
 			error_msg=msg,
 			ended_at=datetime.now(timezone.utc),
 		)
+		
+def build_ranges(breakpoints: list[float], points: list[int]) -> List[Tuple[float, float, int]]:
+    intervals = [-float("inf")] + breakpoints + [float("inf")]
+    return [
+        Tuple(start=intervals[i], end=intervals[i+1], points=points[i])
+        for i in range(len(points))
+    ]
+
