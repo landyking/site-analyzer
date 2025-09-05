@@ -1,3 +1,4 @@
+import Chip from '@mui/material/Chip';
 import { forwardRef, useImperativeHandle, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { UserService } from '../../../client/sdk.gen';
@@ -12,9 +13,12 @@ import FormControl from '@mui/material/FormControl';
 import FormHelperText from '@mui/material/FormHelperText';
 import Checkbox from '@mui/material/Checkbox';
 import FormControlLabel from '@mui/material/FormControlLabel';
-import IconButton from '@mui/material/IconButton';
+// import IconButton from '@mui/material/IconButton';
 import AddIcon from '@mui/icons-material/Add';
-import DeleteIcon from '@mui/icons-material/Delete';
+// import DeleteIcon from '@mui/icons-material/Delete';
+// import Chip from '@mui/material/Chip';
+// import InputAdornment from '@mui/material/InputAdornment';
+import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
 import Paper from '@mui/material/Paper';
 import Divider from '@mui/material/Divider';
@@ -120,78 +124,161 @@ function FactorHistogram({ code, histogram }: { code: string; histogram?: Distri
   );
 }
 
-function FactorScoringRules({
-  ranges,
+
+// Breakpoint-driven Scoring rules component
+
+function BreakpointScoringRules({
+  breakpoints,
+  points,
+  onAddBreakpoint,
+  onRemoveBreakpoint,
+  onPointsChange,
   error,
-  onUpdate,
-  onAdd,
-  onRemove,
+  minValue = -Infinity,
+  maxValue = Infinity,
 }: {
-  ranges: SuitabilityFactorRangeItem[];
-  error?: Array<{ start?: string; end?: string; points?: string }>;
-  onUpdate: (idx: number, patch: Partial<SuitabilityFactorRangeItem>) => void;
-  onAdd: () => void;
-  onRemove: (idx: number) => void;
+  breakpoints: number[];
+  points: number[];
+  onAddBreakpoint: (v: number) => void;
+  onRemoveBreakpoint: (idx: number) => void;
+  onPointsChange: (idx: number, v: number) => void;
+  error?: { breakpoints?: string; points?: string[] };
+  minValue?: number;
+  maxValue?: number;
 }) {
+  const [input, setInput] = useState('');
+  const [inputError, setInputError] = useState<string | null>(null);
+
+  // Generate intervals based on breakpoints
+  const sorted = [...breakpoints].sort((a, b) => a - b);
+  // Always use positive and negative infinity as interval boundaries
+  const intervals = [-Infinity, ...sorted, Infinity];
+
+  function handleInputChange(e: React.ChangeEvent<HTMLInputElement>) {
+    setInput(e.target.value);
+    setInputError(null);
+  }
+  function handleInputConfirm() {
+    if (input.trim() === '') {
+      // Do nothing if input is empty
+      return;
+    }
+    const v = Number(input);
+    if (Number.isNaN(v)) {
+      setInputError('Please enter a valid number');
+      return;
+    }
+    if (breakpoints.includes(v)) {
+      setInputError('Breakpoint already exists');
+      return;
+    }
+    // Browser will enforce min/max validation, but we keep this as a safety check
+    if (minValue !== -Infinity && v <= minValue) {
+      setInputError(`Value must be greater than ${minValue}`);
+      return;
+    }
+    if (maxValue !== Infinity && v >= maxValue) {
+      setInputError(`Value must be less than ${maxValue}`);
+      return;
+    }
+    onAddBreakpoint(v);
+    setInput('');
+    setInputError(null);
+  }
+
   return (
     <>
-      <Typography variant="subtitle2" sx={{ mt: 1 }}>Scoring rules</Typography>
-      {ranges.length === 0 && error && (
-        <FormHelperText error sx={{ mb: 1, color: 'error.main' }}>
-          At least one scoring rule is required. Please add one.
-        </FormHelperText>
-      )}
-      <Stack spacing={1}>
-        {ranges.map((r, idx) => {
-          const re = error?.[idx] || {};
-          return (
-            <Stack key={idx} direction="row" spacing={2} alignItems="center">
-              <FormControl error={Boolean(re.start)} sx={{ width: 180 }}>
-                <TextField
-                  required
-                  label="Start"
-                  type="number"
-                  value={Number.isFinite(r.start) ? r.start : ''}
-                  onChange={(e) => onUpdate(idx, { start: e.target.value === '' ? Number.NaN : Number(e.target.value) })}
-                  error={Boolean(re.start)}
-                  helperText={re.start}
-                  inputProps={{ step: 'any' }}
-                />
-              </FormControl>
-              <FormControl error={Boolean(re.end)} sx={{ width: 180 }}>
-                <TextField
-                  required
-                  label="End"
-                  type="number"
-                  value={Number.isFinite(r.end) ? r.end : ''}
-                  onChange={(e) => onUpdate(idx, { end: e.target.value === '' ? Number.NaN : Number(e.target.value) })}
-                  error={Boolean(re.end)}
-                  helperText={re.end}
-                  inputProps={{ step: 'any' }}
-                />
-              </FormControl>
-              <FormControl error={Boolean(re.points)} sx={{ width: 180 }}>
-                <TextField
-                  required
-                  label="Points"
-                  type="number"
-                  value={Number.isFinite(r.points) ? r.points : ''}
-                  onChange={(e) => onUpdate(idx, { points: e.target.value === '' ? Number.NaN : Number(e.target.value) })}
-                  error={Boolean(re.points)}
-                  helperText={re.points}
-                  inputProps={{ step: 1, min: 1, max: 10 }}
-                />
-              </FormControl>
-              <IconButton aria-label="delete" onClick={() => onRemove(idx)}>
-                <DeleteIcon />
-              </IconButton>
-            </Stack>
-          );
-        })}
-        <IconButton aria-label="add" color="primary" onClick={onAdd}>
-          <AddIcon />
-        </IconButton>
+      <Typography variant="h6" sx={{ mt: 1, mb: 0.5, fontWeight: 600, letterSpacing: 0.2 }}>Scoring rules</Typography>
+      <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+        Add breakpoints to divide the value range into intervals. Each interval will have a score.
+      </Typography>
+      {/* Combined row: input + chips */}
+      <Stack 
+        direction="row" 
+        spacing={1} 
+        alignItems="center" 
+        sx={{ mb: 1, flexWrap: 'wrap', minHeight: 40 }}
+      >
+        <Typography sx={{ fontWeight: 500, mr: 1 }}>Breakpoints:</Typography>
+        <FormControl error={!!inputError} sx={{ width: 140 }}>
+          <TextField
+            size="small"
+            type="number"
+            value={input}
+            onChange={handleInputChange}
+            onKeyDown={e => {
+              if (e.key === 'Enter') handleInputConfirm();
+            }}
+            error={!!inputError}
+            placeholder="Enter value"
+            inputProps={{ 
+              step: 'any',
+              min: minValue !== -Infinity ? minValue : undefined,
+              max: maxValue !== Infinity ? maxValue : undefined
+            }}
+          />
+          <FormHelperText>
+            {inputError || ''}
+          </FormHelperText>
+        </FormControl>
+        <Button
+          variant="outlined"
+          color="secondary"
+          size="small"
+          sx={{ minWidth: 28, height: 32, p: 0 }}
+          onClick={handleInputConfirm}
+          title="add"
+        >
+          <AddIcon fontSize="inherit" style={{ fontSize: 16 }} />
+        </Button>
+        {sorted.length > 0 && sorted.map((bp, idx) => (
+          <Chip
+            key={bp}
+            label={bp}
+            onDelete={() => onRemoveBreakpoint(idx)}
+            sx={{ fontSize: 16, ml: 1 }}
+            color="primary"
+          />
+        ))}
       </Stack>
+      {error?.breakpoints && (
+        <FormHelperText error sx={{ mb: 1 }}>{error.breakpoints}</FormHelperText>
+      )}
+      {/* Only show points rows when breakpoints exist */}
+      {sorted.length > 0 && (
+        <Stack spacing={1}>
+          {intervals.slice(0, -1).map((start, idx) => {
+            // Build natural language interval description
+            let label = '';
+            const end = intervals[idx + 1];
+            if (start === -Infinity && end !== Infinity) {
+              label = `If value ≤ ${end}`;
+            } else if (start !== -Infinity && end !== Infinity) {
+              label = `If ${start} < value ≤ ${end}`;
+            } else if (end === Infinity && start !== -Infinity) {
+              label = `If value > ${start}`;
+            }
+            return (
+              <Stack key={idx} direction="row" spacing={2} alignItems="center">
+                <Typography sx={{ minWidth: 48, mr: 1 }}>Points:</Typography>
+                <FormControl error={!!(error?.points && error.points[idx])} sx={{ width: 120, my: 0 }}>
+                  <TextField
+                    required
+                    type="number"
+                    value={Number.isFinite(points[idx]) ? points[idx] : ''}
+                    onChange={e => onPointsChange(idx, e.target.value === '' ? NaN : Number(e.target.value))}
+                    error={!!(error?.points && error.points[idx])}
+                    helperText={error?.points && error.points[idx]}
+                    inputProps={{ step: 1, min: 1, max: 10 }}
+                    size="small"
+                  />
+                </FormControl>
+                <Chip label={label} color="info" variant="outlined" sx={{ ml: 2, fontSize: 14, my: 0 }} />
+              </Stack>
+            );
+          })}
+        </Stack>
+      )}
     </>
   );
 }
@@ -304,18 +391,44 @@ function useSuitabilitySelection(value: SuitabilityFactorsValue, onChange: (v: S
 
 const SuitabilityFactorsStepInner = forwardRef<SuitabilityFactorsStepHandle, SuitabilityFactorsStepProps & { histograms?: Record<string, DistrictHistogram> }>(
   ({ value, onChange, histograms }, ref) => {
-    const { errors, selectionError, validate, clearWeightError, clearRangeError } = useSuitabilityErrors(value);
-  const { toggle, updateWeight, addRange, removeRange, updateRange } = useSuitabilitySelection(value, onChange, () => {});
+    const { errors, selectionError, validate, clearWeightError } = useSuitabilityErrors(value);
+    const { toggle, updateWeight } = useSuitabilitySelection(value, onChange, () => {});
     const selectedMap = useMemo(() => new Map(value.map((v) => [v.kind, v])), [value]);
 
+    // New scoring rules state management
     function handleToggle(kind: string, checked: boolean) {
       toggle(kind, checked);
     }
     function handleUpdateWeight(kind: string, w: number | '') {
       updateWeight(kind, w, clearWeightError);
     }
-    function handleUpdateRange(kind: string, idx: number, patch: Partial<SuitabilityFactorRangeItem>) {
-      updateRange(kind, idx, patch, clearRangeError);
+
+    // New scoring rules data structure: breakpoints + points
+    function getBreakpointsAndPoints(ranges: SuitabilityFactorRangeItem[]) {
+      // Compatible with old data structure
+      if (!ranges || ranges.length === 0) return { breakpoints: [], points: [] };
+      // Assume ranges are intervals, infer breakpoints automatically
+      const sorted = [...ranges].sort((a, b) => a.start - b.start);
+      const breakpoints: number[] = [];
+      for (let i = 0; i < sorted.length - 1; ++i) {
+        breakpoints.push(sorted[i].end);
+      }
+      const points = sorted.map(r => r.points);
+      return { breakpoints, points };
+    }
+    function setBreakpointsAndPoints(kind: string, breakpoints: number[], points: number[]) {
+      // Generate ranges from breakpoints and points
+      const sorted = [...breakpoints].sort((a, b) => a - b);
+      const ranges: SuitabilityFactorRangeItem[] = [];
+      let last = -Infinity;
+      for (let i = 0; i < sorted.length; ++i) {
+        ranges.push({ start: last, end: sorted[i], points: points[i] });
+        last = sorted[i];
+      }
+      ranges.push({ start: last, end: Infinity, points: points[points.length - 1] });
+      // Update value
+      const next = value.map(v => v.kind === kind ? { ...v, ranges } : v);
+      onChange(next);
     }
 
     useImperativeHandle(ref, () => ({ validate }));
@@ -326,6 +439,29 @@ const SuitabilityFactorsStepInner = forwardRef<SuitabilityFactorsStepHandle, Sui
         {ALL_FACTORS.map((opt) => {
           const selected = selectedMap.get(opt.code);
           const err = errors[opt.code];
+          // Parse breakpoints/points
+          const { breakpoints, points } = getBreakpointsAndPoints(selected?.ranges ?? []);
+          function handleAddBreakpoint(v: number) {
+            const newBreakpoints = [...breakpoints, v];
+            // After adding a new breakpoint, insert a new points item, default to NaN
+            const insertIdx = newBreakpoints.sort((a, b) => a - b).indexOf(v);
+            const newPoints = [...points];
+            newPoints.splice(insertIdx + 1, 0, NaN);
+            setBreakpointsAndPoints(opt.code, newBreakpoints, newPoints);
+          }
+          function handleRemoveBreakpoint(idx: number) {
+            const newBreakpoints = [...breakpoints];
+            newBreakpoints.splice(idx, 1);
+            const newPoints = [...points];
+            // Merge intervals, remove the points at idx+1
+            newPoints.splice(idx + 1, 1);
+            setBreakpointsAndPoints(opt.code, newBreakpoints, newPoints);
+          }
+          function handlePointsChange(idx: number, v: number) {
+            const newPoints = [...points];
+            newPoints[idx] = v;
+            setBreakpointsAndPoints(opt.code, breakpoints, newPoints);
+          }
           return (
             <Paper key={opt.code} variant="outlined" sx={{ p: 2 }}>
               <Stack direction="row" spacing={2} alignItems="center" flexWrap="wrap">
@@ -345,12 +481,15 @@ const SuitabilityFactorsStepInner = forwardRef<SuitabilityFactorsStepHandle, Sui
                 <Stack spacing={2} sx={{ pl: 5, pt: 1 }}>
                   <Divider flexItem />
                   <FactorHistogram code={opt.code} histogram={histograms?.[opt.code]} />
-                  <FactorScoringRules
-                    ranges={selected.ranges}
-                    error={err?.ranges}
-                    onUpdate={(idx, patch) => handleUpdateRange(opt.code, idx, patch)}
-                    onAdd={() => addRange(opt.code)}
-                    onRemove={(idx) => removeRange(opt.code, idx)}
+                  <BreakpointScoringRules
+                    breakpoints={breakpoints}
+                    points={points}
+                    onAddBreakpoint={handleAddBreakpoint}
+                    onRemoveBreakpoint={handleRemoveBreakpoint}
+                    onPointsChange={handlePointsChange}
+                    error={undefined}
+                    minValue={histograms?.[opt.code]?.min ?? -Infinity}
+                    maxValue={histograms?.[opt.code]?.max ?? Infinity}
                   />
                 </Stack>
               )}
@@ -360,7 +499,7 @@ const SuitabilityFactorsStepInner = forwardRef<SuitabilityFactorsStepHandle, Sui
       </Stack>
     );
   },
-);
+  );
 
 
 const SuitabilityFactorsStep = forwardRef<SuitabilityFactorsStepHandle, SuitabilityFactorsStepProps>((props, ref) => {
