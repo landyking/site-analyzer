@@ -297,6 +297,9 @@ function useSuitabilityErrors(value: SuitabilityFactorsValue) {
       setSelectionError(undefined);
     }
     for (const item of value) {
+      // Debug log to inspect the ranges
+      // console.log('Validating item:', item.kind, 'with ranges:', JSON.stringify(item.ranges));
+      
       const e: { weight?: string; ranges?: Array<{ start?: string; end?: string; points?: string }> } = {};
       if (!Number.isFinite(item.weight)) {
         e.weight = 'Weight is required and must be a number';
@@ -311,9 +314,21 @@ function useSuitabilityErrors(value: SuitabilityFactorsValue) {
       } else {
         e.ranges = item.ranges.map((r) => {
           const re: { start?: string; end?: string; points?: string } = {};
-          if (!Number.isFinite(r.start)) re.start = 'Required';
-          if (!Number.isFinite(r.end)) re.end = 'Required';
+          // Special handling for -Infinity, Infinity and null
+          // In JSON serialization, Infinity becomes null, so we need to handle both
+          if (r.start !== -Infinity && r.start !== null && !Number.isFinite(r.start)) re.start = 'Required';
+          if (r.end !== Infinity && r.end !== null && !Number.isFinite(r.end)) re.end = 'Required';
           if (!Number.isFinite(r.points)) re.points = 'Required';
+          else if (r.points < 1 || r.points > 10) re.points = 'Points must be between 1 and 10';
+          
+          // Debug log for this range
+          /* console.log('Range validation:', {
+            start: r.start, 
+            end: r.end, 
+            points: r.points,
+            errors: re
+          }); */
+          
           if (re.start || re.end || re.points) ok = false;
           return re;
         });
@@ -321,6 +336,10 @@ function useSuitabilityErrors(value: SuitabilityFactorsValue) {
       if (e.weight || e.ranges?.some((x) => x.start || x.end || x.points)) next[item.kind] = e;
     }
     setErrors(next);
+    
+    // Final validation result
+    // console.log('Validation result:', ok, 'Errors:', JSON.stringify(next));
+    
     return ok;
   }
 
@@ -405,27 +424,59 @@ const SuitabilityFactorsStepInner = forwardRef<SuitabilityFactorsStepHandle, Sui
 
     // New scoring rules data structure: breakpoints + points
     function getBreakpointsAndPoints(ranges: SuitabilityFactorRangeItem[]) {
+      // Debug log
+      // console.log('Getting breakpoints from ranges:', JSON.stringify(ranges));
+      
       // Compatible with old data structure
       if (!ranges || ranges.length === 0) return { breakpoints: [], points: [] };
+      
+      // Handle null values that might occur from JSON serialization
+      const validRanges = ranges.map(r => ({
+        start: r.start === null ? -Infinity : r.start,
+        end: r.end === null ? Infinity : r.end,
+        points: r.points
+      }));
+      
       // Assume ranges are intervals, infer breakpoints automatically
-      const sorted = [...ranges].sort((a, b) => a.start - b.start);
+      const sorted = [...validRanges].sort((a, b) => a.start - b.start);
       const breakpoints: number[] = [];
       for (let i = 0; i < sorted.length - 1; ++i) {
-        breakpoints.push(sorted[i].end);
+        if (Number.isFinite(sorted[i].end)) {
+          breakpoints.push(sorted[i].end);
+        }
       }
       const points = sorted.map(r => r.points);
+      
+      // Debug log
+      // console.log('Resulting breakpoints:', breakpoints, 'points:', points);
+      
       return { breakpoints, points };
     }
     function setBreakpointsAndPoints(kind: string, breakpoints: number[], points: number[]) {
+      // Debug log
+      // console.log('Setting breakpoints:', breakpoints, 'points:', points);
+      
       // Generate ranges from breakpoints and points
       const sorted = [...breakpoints].sort((a, b) => a - b);
       const ranges: SuitabilityFactorRangeItem[] = [];
       let last = -Infinity;
       for (let i = 0; i < sorted.length; ++i) {
-        ranges.push({ start: last, end: sorted[i], points: points[i] });
+        ranges.push({ 
+          start: last, 
+          end: sorted[i], 
+          points: Number.isFinite(points[i]) ? points[i] : NaN 
+        });
         last = sorted[i];
       }
-      ranges.push({ start: last, end: Infinity, points: points[points.length - 1] });
+      ranges.push({ 
+        start: last, 
+        end: Infinity, 
+        points: Number.isFinite(points[points.length - 1]) ? points[points.length - 1] : NaN 
+      });
+      
+      // Debug log
+      // console.log('Generated ranges:', JSON.stringify(ranges));
+      
       // Update value
       const next = value.map(v => v.kind === kind ? { ...v, ranges } : v);
       onChange(next);
@@ -487,7 +538,10 @@ const SuitabilityFactorsStepInner = forwardRef<SuitabilityFactorsStepHandle, Sui
                     onAddBreakpoint={handleAddBreakpoint}
                     onRemoveBreakpoint={handleRemoveBreakpoint}
                     onPointsChange={handlePointsChange}
-                    error={undefined}
+                    error={err?.ranges ? { 
+                      breakpoints: breakpoints.length === 0 ? 'At least one breakpoint is required' : undefined,
+                      points: err.ranges.map(r => r.points || '') 
+                    } : undefined}
                     minValue={histograms?.[opt.code]?.min ?? -Infinity}
                     maxValue={histograms?.[opt.code]?.max ?? Infinity}
                   />

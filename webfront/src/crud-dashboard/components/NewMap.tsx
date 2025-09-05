@@ -46,18 +46,26 @@ export default function NewMap() {
   const confirmRef = useRef<ConfirmationStepHandle>(null);
 
   function validateStep(stepIndex: number) {
+    // console.log('Validating step:', stepIndex);
+    let result = false;
     switch (stepIndex) {
       case 0:
-        return baseRef.current?.validate() ?? true;
+        result = baseRef.current?.validate() ?? true;
+        break;
       case 1:
-        return constraintRef.current?.validate() ?? true;
+        result = constraintRef.current?.validate() ?? true;
+        break;
       case 2:
-        return suitabilityRef.current?.validate() ?? true;
+        result = suitabilityRef.current?.validate() ?? true;
+        break;
       case 3:
-        return confirmRef.current?.validate() ?? true;
+        result = confirmRef.current?.validate() ?? true;
+        break;
       default:
-        return true;
+        result = true;
     }
+    // console.log('Validation result for step', stepIndex, ':', result);
+    return result;
   }
 
   function handleNext() {
