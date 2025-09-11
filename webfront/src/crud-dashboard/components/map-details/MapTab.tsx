@@ -4,6 +4,8 @@ import 'leaflet/dist/leaflet.css';
 import '../../../jslibs/leaflet.groupedlayercontrol.css';
 import { css } from '@emotion/react';
 import L from 'leaflet';
+import 'leaflet.fullscreen';
+import 'leaflet.fullscreen/Control.FullScreen.css';
 import '../../../jslibs/leaflet.groupedlayercontrol.js';
 import type { MapTaskDetails } from '../../../client/types.gen';
 import axios from 'axios';
@@ -192,6 +194,11 @@ const MapInner:React.FC<MapTabInnerProps> = ({ mapTask }) => {
       const map = L.map(mapRef.current, { layers: [cartoDark] }).setView([0, 0], 2);
       leafletMapRef.current = map;
       if (bounds) map.fitBounds(bounds);
+
+      // Add fullscreen control if plugin is loaded
+      if ((L as any).control?.fullscreen) {
+        (L as any).control.fullscreen({ position: 'topleft' }).addTo(map);
+      }
 
       // 4. Grouped layer control
       const baseMaps = {
