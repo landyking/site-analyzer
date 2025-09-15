@@ -126,6 +126,13 @@ async def get_oidc_token(session: SessionDep,payload: OidcTokenRequest) -> PostL
         user = crud.create_user(session=session, user_create=user_create)
 
     # 4) Issue your app's JWT
+    # Update last_login for this user
+    try:
+        user = crud.touch_last_login(session=session, user=user)
+    except Exception:
+        # Non-fatal
+        pass
+
     access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = security.create_access_token(
         user.id, user.role == UserRole.ADMIN, expires_delta=access_token_expires

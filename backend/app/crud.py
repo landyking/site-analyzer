@@ -21,6 +21,17 @@ from app.gis.processor import process_map_task
 from app.db.pagination import paginate
 
 
+def touch_last_login(*, session: Session, user: UserDB) -> UserDB:
+    """Update the user's last_login to now (UTC) and persist.
+
+    Returns the refreshed user row.
+    """
+    user.last_login = datetime.now(timezone.utc)
+    session.add(user)
+    session.commit()
+    session.refresh(user)
+    return user
+
 
 def create_user(*, session: Session, user_create: UserCreate) -> UserDB:
     db_obj = UserDB.model_validate(
@@ -80,6 +91,12 @@ def authenticate(*, session: Session, email: str, password: str) -> UserDB | Non
         return None
     if not verify_password(password, db_user.password_hash):
         return None
+    # successful authentication – update last_login
+    try:
+        db_user = touch_last_login(session=session, user=db_user)
+    except Exception:
+        # Do not block login if timestamp update fails
+        pass
     return db_user
 
 
