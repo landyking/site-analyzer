@@ -10,6 +10,7 @@ from app.models import (
 )
 from app import crud
 from app.models import User4Admin
+from app.api.routes.mappers.map_task import to_map_task as _to_map_task
 
 
 router = APIRouter(tags=["Admin"])
@@ -80,13 +81,23 @@ async def admin_get_map_tasks(
     user_id: int | None = None,
     status: int | None = None,
 ) -> MapTask4AdminPageData:
-    # Stub implementation: return empty list with pagination meta
+    ps = max(1, int(page_size) if page_size else 20)
+    cp = max(1, int(current_page) if current_page else 1)
+    rows, total, ps, cp = crud.admin_list_map_tasks(
+        session=session,
+        page_size=ps,
+        current_page=cp,
+        name=name,
+        user_id=user_id,
+        status=status,
+    )
+    tasks = [_to_map_task(session, row) for row in rows]
     return MapTask4AdminPageData(
         error=0,
-        list=[],
-        total=0,
-        current_page=current_page,
-        page_size=page_size,
+        list=tasks,
+        total=total,
+        current_page=cp,
+        page_size=ps,
     )
 
 

@@ -27,6 +27,7 @@ from datetime import datetime, timedelta, timezone
 
 from app.core.security import gen_tile_signature
 from app.core import storage
+from app.api.routes.mappers.map_task import to_map_task_details as _map_to_details
 
 router = APIRouter(tags=["User"])
 
@@ -42,53 +43,7 @@ def _as_aware_utc(dt):
     return dt.astimezone(timezone.utc)
 
 def _to_map_task_details(session: SessionDep, data: MapTaskDB) -> MapTaskDetails:
-    """Create a MapTaskDetails from a MapTaskDB row, safely parsing JSON fields."""
-    # Fetch user email by user_id; ignore failures gracefully
-    user_email: str | None = None
-    try:
-        user = crud.get_user_by_id(session=session, user_id=data.user_id)
-        if user:
-            user_email = user.email
-    except Exception:
-        user_email = None
-
-    district_name = _DISTRICT_CODE_TO_NAME.get(data.district)
-    # Translate status to a human-readable description using Enum
-    status_desc: str | None = None
-    try:
-        status_desc = MapTaskStatus(data.status).name.title()
-    except Exception:
-        status_desc = None
-
-    db_files: list[MapTaskFileDB] = crud.get_files_by_id(session=session, user_id=data.user_id, map_task_id=data.id)
-    files: list[MapTaskFile] = [MapTaskFile(**file.model_dump()) for file in db_files]
-    for f in files:
-        f.file_path = storage.generate_presigned_url(f.file_path)
-    return MapTaskDetails(
-        id=data.id,
-        name=data.name,
-        files=files,
-        constraint_factors=(
-            json.loads(data.constraint_factors)
-            if isinstance(data.constraint_factors, str)
-            else data.constraint_factors
-        ),
-        suitability_factors=(
-            json.loads(data.suitability_factors)
-            if isinstance(data.suitability_factors, str)
-            else data.suitability_factors
-        ),
-        user_id=data.user_id,
-        user_email=user_email,
-        status=data.status,
-        status_desc=status_desc,
-        started_at=_as_aware_utc(data.started_at),
-        ended_at=_as_aware_utc(data.ended_at),
-        created_at=_as_aware_utc(data.created_at),
-        updated_at=_as_aware_utc(data.updated_at),
-        district_code=data.district,
-        district_name=district_name,
-    )
+    return _map_to_details(session, data)
 
 
 @router.get("/user/my-map-tasks", response_model=MyMapTaskListResp, summary="Get user's map tasks")

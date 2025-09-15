@@ -269,6 +269,35 @@ def admin_list_users(
     return rows, total, ps, cp
 
 
+def admin_list_map_tasks(
+    *,
+    session: Session,
+    page_size: int,
+    current_page: int,
+    name: str | None = None,
+    user_id: int | None = None,
+    status: int | None = None,
+) -> tuple[list[MapTaskDB], int, int, int]:
+    """List map tasks for admin with pagination and optional filters."""
+    stmt = select(MapTaskDB)
+    if name:
+        kw = f"%{name.strip()}%"
+        stmt = stmt.where(MapTaskDB.name.like(kw))
+    if user_id is not None:
+        stmt = stmt.where(MapTaskDB.user_id == user_id)
+    if status is not None:
+        stmt = stmt.where(MapTaskDB.status == status)
+
+    rows, total, ps, cp = paginate(
+        session=session,
+        base_stmt=stmt,
+        page_size=page_size,
+        current_page=current_page,
+        order_by=(MapTaskDB.created_at.desc(),),
+    )
+    return rows, total, ps, cp
+
+
 def admin_update_user_status(
     *, session: Session, target_user_id: int, status: int
 ) -> UserDB | None:
