@@ -236,6 +236,12 @@ def get_map_task_progress(*, session: Session, user_id: int, task_id: int) -> li
     return rows
 
 
+def admin_get_map_task(*, session: Session, task_id: int) -> MapTaskDB | None:
+    """Fetch a map task by id without user restriction (admin scope)."""
+    statement = select(MapTaskDB).where(MapTaskDB.id == task_id)
+    return session.exec(statement).first()
+
+
 def admin_list_users(
     *,
     session: Session,

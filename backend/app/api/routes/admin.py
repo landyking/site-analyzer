@@ -11,6 +11,7 @@ from app.models import (
 from app import crud
 from app.models import User4Admin
 from app.api.routes.mappers.map_task import to_map_task as _to_map_task
+from app.api.routes.mappers.map_task import to_map_task_details as _to_map_task_details
 
 
 router = APIRouter(tags=["Admin"])
@@ -107,5 +108,8 @@ async def admin_get_map_task(
     current_user: CurrentAdminUser,
     taskId: int,
 ) -> AdminMapTaskResp:
-    # Stub implementation: return empty data
-    return AdminMapTaskResp(error=0, data=None)
+    data = crud.admin_get_map_task(session=session, task_id=taskId)
+    if not data:
+        raise HTTPException(status_code=404, detail="Task not found")
+    details = _to_map_task_details(session, data)
+    return AdminMapTaskResp(error=0, data=details)

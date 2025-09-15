@@ -14,10 +14,13 @@ from app.models import (
     MapTaskFileDB,
     MapTaskStatus,
 )
-
+import json
 
 # Build a fast lookup for district code -> name
 _DISTRICT_CODE_TO_NAME = {code: name for code, name in districts}
+
+def _ensure_list(val):
+    return json.loads(val) if isinstance(val, str) else val
 
 
 def as_aware_utc(dt: datetime | None) -> datetime | None:
@@ -73,12 +76,6 @@ def to_map_task_details(session: Any, data: MapTaskDB) -> MapTaskDetails:
     files: list[MapTaskFile] = [MapTaskFile(**file.model_dump()) for file in db_files]
     for f in files:
         f.file_path = storage.generate_presigned_url(f.file_path)
-
-    # JSON fields may already be list in some contexts
-    import json
-
-    def _ensure_list(val):
-        return json.loads(val) if isinstance(val, str) else val
 
     return MapTaskDetails(
         id=base.id,
