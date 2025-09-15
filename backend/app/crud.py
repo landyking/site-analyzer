@@ -18,6 +18,7 @@ from app.models import (
 )
 from pydantic.json import pydantic_encoder
 from app.gis.processor import process_map_task
+from app.db.pagination import paginate
 
 
 
@@ -233,3 +234,36 @@ def get_map_task_progress(*, session: Session, user_id: int, task_id: int) -> li
                                                 MapTaskProgressDB.map_task_id == task_id).order_by(MapTaskProgressDB.created_at.asc())
     rows = session.exec(statement).all()
     return rows
+
+
+def admin_list_users(
+    *,
+    session: Session,
+    page_size: int,
+    current_page: int,
+    keyword: str | None = None,
+    status: int | None = None,
+) -> tuple[list[UserDB], int, int, int]:
+    """List users for admin with pagination and optional filters.
+
+    Returns (rows, total_count, page_size, current_page).
+    """
+    # Base selectable
+    stmt = select(UserDB)
+
+    # Filters
+    if keyword:
+        kw = f"%{keyword.strip()}%"
+        stmt = stmt.where(UserDB.email.like(kw))
+    if status is not None:
+        stmt = stmt.where(UserDB.status == status)
+
+    # Paginate with consistent ordering
+    rows, total, ps, cp = paginate(
+        session=session,
+        base_stmt=stmt,
+        page_size=page_size,
+        current_page=current_page,
+        order_by=(UserDB.created_at.desc(),),
+    )
+    return rows, total, ps, cp

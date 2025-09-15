@@ -8,6 +8,8 @@ from app.models import (
     MapTask4AdminPageData,
     AdminMapTaskResp,
 )
+from app import crud
+from app.models import User4Admin
 
 
 router = APIRouter(tags=["Admin"])
@@ -22,13 +24,35 @@ async def admin_get_user_list(
     keyword: str | None = None,
     status: int | None = None,
 ) -> User4AdminPageData:
-    # Stub implementation: return empty list with pagination meta
+    # Query DB via CRUD with pagination and filters
+    ps = max(1, int(page_size) if page_size else 20)
+    cp = max(1, int(current_page) if current_page else 1)
+    rows, total, ps, cp = crud.admin_list_users(
+        session=session,
+        page_size=ps,
+        current_page=cp,
+        keyword=keyword,
+        status=status,
+    )
+    users = [
+        User4Admin(
+            id=row.id,
+            provider=row.provider,
+            sub=row.sub,
+            email=row.email,
+            role=row.role,
+            status=row.status,
+            created_at=row.created_at,
+            last_login=row.last_login,
+        )
+        for row in rows
+    ]
     return User4AdminPageData(
         error=0,
-        list=[],
-        total=0,
-        current_page=current_page,
-        page_size=page_size,
+        list=users,
+    total=total,
+    current_page=cp,
+    page_size=ps,
     )
 
 
