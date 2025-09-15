@@ -287,7 +287,8 @@ class MapTask4AdminPageData(BaseResp, PageData):
 
 class AdminUpdateUserStatusRequest(BaseModel):
     user_id: int
-    status: int
+    # Enforce allowed values using enum; FastAPI will 422 on invalid
+    status: UserStatus
 
 class UserRole(IntEnum):
     ADMIN = 1

@@ -267,3 +267,27 @@ def admin_list_users(
         order_by=(UserDB.created_at.desc(),),
     )
     return rows, total, ps, cp
+
+
+def admin_update_user_status(
+    *, session: Session, target_user_id: int, status: int
+) -> UserDB | None:
+    """Update a user's status (admin only action).
+
+    Validates status against UserStatus enum. Returns updated user or None if not found.
+    Raises ValueError for invalid status input.
+    """
+    # Fetch target user
+    stmt = select(UserDB).where(UserDB.id == target_user_id)
+    user = session.exec(stmt).first()
+    if not user:
+        return None
+
+    # Update and persist only if changed
+    new_status = int(status)
+    if user.status != new_status:
+        user.status = new_status
+        session.add(user)
+        session.commit()
+        session.refresh(user)
+    return user

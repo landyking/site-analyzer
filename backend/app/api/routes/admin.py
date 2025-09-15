@@ -1,4 +1,4 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 
 from app.api.deps import CurrentAdminUser, SessionDep
 from app.models import (
@@ -62,7 +62,11 @@ async def admin_update_user_status(
     current_user: CurrentAdminUser,
     payload: AdminUpdateUserStatusRequest,
 ) -> BaseResp:
-    # Stub implementation: no-op
+    updated = crud.admin_update_user_status(
+        session=session, target_user_id=payload.user_id, status=int(payload.status)
+    )
+    if not updated:
+        raise HTTPException(status_code=404, detail="User not found")
     return BaseResp(error=0)
 
 
