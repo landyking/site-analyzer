@@ -10,8 +10,8 @@ from app.models import (
 )
 from app import crud
 from app.models import User4Admin
-from app.api.routes.mappers.map_task import to_map_task as _to_map_task
-from app.api.routes.mappers.map_task import to_map_task_details as _to_map_task_details
+from app.api.routes._mappers import to_map_task as _to_map_task
+from app.api.routes._mappers import to_map_task_details as _to_map_task_details
 
 
 router = APIRouter(tags=["Admin"])

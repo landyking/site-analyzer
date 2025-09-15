@@ -27,24 +27,10 @@ from datetime import datetime, timedelta, timezone
 
 from app.core.security import gen_tile_signature
 from app.core import storage
-from app.api.routes.mappers.map_task import to_map_task_details as _map_to_details
+from app.api.routes._mappers import to_map_task_details as _to_map_task_details
+from app.api.routes._mappers import as_aware_utc as _as_aware_utc
 
 router = APIRouter(tags=["User"])
-
-# Build a fast lookup for district code -> name
-_DISTRICT_CODE_TO_NAME = {code: name for code, name in districts}
-
-# Ensure timezone-aware datetimes (UTC) for consistent ISO output with offset
-def _as_aware_utc(dt):
-    if dt is None:
-        return None
-    if dt.tzinfo is None:
-        return dt.replace(tzinfo=timezone.utc)
-    return dt.astimezone(timezone.utc)
-
-def _to_map_task_details(session: SessionDep, data: MapTaskDB) -> MapTaskDetails:
-    return _map_to_details(session, data)
-
 
 @router.get("/user/my-map-tasks", response_model=MyMapTaskListResp, summary="Get user's map tasks")
 async def user_get_my_map_tasks(session: SessionDep, current_user: CurrentUser, completed: bool | None = None) -> MyMapTaskListResp:
