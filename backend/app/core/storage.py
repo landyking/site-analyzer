@@ -1,5 +1,6 @@
 import logging
 import os
+from typing import Iterable
 import boto3
 from botocore.exceptions import ClientError
 from .config import settings
@@ -52,6 +53,55 @@ def save_task_file(src_path: str, user_id: int, task_id: int) -> str:
     dest_path = f"{user_id}/{task_id}/{file_name}"
     save_file(src_path, dest_path)
     return dest_path
+
+
+def delete_file(key: str) -> bool:
+    """Delete a single object from storage.
+
+    Typical key format for task output: "<user_id>/<task_id>/<filename>" as produced by save_task_file.
+    Returns True if deletion succeeds (or object absent), False otherwise.
+    Never raises to keep upstream logic resilient.
+    """
+    try:
+        s3.delete_object(Bucket=bucket_name, Key=key)
+        return True
+    except ClientError as e:
+        # Ignore not found; log others
+        err_code = getattr(e, "response", {}).get("Error", {}).get("Code")
+        if err_code not in ("NoSuchKey",):
+            logger.warning("delete_file failed for key %s: %s", key, e)
+        return False
+
+
+def delete_files(keys: Iterable[str]) -> dict:
+    """Batch delete objects (best effort) for the provided iterable of keys.
+
+    The CRUD layer calls this when deleting a map task to ensure all previously
+    uploaded result artifacts are removed from object storage.
+
+    Returns a summary dict: {requested, deleted, errors}.
+    """
+    keys_list = [k for k in keys if k]
+    if not keys_list:
+        return {"requested": 0, "deleted": 0, "errors": 0}
+    deleted = 0
+    errors = 0
+    # S3 DeleteObjects allows up to 1000 per request
+    for i in range(0, len(keys_list), 1000):
+        chunk = keys_list[i:i+1000]
+        try:
+            resp = s3.delete_objects(
+                Bucket=bucket_name,
+                Delete={"Objects": [{"Key": k} for k in chunk], "Quiet": True},
+            )
+            deleted += len(resp.get("Deleted", []))
+            errors += len(resp.get("Errors", []))
+            if resp.get("Errors"):
+                logger.warning("Some keys failed to delete: %s", [e.get('Key') for e in resp["Errors"]])
+        except ClientError as e:
+            errors += len(chunk)
+            logger.warning("delete_files chunk failed (%s): %s", len(chunk), e)
+    return {"requested": len(keys_list), "deleted": deleted, "errors": errors}
 
 def generate_presigned_url(key: str, expires_in_seconds: int = settings.STORAGE_SIGN_EXPIRE_SECONDS) -> str:
     # Generate a presigned URL for download

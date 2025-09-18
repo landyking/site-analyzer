@@ -20,6 +20,10 @@ from app.models import (
 from pydantic.json import pydantic_encoder
 from app.gis.processor import process_map_task
 from app.db.pagination import paginate
+from app.core import storage
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def touch_last_login(*, session: Session, user: UserDB) -> UserDB:
@@ -196,12 +200,43 @@ def delete_map_task(*, session: Session, user_id: int, task_id: int) -> MapTaskD
     if db_obj.status in (MapTaskStatus.PENDING, MapTaskStatus.PROCESSING):
         raise ValueError("Cannot delete a running task; cancel it first")
 
-    # Clean up related rows in batch (best-effort; no FKs defined)
+    # Fetch related file rows BEFORE deletion for storage cleanup
+    file_rows: list[MapTaskFileDB] = []
     try:
-        session.exec(delete(MapTaskFileDB).where(MapTaskFileDB.user_id == user_id, MapTaskFileDB.map_task_id == db_obj.id))
-        session.exec(delete(MapTaskProgressDB).where(MapTaskProgressDB.user_id == user_id,MapTaskProgressDB.map_task_id == db_obj.id))
+        stmt_files = select(MapTaskFileDB).where(
+            MapTaskFileDB.user_id == user_id,
+            MapTaskFileDB.map_task_id == db_obj.id,
+        )
+        file_rows = list(session.exec(stmt_files).all())
     except Exception:
-        # If cleanup fails, still attempt to delete the task to honor API contract
+        logger.warning("Failed to fetch file rows for cleanup")
+        file_rows = []
+
+    # Attempt object storage deletion (best-effort, non-blocking)
+    try:
+        keys = [r.file_path for r in file_rows if r.file_path]
+        if keys:
+            storage.delete_files(keys)
+    except Exception:
+        logger.warning("Failed to delete files from storage")
+        pass
+
+    # Clean up related DB rows (best-effort; no cascading) then task
+    try:
+        session.exec(
+            delete(MapTaskFileDB).where(
+                MapTaskFileDB.user_id == user_id,
+                MapTaskFileDB.map_task_id == db_obj.id,
+            )
+        )
+        session.exec(
+            delete(MapTaskProgressDB).where(
+                MapTaskProgressDB.user_id == user_id,
+                MapTaskProgressDB.map_task_id == db_obj.id,
+            )
+        )
+    except Exception:
+        logger.warning("Failed to delete related DB rows for task cleanup")
         pass
 
     session.delete(db_obj)
