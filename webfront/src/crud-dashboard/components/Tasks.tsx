@@ -22,9 +22,9 @@ import { alpha } from '@mui/material/styles';
 
 import { AdminService, type AdminAdminGetMapTasksResponse, type MapTask } from '../../client';
 import { useQuery } from '@tanstack/react-query';
-import { formatDate, formatElapsed } from './tableFormatters';
-import { CompactPagination } from './TableUtils';
-import { mapTaskStatusOptions, mapStatusFilterValueToCode, mapTaskStatusColor } from './statusUtils';
+import { formatDate, formatElapsed } from './shared/tableFormatters';
+import { CompactPagination } from './shared/TableUtils';
+import { mapTaskStatusOptions, mapStatusFilterValueToCode, mapTaskStatusColor } from './shared/statusUtils';
 
 interface AdminMapTasksParams {
   page: number; pageSize: number; name?: string; status?: number;

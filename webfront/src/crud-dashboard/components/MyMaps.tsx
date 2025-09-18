@@ -28,7 +28,7 @@ import { UserService, type MapTaskDetails } from '../../client';
 import useNotifications from '../hooks/useNotifications/useNotifications';
 import { useDialogs } from '../hooks/useDialogs/useDialogs';
 import { isAdmin } from '../../utils/auth';
-import { formatDate, formatElapsed } from './tableFormatters';
+import { formatDate, formatElapsed } from './shared/tableFormatters';
 
 function statusColor(desc?: string | null): 'default' | 'success' | 'error' | 'warning' {
   const label = (desc || '').toLowerCase();

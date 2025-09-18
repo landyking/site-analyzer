@@ -30,10 +30,10 @@ import { useDialogs } from '../hooks/useDialogs/useDialogs';
 import Select from '@mui/material/Select';
 import type { SelectChangeEvent } from '@mui/material/Select';
 import MenuItem from '@mui/material/MenuItem';
-import { CompactPagination } from './TableUtils';
-import { formatDate } from './tableFormatters';
-import { useDebouncedValue } from './useDebouncedValue';
-import { userStatusFilterOptions, userStatusFilterValueToCode, userStatusColor, userStatusLabel } from './statusUtils';
+import { CompactPagination } from './shared/TableUtils';
+import { formatDate } from './shared/tableFormatters';
+import { useDebouncedValue } from './shared/useDebouncedValue';
+import { userStatusFilterOptions, userStatusFilterValueToCode, userStatusColor, userStatusLabel } from './shared/statusUtils';
 
 function useAdminUsers(params: { page: number; pageSize: number; keyword: string; status?: number | undefined }) {
   const { page, pageSize, keyword, status } = params;
