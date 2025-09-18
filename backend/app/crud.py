@@ -245,11 +245,14 @@ def duplicate_map_task(
 
 def get_map_task_progress(*, session: Session, user_id: int, task_id: int) -> list[MapTaskProgressDB]:
     """Get the progress rows for a specific map task."""
-    # task = get_map_task(session=session, user_id=user_id, task_id=task_id)
-    # if not task:
-    #     return []
     statement = select(MapTaskProgressDB).where(MapTaskProgressDB.user_id == user_id, 
                                                 MapTaskProgressDB.map_task_id == task_id).order_by(MapTaskProgressDB.created_at.asc())
+    rows = session.exec(statement).all()
+    return rows
+
+def admin_get_map_task_progress(*, session: Session, task_id: int) -> list[MapTaskProgressDB]:
+    """Get the progress rows for a specific map task."""
+    statement = select(MapTaskProgressDB).where(MapTaskProgressDB.map_task_id == task_id).order_by(MapTaskProgressDB.created_at.asc())
     rows = session.exec(statement).all()
     return rows
 

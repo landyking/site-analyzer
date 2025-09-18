@@ -3,16 +3,24 @@ from fastapi import APIRouter, HTTPException
 from app.api.deps import CurrentAdminUser, SessionDep
 from app.models import (
     BaseResp,
+    MapTaskDB,
     User4AdminPageData,
     AdminUpdateUserStatusRequest,
     MapTask4AdminPageData,
+    MapTaskProgressDB,
+    MapTaskProgress,
+    MyMapTaskTileSignature,
+    MyMapTaskTileSignatureResp,
     AdminMapTaskResp,
+    MapTaskProgressListResp
 )
 from app import crud
+from datetime import datetime, timedelta, timezone
 from app.models import User4Admin
 from app.api.routes._mappers import to_map_task as _to_map_task
 from app.api.routes._mappers import to_map_task_details as _to_map_task_details
-
+from app.core.security import gen_tile_signature
+from app.api.routes._mappers import as_aware_utc as _as_aware_utc
 
 router = APIRouter(tags=["Admin"])
 
@@ -113,3 +121,12 @@ async def admin_get_map_task(
         raise HTTPException(status_code=404, detail="Task not found")
     details = _to_map_task_details(session, data)
     return AdminMapTaskResp(error=0, data=details)
+
+@router.get("/admin/map-tasks/{taskId}/progress", response_model=MapTaskProgressListResp, summary="Get progress of a map task for admin")
+async def admin_get_map_task_progress(session: SessionDep, current_user: CurrentAdminUser, taskId: int):
+    rows: list[MapTaskProgressDB] = crud.admin_get_map_task_progress(session=session, task_id=taskId)
+    for row in rows:
+        row.created_at = _as_aware_utc(row.created_at)
+        row.updated_at = _as_aware_utc(row.updated_at)
+    progress_list = [MapTaskProgress.model_validate(row.model_dump()) for row in rows]
+    return MapTaskProgressListResp(error=0, list=progress_list)
