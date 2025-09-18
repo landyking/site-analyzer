@@ -12,6 +12,8 @@ import type {
 	AdminAdminGetMapTasksResponse,
 	AdminAdminGetMapTaskData,
 	AdminAdminGetMapTaskResponse,
+	AdminAdminGetMapTaskProgressData,
+	AdminAdminGetMapTaskProgressResponse,
 	AuthUserLoginData,
 	AuthUserLoginResponse,
 	AuthGetUserInfoResponse,
@@ -139,6 +141,28 @@ export class AdminService {
 		return __request(OpenAPI, {
 			method: "GET",
 			url: "/api/v1/admin/map-tasks/{taskId}",
+			path: {
+				taskId: data.taskId,
+			},
+			errors: {
+				422: "Validation Error",
+			},
+		});
+	}
+
+	/**
+	 * Get progress of a map task for admin
+	 * @param data The data for the request.
+	 * @param data.taskId
+	 * @returns MapTaskProgressListResp Successful Response
+	 * @throws ApiError
+	 */
+	public static adminGetMapTaskProgress(
+		data: AdminAdminGetMapTaskProgressData,
+	): CancelablePromise<AdminAdminGetMapTaskProgressResponse> {
+		return __request(OpenAPI, {
+			method: "GET",
+			url: "/api/v1/admin/map-tasks/{taskId}/progress",
 			path: {
 				taskId: data.taskId,
 			},

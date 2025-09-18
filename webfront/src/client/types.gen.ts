@@ -7,7 +7,7 @@ export type AdminMapTaskResp = {
 
 export type AdminUpdateUserStatusRequest = {
 	user_id: number;
-	status: number;
+	status: UserStatus;
 };
 
 export type BaseResp = {
@@ -210,6 +210,8 @@ export type UserPublic = {
 	id: number;
 };
 
+export type UserStatus = 1 | 2;
+
 export type ValidationError = {
 	loc: Array<string | number>;
 	msg: string;
@@ -217,9 +219,9 @@ export type ValidationError = {
 };
 
 export type AdminAdminGetUserListData = {
-	currentPage?: number;
+	currentPage?: number | null;
 	keyword?: string | null;
-	pageSize?: number;
+	pageSize?: number | null;
 	status?: number | null;
 };
 
@@ -232,9 +234,9 @@ export type AdminAdminUpdateUserStatusData = {
 export type AdminAdminUpdateUserStatusResponse = BaseResp;
 
 export type AdminAdminGetMapTasksData = {
-	currentPage?: number;
+	currentPage?: number | null;
 	name?: string | null;
-	pageSize?: number;
+	pageSize?: number | null;
 	status?: number | null;
 	userId?: number | null;
 };
@@ -246,6 +248,12 @@ export type AdminAdminGetMapTaskData = {
 };
 
 export type AdminAdminGetMapTaskResponse = AdminMapTaskResp;
+
+export type AdminAdminGetMapTaskProgressData = {
+	taskId: number;
+};
+
+export type AdminAdminGetMapTaskProgressResponse = MapTaskProgressListResp;
 
 export type AuthUserLoginData = {
 	formData: Body_Auth_user_login;

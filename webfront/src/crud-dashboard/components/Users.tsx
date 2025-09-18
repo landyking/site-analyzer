@@ -140,7 +140,7 @@ export default function Users() {
 
   type CachedUserList = { list?: Array<{ id?: number | null; status?: number | null }> | null };
   const mutation = useMutation({
-    mutationFn: (payload: { user_id: number; status: number }) =>
+    mutationFn: (payload: { user_id: number; status: 1 | 2 }) =>
       AdminService.adminUpdateUserStatus({ requestBody: payload }),
     onMutate: async ({ user_id, status }) => {
       await queryClient.cancelQueries({ queryKey: ['admin', 'users'] });
