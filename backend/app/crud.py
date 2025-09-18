@@ -15,6 +15,7 @@ from app.models import (
     MapTaskFileDB,
     UserDB,
     UserCreate,
+    UserRole,
 )
 from pydantic.json import pydantic_encoder
 from app.gis.processor import process_map_task
@@ -334,7 +335,8 @@ def admin_update_user_status(
     user = session.exec(stmt).first()
     if not user:
         return None
-
+    if user.role == UserRole.ADMIN:
+        return None  # Do not allow changing admin status
     # Update and persist only if changed
     new_status = int(status)
     if user.status != new_status:
