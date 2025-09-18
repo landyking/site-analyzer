@@ -24,6 +24,7 @@ import { AdminService, type AdminAdminGetMapTasksResponse, type MapTask } from '
 import { useQuery } from '@tanstack/react-query';
 import { formatDate, formatElapsed } from './tableFormatters';
 import { CompactPagination } from './TableUtils';
+import { mapTaskStatusOptions, mapStatusFilterValueToCode, mapTaskStatusColor } from './statusUtils';
 
 interface AdminMapTasksParams {
   page: number; pageSize: number; name?: string; status?: number;
@@ -36,20 +37,12 @@ function useAdminMapTasks({ page, pageSize, name, status }: AdminMapTasksParams)
 }
 
 
-function statusColor(desc?: string | null): 'default' | 'success' | 'error' | 'warning' | 'info' {
-  const label = (desc || '').toLowerCase();
-  if (label.includes('success') || label.includes('complete')) return 'success';
-  if (label.includes('fail') || label.includes('error')) return 'error';
-  if (label.includes('cancel')) return 'warning';
-  if (label.includes('process') || label.includes('running')) return 'info';
-  return 'default';
-}
+// status color & mapping centralized in statusUtils
 
 export default function Tasks() {
   const [nameInput, setNameInput] = useState('');
   const [name, setName] = useState(''); // debounced value
-  // status mapping: 1 Pending, 2 Processing, 3 Success, 4 Failure, 5 Cancelled
-  const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'processing' | 'success' | 'failure' | 'cancelled'>('all');
+  const [statusFilter, setStatusFilter] = useState<'all' | string>('all');
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(5);
 
@@ -60,16 +53,7 @@ export default function Tasks() {
   }, [nameInput]);
 
 
-  const statusParam = useMemo(() => {
-    switch (statusFilter) {
-      case 'pending': return 1;
-      case 'processing': return 2;
-      case 'success': return 3;
-      case 'failure': return 4;
-      case 'cancelled': return 5;
-      default: return undefined;
-    }
-  }, [statusFilter]);
+  const statusParam = useMemo(() => mapStatusFilterValueToCode(statusFilter), [statusFilter]);
 
   const { data, isLoading, isError, error, refetch } = useAdminMapTasks({ page, pageSize, name: name || undefined, status: statusParam });
   const list: MapTask[] = (data?.list ?? []) as MapTask[];
@@ -88,13 +72,17 @@ export default function Tasks() {
           {/* Filters Row */}
           <Stack direction="row" spacing={1} flexWrap="wrap" alignItems="center" sx={{ mb: 1 }}>
             <TextField size="small" placeholder="Name" value={nameInput} onChange={(e) => { setNameInput(e.target.value); setPage(1); }} sx={{ width: 140 }} />
-            <Select size="small" value={statusFilter} onChange={(e) => { setStatusFilter(e.target.value as typeof statusFilter); setPage(1); }} sx={{ width: 150 }} displayEmpty>
+            <Select
+              size="small"
+              value={statusFilter}
+              onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
+              sx={{ width: 150 }}
+              displayEmpty
+            >
               <MenuItem value="all">All</MenuItem>
-              <MenuItem value="pending">Pending</MenuItem>
-              <MenuItem value="processing">Processing</MenuItem>
-              <MenuItem value="success">Success</MenuItem>
-              <MenuItem value="failure">Failure</MenuItem>
-              <MenuItem value="cancelled">Cancelled</MenuItem>
+              {mapTaskStatusOptions.map(opt => (
+                <MenuItem key={opt.value} value={opt.value}>{opt.label}</MenuItem>
+              ))}
             </Select>
           </Stack>
           <Divider sx={{ mb: 1 }} />
@@ -130,7 +118,12 @@ export default function Tasks() {
                     <TableCell>{formatDate(task.ended_at)}</TableCell>
                     <TableCell>{formatElapsed(task.started_at, task.ended_at)}</TableCell>
                     <TableCell>
-                      <Chip size="small" label={task.status_desc ?? task.status} color={statusColor(task.status_desc)} variant={statusColor(task.status_desc)==='default' ? 'outlined' : 'filled'} />
+                      <Chip
+                        size="small"
+                        label={task.status_desc ?? task.status}
+                        color={mapTaskStatusColor(task.status_desc)}
+                        variant={mapTaskStatusColor(task.status_desc) === 'default' ? 'outlined' : 'filled'}
+                      />
                     </TableCell>
                     <TableCell>{task.user_email}</TableCell>
                     <TableCell align="right">

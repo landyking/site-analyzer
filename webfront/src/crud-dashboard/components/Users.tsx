@@ -32,6 +32,8 @@ import type { SelectChangeEvent } from '@mui/material/Select';
 import MenuItem from '@mui/material/MenuItem';
 import { CompactPagination } from './TableUtils';
 import { formatDate } from './tableFormatters';
+import { useDebouncedValue } from './useDebouncedValue';
+import { userStatusFilterOptions, userStatusFilterValueToCode, userStatusColor, userStatusLabel } from './statusUtils';
 
 function useAdminUsers(params: { page: number; pageSize: number; keyword: string; status?: number | undefined }) {
   const { page, pageSize, keyword, status } = params;
@@ -61,14 +63,7 @@ const SearchBox = ({ value, onChange }: { value: string; onChange: (v: string) =
   />
 );
 
-const StatusChip = ({ locked }: { locked: boolean }) => (
-  <Chip
-    size="small"
-    label={locked ? 'Locked' : 'Active'}
-    color={locked ? 'warning' : 'success'}
-    variant={locked ? 'outlined' : 'filled'}
-  />
-);
+// Status chip replaced inline using shared helpers
 
 const LockToggleButton = ({ locked, onToggle, disabled }: { locked: boolean; onToggle: () => void; disabled?: boolean }) => (
   <Tooltip title={disabled ? 'Admin accounts cannot be locked' : (locked ? 'Unlock user' : 'Lock user')}>
@@ -80,12 +75,7 @@ const LockToggleButton = ({ locked, onToggle, disabled }: { locked: boolean; onT
   </Tooltip>
 );
 
-interface UsersTableProps {
-  users: User4Admin[];
-  onToggleLock?: (id: number) => void; // optional until wired
-  loading?: boolean;
-}
-
+interface UsersTableProps { users: User4Admin[]; onToggleLock: (u: User4Admin) => void; loading?: boolean; }
 const UsersTable = ({ users, onToggleLock, loading }: UsersTableProps) => (
   <Table size="small" aria-label="users table">
     <TableHead>
@@ -102,20 +92,27 @@ const UsersTable = ({ users, onToggleLock, loading }: UsersTableProps) => (
         <TableRow><TableCell colSpan={5} align="center"><CircularProgress size={22} /></TableCell></TableRow>
       ) : users.length === 0 ? (
         <TableRow><TableCell colSpan={5} align="center">No users found</TableCell></TableRow>
-      ) : users.map((u) => (
+      ) : users.map(u => (
         <TableRow key={u.id} hover sx={{ '&:last-child td': { border: 0 } }}>
           <TableCell>{u.email || '(no email)'}</TableCell>
           <TableCell>{formatDate(u.created_at)}</TableCell>
           <TableCell>{formatDate(u.last_login)}</TableCell>
-          <TableCell><StatusChip locked={u.status === 2} /></TableCell>
+          <TableCell>
+            <Chip
+              size="small"
+              label={userStatusLabel(u.status)}
+              color={userStatusColor(u.status) === 'default' ? 'default' : userStatusColor(u.status)}
+              variant={userStatusColor(u.status) === 'default' ? 'outlined' : 'filled'}
+            />
+          </TableCell>
           <TableCell align="right">
-            {onToggleLock && u.id != null ? (
+            {u.id != null && (
               <LockToggleButton
                 locked={u.status === 2}
                 disabled={u.role === 1}
-                onToggle={() => onToggleLock(u.id as number)}
+                onToggle={() => onToggleLock(u)}
               />
-            ) : null}
+            )}
           </TableCell>
         </TableRow>
       ))}
@@ -131,14 +128,8 @@ export default function Users() {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(5);
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'locked'>('all');
-
-  const [keyword, setKeyword] = useState('');
-  useEffect(() => {
-    const t = setTimeout(() => setKeyword(search), 300);
-    return () => clearTimeout(t);
-  }, [search]);
-
-  const statusParam = statusFilter === 'all' ? undefined : (statusFilter === 'active' ? 1 : 2);
+  const keyword = useDebouncedValue(search, 300);
+  const statusParam = userStatusFilterValueToCode(statusFilter);
   const { items, isLoading, isError, error, total } = useAdminUsers({ page, pageSize, keyword, status: statusParam });
   const pageCount = Math.max(1, Math.ceil((total || 0) / pageSize));
   const rangeStart = total ? (total === 0 ? 0 : (page - 1) * pageSize + 1) : (items.length ? (page - 1) * pageSize + 1 : 0);
@@ -201,9 +192,9 @@ export default function Users() {
         onChange={(e: SelectChangeEvent) => { setStatusFilter(e.target.value as 'all' | 'active' | 'locked'); setPage(1); }}
         sx={{ height: 32, '& .MuiSelect-select': { py: 0.5 }, minWidth: 90 }}
       >
-        <MenuItem value="all">All</MenuItem>
-        <MenuItem value="active">Active</MenuItem>
-        <MenuItem value="locked">Locked</MenuItem>
+        {userStatusFilterOptions.map(opt => (
+          <MenuItem key={opt.value} value={opt.value}>{opt.label}</MenuItem>
+        ))}
       </Select>
     </Stack>
   );
@@ -228,10 +219,7 @@ export default function Users() {
                 {error instanceof Error ? error.message : 'Failed to load users'}
               </Alert>
             ) : (
-              <UsersTable users={items} onToggleLock={(id) => {
-                const u = items.find(i => i.id === id);
-                if (u) handleToggleLock(u);
-              }} loading={isLoading || mutation.isPending} />
+              <UsersTable users={items} onToggleLock={handleToggleLock} loading={isLoading || mutation.isPending} />
             )}
           </Box>
           <CompactPagination
