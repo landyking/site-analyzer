@@ -170,7 +170,7 @@ export default function DashboardSidebar({
                   title="Tasks"
                   icon={<AssignmentTurnedInIcon />}
                   href="/dashboard/tasks"
-                  selected={pathname === '/dashboard/tasks'}
+                  selected={pathname.startsWith('/dashboard/tasks')}
                 />
               </React.Fragment>
             )}

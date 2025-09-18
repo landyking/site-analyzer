@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import PageContainer from './PageContainer';
+import { useNavigate } from '@tanstack/react-router';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import Paper from '@mui/material/Paper';
@@ -45,6 +46,7 @@ export default function Tasks() {
   const [statusFilter, setStatusFilter] = useState<'all' | string>('all');
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(5);
+  const navigate = useNavigate();
 
   // Debounce name filter
   useEffect(() => {
@@ -63,6 +65,9 @@ export default function Tasks() {
   const rangeStart = total === 0 ? 0 : (page - 1) * pageSize + 1;
   const rangeEnd = total === 0 ? 0 : Math.min(page * pageSize, total);
 
+  const openDetails = (task: MapTask) => {
+    navigate({ to: `/dashboard/tasks/$taskId`, params: { taskId: String(task.id) } });
+  };
 
   return (
     <PageContainer title="Tasks" breadcrumbs={[{ title: 'Tasks' }]}>      
@@ -128,7 +133,7 @@ export default function Tasks() {
                     <TableCell>{task.user_email}</TableCell>
                     <TableCell align="right">
                       <Stack direction="row" spacing={1} justifyContent="flex-end">
-                        <Button size="small" startIcon={<VisibilityRoundedIcon />}>View</Button>
+                        <Button size="small" startIcon={<VisibilityRoundedIcon />} onClick={() => openDetails(task)}>View</Button>
                       </Stack>
                     </TableCell>
                   </TableRow>

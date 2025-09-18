@@ -11,10 +11,11 @@ import CircularProgress from '@mui/material/CircularProgress';
 import Alert from '@mui/material/Alert';
 import Tooltip from '@mui/material/Tooltip';
 import type { MapTaskDetails, MapTaskProgress } from '../../../client/types.gen';
-import { UserService } from '../../../client/sdk.gen';
+import { UserService, AdminService } from '../../../client/sdk.gen';
 
 interface ProgressTabProps {
 	mapTask: MapTaskDetails;
+	admin: boolean;
 }
 
 function formatTime(dt?: string) {
@@ -27,13 +28,13 @@ function formatTime(dt?: string) {
 
 
 
-const ProgressTab: React.FC<ProgressTabProps> = ({ mapTask }) => {
+const ProgressTab: React.FC<ProgressTabProps> = ({ mapTask, admin }) => {
 	const taskId = mapTask.id;
 	// If status < 3, task is ongoing, so poll every 3s. Otherwise, fetch once.
 	const shouldPoll = typeof mapTask?.status === 'number' && mapTask.status < 3;
 	const { data, isLoading, isError, error } = useQuery({
-		queryKey: ['userGetMapTaskProgress', taskId],
-		queryFn: () => UserService.userGetMapTaskProgress({ taskId: Number(taskId) }),
+		queryKey: ['commonGetMapTaskProgress', taskId],
+		queryFn: () => admin? AdminService.adminGetMapTaskProgress({ taskId: Number(taskId) }):UserService.userGetMapTaskProgress({ taskId: Number(taskId) }),
 		enabled: !!taskId,
 		refetchInterval: shouldPoll ? 3000 : undefined,
 	});

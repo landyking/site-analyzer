@@ -20,7 +20,7 @@ import ProgressTab from './map-details/ProgressTab';
 import FilesTab from './map-details/FilesTab';
 import { useNavigate, useParams } from '@tanstack/react-router';
 import { useQuery } from '@tanstack/react-query';
-import { UserService } from '../../client/sdk.gen';
+import { UserService,AdminService } from '../../client/sdk.gen';
 import ConstraintFactorsList from './shared/ConstraintFactorsList';
 import SuitabilityFactorsList from './shared/SuitabilityFactorsList';
 
@@ -90,7 +90,7 @@ function MapSummary({ mapTask }: { mapTask: NonNullable<UserUserGetMapTaskRespon
   );
 }
 
-function MapTabs({ mapTask, isOngoing }: { mapTask: NonNullable<UserUserGetMapTaskResponse['data']>; isOngoing: boolean }) {
+function MapTabs({ mapTask, isOngoing, admin }: { mapTask: NonNullable<UserUserGetMapTaskResponse['data']>; isOngoing: boolean; admin: boolean }) {
   const [tabValue, setTabValue] = useState(0);
   if (isOngoing) {
     return (
@@ -103,7 +103,7 @@ function MapTabs({ mapTask, isOngoing }: { mapTask: NonNullable<UserUserGetMapTa
           <Tab label="Progress" />
         </Tabs>
         <Box sx={{ p: 0 }}>
-          <ProgressTab mapTask={mapTask} />
+          <ProgressTab mapTask={mapTask} admin={admin} />
         </Box>
       </>
     );
@@ -146,7 +146,7 @@ function MapTabs({ mapTask, isOngoing }: { mapTask: NonNullable<UserUserGetMapTa
           )
         )}
         {/* Progress Tab */}
-        {tabValue === visibleTabs.findIndex(t => t.label === 'Progress') && <ProgressTab mapTask={mapTask} />}
+        {tabValue === visibleTabs.findIndex(t => t.label === 'Progress') && <ProgressTab mapTask={mapTask} admin={admin} />}
         {/* Files Tab */}
         {visibleTabs.some(t => t.label === 'Files') && tabValue === visibleTabs.findIndex(t => t.label === 'Files') && (
           <FilesTab mapTask={mapTask} />
@@ -192,20 +192,24 @@ function MapSettings({ mapTask }: { mapTask: NonNullable<UserUserGetMapTaskRespo
   );
 }
 
-export default function MapDetails() {
+interface MapDetailsProps {
+  admin: boolean;
+}
+
+const MapDetails: React.FC<MapDetailsProps> = ({ admin }) =>  {
   const navigate = useNavigate();
   const { taskId = '' } = useParams({ strict: false }) as { taskId?: string };
   const [polling, setPolling] = useState(false);
   const query = useQuery({
-    queryKey: ['userGetMapTask', taskId],
-    queryFn: () => UserService.userGetMapTask({ taskId: Number(taskId) }),
+    queryKey: ['commonGetMapTask', taskId],
+    queryFn: () => admin ? AdminService.adminGetMapTask({ taskId: Number(taskId) }) : UserService.userGetMapTask({ taskId: Number(taskId) }),
     enabled: !!taskId,
     refetchInterval: polling ? 10000 : false,
   });
   const { data, isLoading, isError, error } = query;
 
   const handleBack = () => {
-    navigate({ to: '/dashboard/my-maps' });
+    navigate({ to: admin ? '/dashboard/tasks' : '/dashboard/my-maps' });
   };
   const actions = (
     <IconButton aria-label="back" onClick={handleBack}>
@@ -217,11 +221,11 @@ export default function MapDetails() {
   if (data && typeof data === 'object' && 'data' in data) {
     mapTask = (data as UserUserGetMapTaskResponse).data;
   }
-
+  const parentTitle = admin ? 'Tasks' : 'My Maps';
   // If loading or error, show as before
   if (isLoading) {
     return (
-      <PageContainer title="Map Details" actions={actions} breadcrumbs={[{ title: 'My Maps' }, { title: 'Map Details' }]}> 
+      <PageContainer title="Details" actions={actions} breadcrumbs={[{ title: parentTitle }, { title: 'Details' }]}> 
         <Stack spacing={3}>
           <Paper variant="outlined" sx={{ p: 2, mb: 1 }}>
             <Typography>Loading...</Typography>
@@ -232,7 +236,7 @@ export default function MapDetails() {
   }
   if (isError) {
     return (
-      <PageContainer title="Map Details" actions={actions} breadcrumbs={[{ title: 'My Maps' }, { title: 'Map Details' }]}> 
+      <PageContainer title="Details" actions={actions} breadcrumbs={[{ title: parentTitle }, { title: 'Details' }]}> 
         <Stack spacing={3}>
           <Paper variant="outlined" sx={{ p: 2, mb: 1 }}>
             <Alert severity="error">{(error instanceof Error ? error.message : 'Failed to load map task.')}</Alert>
@@ -245,7 +249,7 @@ export default function MapDetails() {
   // If mapTask is null or undefined, show error
   if (!mapTask) {
     return (
-      <PageContainer title="Map Details" actions={actions} breadcrumbs={[{ title: 'My Maps' }, { title: 'Map Details' }]}> 
+      <PageContainer title="Details" actions={actions} breadcrumbs={[{ title: parentTitle }, { title: 'Details' }]}> 
         <Stack spacing={3}>
           <Paper variant="outlined" sx={{ p: 2, mb: 1 }}>
             <Alert severity="error">Map task not found or invalid.</Alert>
@@ -263,9 +267,9 @@ export default function MapDetails() {
 
   return (
     <PageContainer
-      title="Map Details"
+      title="Details"
       actions={actions}
-      breadcrumbs={[{ title: 'My Maps' }, { title: 'Map Details' }]}
+      breadcrumbs={[{ title: parentTitle }, { title: 'Details' }]}
     >
       <Stack spacing={3}>
         {/* Top summary info */}
@@ -275,7 +279,7 @@ export default function MapDetails() {
 
         {/* Tabs for Map and Progress */}
         <Paper variant="outlined" sx={{ p: 2, mb: 1 }}>
-          <MapTabs mapTask={mapTask} isOngoing={isOngoing} />
+          <MapTabs mapTask={mapTask} isOngoing={isOngoing} admin={admin} />
         </Paper>
 
         {/* Settings section */}
@@ -283,4 +287,10 @@ export default function MapDetails() {
       </Stack>
     </PageContainer>
   );
+}
+export function UserMapDetails(){
+  return <MapDetails admin={false} />;
+}
+export function AdminMapDetails(){
+  return <MapDetails admin={true} />;
 }
