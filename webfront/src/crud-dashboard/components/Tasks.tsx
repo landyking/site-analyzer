@@ -6,13 +6,8 @@ import Paper from '@mui/material/Paper';
 import Stack from '@mui/material/Stack';
 import TextField from '@mui/material/TextField';
 import Select from '@mui/material/Select';
-import type { SelectChangeEvent } from '@mui/material/Select';
 import MenuItem from '@mui/material/MenuItem';
 import Button from '@mui/material/Button';
-import IconButton from '@mui/material/IconButton';
-import Tooltip from '@mui/material/Tooltip';
-import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
-import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import VisibilityRoundedIcon from '@mui/icons-material/VisibilityRounded';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import Table from '@mui/material/Table';
@@ -27,6 +22,8 @@ import { alpha } from '@mui/material/styles';
 
 import { AdminService, type AdminAdminGetMapTasksResponse, type MapTask } from '../../client';
 import { useQuery } from '@tanstack/react-query';
+import { formatDate, formatElapsed } from './tableFormatters';
+import { CompactPagination } from './TableUtils';
 
 interface AdminMapTasksParams {
   page: number; pageSize: number; name?: string; status?: number;
@@ -38,27 +35,6 @@ function useAdminMapTasks({ page, pageSize, name, status }: AdminMapTasksParams)
   });
 }
 
-function formatDate(value?: string | null) {
-  if (!value) return '-';
-  try {
-    const d = new Date(value);
-    return new Intl.DateTimeFormat(undefined, { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }).format(d);
-  } catch { return value; }
-}
-
-function formatElapsed(start?: string | null, end?: string | null) {
-  const startMs = start ? Date.parse(start) : NaN;
-  const endMs = end ? Date.parse(end) : Date.now();
-  if (Number.isNaN(startMs) || Number.isNaN(endMs)) return '-';
-  const ms = Math.max(0, endMs - startMs);
-  const minutes = Math.floor(ms / 60000);
-  const hours = Math.floor(minutes / 60);
-  const remainingMinutes = minutes % 60;
-  if (hours > 0) return `${hours}h ${remainingMinutes}m`;
-  if (minutes > 0) return `${minutes}m`;
-  const seconds = Math.floor(ms / 1000);
-  return `${seconds}s`;
-}
 
 function statusColor(desc?: string | null): 'default' | 'success' | 'error' | 'warning' | 'info' {
   const label = (desc || '').toLowerCase();
@@ -103,18 +79,6 @@ export default function Tasks() {
   const rangeStart = total === 0 ? 0 : (page - 1) * pageSize + 1;
   const rangeEnd = total === 0 ? 0 : Math.min(page * pageSize, total);
 
-  const handlePageSizeChange = (e: SelectChangeEvent) => { const v = Number(e.target.value); setPageSize(v); setPage(1); };
-
-  const PageSizeSelect = (
-    <Stack direction="row" spacing={0.75} alignItems="center">
-      <Typography variant="caption" color="text.secondary" sx={{ whiteSpace: 'nowrap' }}>Rows per page:</Typography>
-      <Select size="small" value={String(pageSize)} onChange={handlePageSizeChange} sx={{ height: 32, '& .MuiSelect-select': { py: 0.5 }, minWidth: 70 }}>
-        {[5,10,20].map(n => <MenuItem key={n} value={String(n)}>{n}</MenuItem>)}
-      </Select>
-    </Stack>
-  );
-
-  const navBtnSx = { width: 26, height: 26, p: 0, '& .MuiSvgIcon-root': { fontSize: 18 } } as const;
 
   return (
     <PageContainer title="Tasks" breadcrumbs={[{ title: 'Tasks' }]}>      
@@ -141,7 +105,7 @@ export default function Tasks() {
                 <TableRow>
                   <TableCell>Name</TableCell>
                   <TableCell>District</TableCell>
-                  <TableCell>Created At</TableCell>
+                  {/* <TableCell>Created At</TableCell> */}
                   <TableCell>Started At</TableCell>
                   <TableCell>Ended At</TableCell>
                   <TableCell>Elapse</TableCell>
@@ -161,7 +125,7 @@ export default function Tasks() {
                   <TableRow key={task.id} hover>
                     <TableCell>{task.name}</TableCell>
                     <TableCell>{task.district_name ?? task.district_code}</TableCell>
-                    <TableCell>{formatDate(task.created_at)}</TableCell>
+                    {/* <TableCell>{formatDate(task.created_at)}</TableCell> */}
                     <TableCell>{formatDate(task.started_at)}</TableCell>
                     <TableCell>{formatDate(task.ended_at)}</TableCell>
                     <TableCell>{formatElapsed(task.started_at, task.ended_at)}</TableCell>
@@ -184,29 +148,16 @@ export default function Tasks() {
               </Alert>
             )}
           </Box>
-          {/* Pagination footer aligned with Users page */}
-          <Stack direction="row" justifyContent="flex-end" alignItems="center" spacing={2} sx={{ mt: 1 }}>
-            {PageSizeSelect}
-            <Typography variant="caption" color="text.secondary" sx={{ whiteSpace: 'nowrap' }}>
-              {rangeStart}-{rangeEnd} of {total}
-            </Typography>
-            <Stack direction="row" spacing={0.5} alignItems="center">
-              <Tooltip title="Previous page">
-                <span>
-                  <IconButton size="small" sx={navBtnSx} disabled={page <= 1} onClick={() => setPage(p => Math.max(1, p - 1))}>
-                    <ChevronLeftIcon />
-                  </IconButton>
-                </span>
-              </Tooltip>
-              <Tooltip title="Next page">
-                <span>
-                  <IconButton size="small" sx={navBtnSx} disabled={page >= pageCount || rangeEnd >= total} onClick={() => setPage(p => Math.min(pageCount, p + 1))}>
-                    <ChevronRightIcon />
-                  </IconButton>
-                </span>
-              </Tooltip>
-            </Stack>
-          </Stack>
+          <CompactPagination
+            page={page}
+            pageSize={pageSize}
+            total={total}
+            pageCount={pageCount}
+            rangeStart={rangeStart}
+            rangeEnd={rangeEnd}
+            onPageChange={setPage}
+            onPageSizeChange={(s) => { setPageSize(s); setPage(1); }}
+          />
         </Paper>
       </Stack>
     </PageContainer>

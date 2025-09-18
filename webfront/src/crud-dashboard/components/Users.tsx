@@ -30,19 +30,8 @@ import { useDialogs } from '../hooks/useDialogs/useDialogs';
 import Select from '@mui/material/Select';
 import type { SelectChangeEvent } from '@mui/material/Select';
 import MenuItem from '@mui/material/MenuItem';
-import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
-import ChevronRightIcon from '@mui/icons-material/ChevronRight';
-
-function formatDate(value?: string | null) {
-  if (!value) return '-';
-  try {
-    const d = new Date(value);
-    return new Intl.DateTimeFormat(undefined, {
-      year: 'numeric', month: '2-digit', day: '2-digit',
-      hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false,
-    }).format(d);
-  } catch { return value; }
-}
+import { CompactPagination } from './TableUtils';
+import { formatDate } from './tableFormatters';
 
 function useAdminUsers(params: { page: number; pageSize: number; keyword: string; status?: number | undefined }) {
   const { page, pageSize, keyword, status } = params;
@@ -203,34 +192,6 @@ export default function Users() {
     mutation.mutate({ user_id: user.id, status: nextStatus });
   }, [mutation, confirm]);
 
-  const handlePageSizeChange = (e: SelectChangeEvent) => {
-    const value = Number(e.target.value as string);
-    setPageSize(value);
-    setPage(1);
-  };
-
-  const PageSizeSelect = (
-    <Stack direction="row" spacing={0.75} alignItems="center">
-        <Typography variant="caption" color="text.secondary" sx={{ whiteSpace: 'nowrap' }}>Rows per page:</Typography>
-      <Select
-        size="small"
-        value={String(pageSize)}
-        onChange={handlePageSizeChange}
-        sx={{
-          height: 32,
-          '& .MuiSelect-select': { py: 0.5, display: 'flex', alignItems: 'center' },
-          minWidth: 70,
-        }}
-      >
-        {[5, 10, 20].map((n) => (
-          <MenuItem key={n} value={String(n)}>{n}</MenuItem>
-        ))}
-      </Select>
-    </Stack>
-  );
-
-  const navBtnSx = { width: 26, height: 26, p: 0, '& .MuiSvgIcon-root': { fontSize: 18 } } as const;
-
   const StatusSelect = (
     <Stack direction="row" spacing={0.75} alignItems="center">
       <Typography variant="caption" color="text.secondary" sx={{ whiteSpace: 'nowrap' }}>Status:</Typography>
@@ -273,28 +234,16 @@ export default function Users() {
               }} loading={isLoading || mutation.isPending} />
             )}
           </Box>
-          <Stack direction="row" justifyContent="flex-end" alignItems="center" spacing={2} sx={{ mt: 1 }}>
-            {PageSizeSelect}
-            <Typography variant="caption" color="text.secondary" sx={{ whiteSpace: 'nowrap' }}>
-              {rangeStart}-{rangeEnd} of {inferredTotal}
-            </Typography>
-            <Stack direction="row" spacing={0.5} alignItems="center">
-              <Tooltip title="Previous page">
-                <span>
-                  <IconButton size="small" sx={navBtnSx} disabled={page <= 1} onClick={() => setPage((p) => Math.max(1, p - 1))}>
-                    <ChevronLeftIcon />
-                  </IconButton>
-                </span>
-              </Tooltip>
-              <Tooltip title="Next page">
-                <span>
-                  <IconButton size="small" sx={navBtnSx} disabled={page >= pageCount || rangeEnd >= inferredTotal} onClick={() => setPage((p) => Math.min(pageCount, p + 1))}>
-                    <ChevronRightIcon />
-                  </IconButton>
-                </span>
-              </Tooltip>
-            </Stack>
-          </Stack>
+          <CompactPagination
+            page={page}
+            pageSize={pageSize}
+            total={inferredTotal}
+            pageCount={pageCount}
+            rangeStart={rangeStart}
+            rangeEnd={rangeEnd}
+            onPageChange={setPage}
+            onPageSizeChange={(s) => { setPageSize(s); setPage(1); }}
+          />
         </Paper>
       </Stack>
     </PageContainer>
