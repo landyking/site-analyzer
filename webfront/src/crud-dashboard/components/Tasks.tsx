@@ -8,7 +8,7 @@ import TextField from '@mui/material/TextField';
 import Select from '@mui/material/Select';
 import type { SelectChangeEvent } from '@mui/material/Select';
 import MenuItem from '@mui/material/MenuItem';
-import Button from '@mui/material/Button'; // retained for table action buttons (View)
+import Button from '@mui/material/Button';
 import IconButton from '@mui/material/IconButton';
 import Tooltip from '@mui/material/Tooltip';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
@@ -23,13 +23,11 @@ import TableBody from '@mui/material/TableBody';
 import Chip from '@mui/material/Chip';
 import Alert from '@mui/material/Alert';
 import Divider from '@mui/material/Divider';
-// Link removed (replaced by Button in actions)
 import { alpha } from '@mui/material/styles';
 
 import { AdminService, type AdminAdminGetMapTasksResponse, type MapTask } from '../../client';
 import { useQuery } from '@tanstack/react-query';
 
-// Inline hook (previously in hooks/useAdminMapTasks.ts) to simplify local usage
 interface AdminMapTasksParams {
   page: number; pageSize: number; name?: string; status?: number;
 }
@@ -86,7 +84,6 @@ export default function Tasks() {
   }, [nameInput]);
 
 
-  // Map status filter to backend numeric or leave undefined (TODO: confirm mapping)
   const statusParam = useMemo(() => {
     switch (statusFilter) {
       case 'pending': return 1;
@@ -135,7 +132,6 @@ export default function Tasks() {
               <MenuItem value="failure">Failure</MenuItem>
               <MenuItem value="cancelled">Cancelled</MenuItem>
             </Select>
-            {/* Search button removed: queries fire automatically via debounce & filter state changes */}
           </Stack>
           <Divider sx={{ mb: 1 }} />
           {/* Table */}

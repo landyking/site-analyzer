@@ -12,7 +12,6 @@ import TableRow from '@mui/material/TableRow';
 import Chip from '@mui/material/Chip';
 import IconButton from '@mui/material/IconButton';
 import Tooltip from '@mui/material/Tooltip';
-// Removed full Pagination in favor of custom compact footer controls
 import Stack from '@mui/material/Stack';
 import Divider from '@mui/material/Divider';
 import Paper from '@mui/material/Paper';
@@ -34,7 +33,6 @@ import MenuItem from '@mui/material/MenuItem';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 
-// Date formatting helper
 function formatDate(value?: string | null) {
   if (!value) return '-';
   try {
@@ -46,7 +44,6 @@ function formatDate(value?: string | null) {
   } catch { return value; }
 }
 
-// Query hook isolated for reuse/testing
 function useAdminUsers(params: { page: number; pageSize: number; keyword: string; status?: number | undefined }) {
   const { page, pageSize, keyword, status } = params;
   const query = useQuery<AdminAdminGetUserListResponse>({
@@ -58,7 +55,6 @@ function useAdminUsers(params: { page: number; pageSize: number; keyword: string
   return { ...query, items, total: data?.total ?? items.length, serverPageSize: data?.page_size, serverCurrentPage: data?.current_page };
 }
 
-// ---- Small Presentational Components ----
 const SearchBox = ({ value, onChange }: { value: string; onChange: (v: string) => void }) => (
   <TextField
     size="small"
@@ -138,7 +134,6 @@ const UsersTable = ({ users, onToggleLock, loading }: UsersTableProps) => (
   </Table>
 );
 
-// ---- Main Page Component ----
 export default function Users() {
   const queryClient = useQueryClient();
   const { show } = useNotifications();
@@ -148,7 +143,6 @@ export default function Users() {
   const [pageSize, setPageSize] = useState(5);
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'locked'>('all');
 
-  // Debounce search simple impl (no timer libs to keep concise)
   const [keyword, setKeyword] = useState('');
   useEffect(() => {
     const t = setTimeout(() => setKeyword(search), 300);
@@ -162,7 +156,6 @@ export default function Users() {
   const inferredTotal = total ?? (pageCount * pageSize); // fallback if server not yet responded
   const rangeEnd = total ? (total === 0 ? 0 : Math.min(page * pageSize, total)) : (rangeStart ? rangeStart + items.length - 1 : 0);
 
-  // Reset page if out of bounds (e.g., keyword reduces total)
   useEffect(() => { if (page > pageCount) setPage(pageCount); }, [page, pageCount]);
 
   type CachedUserList = { list?: Array<{ id?: number | null; status?: number | null }> | null };
@@ -195,7 +188,7 @@ export default function Users() {
   const handleToggleLock = useCallback(async (user: User4Admin) => {
     if (user.id == null) return;
     const isLocked = user.status === 2;
-    const nextStatus = isLocked ? 1 : 2; // 1 active, 2 locked
+  const nextStatus = isLocked ? 1 : 2;
     const actionWord = isLocked ? 'Unlock' : 'Lock';
     const confirmed = await confirm(
       `Are you sure you want to ${actionWord.toLowerCase()} “${user.email}”?`,
@@ -216,7 +209,6 @@ export default function Users() {
     setPage(1);
   };
 
-  // Inline, compact page size selector aligned with Pagination height (~32px)
   const PageSizeSelect = (
     <Stack direction="row" spacing={0.75} alignItems="center">
         <Typography variant="caption" color="text.secondary" sx={{ whiteSpace: 'nowrap' }}>Rows per page:</Typography>
