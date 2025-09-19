@@ -301,7 +301,7 @@ class UserStatus(IntEnum):
 class UserBase(SQLModel):
     email: str = Field(unique=True, index=True, max_length=255) 
     role: int = Field(default=UserRole.USER)
-    status: int = Field(default=UserStatus.ACTIVE)
+    status: int = Field(default=UserStatus.LOCKED)
     provider: str = Field(index=True, max_length=100)
     sub: str = Field(index=True, max_length=255)
 

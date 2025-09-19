@@ -57,7 +57,7 @@ async def user_register(session: SessionDep,user_in: RegisterRequest):
             status_code=400,
             detail="The user with this email already exists in the system",
         )
-    user_create = UserCreate(**user_in.model_dump(),provider="local", sub=user_in.email)
+    user_create = UserCreate(**user_in.model_dump(),provider="local", sub=user_in.email,status=UserStatus.LOCKED)
     user = crud.create_user(session=session, user_create=user_create)
     return user
 
@@ -122,6 +122,7 @@ async def get_oidc_token(session: SessionDep,payload: OidcTokenRequest) -> PostL
             password="#########",
             provider="google",
             sub=sub,
+            status=UserStatus.LOCKED
         )
         user = crud.create_user(session=session, user_create=user_create)
 
