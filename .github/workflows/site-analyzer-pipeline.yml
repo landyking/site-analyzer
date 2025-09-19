@@ -1,0 +1,244 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  greet:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Say hello
+        run: echo "Hello, world!"
+      - name: Print context
+        run: |
+          echo "Repository: $GITHUB_REPOSITORY"
+          echo "Ref: $GITHUB_REF"
+          echo "Event: $GITHUB_EVENT_NAME" 
+      - name: Execute remote SSH commands
+        uses: appleboy/ssh-action@v1.2.2
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          password: ${{ secrets.SSH_PASS }}
+          script: |
+            echo "SSH CONNECTION SUCCESSFUL"
+            pwd
+            ls -la
+  webfront:
+    name: Build webfront (zip)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: webfront
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: webfront/package-lock.json
+      - name: Install deps (ci)
+        run: npm ci
+      - name: Build
+        env:
+          VITE_API_URL: ${{ secrets.VITE_API_URL }}
+          VITE_TITILER_URL: ${{ secrets.VITE_TITILER_URL }}
+          VITE_GOOGLE_CLIENT_ID: ${{ secrets.VITE_GOOGLE_CLIENT_ID }}
+        run: npm run build
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: webfront-dist
+          path: webfront/dist
+          if-no-files-found: error
+  backend:
+    name: Build backend (uv)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Setup uv
+        uses: astral-sh/setup-uv@v5
+      - name: Build
+        run: uv build
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-dist
+          path: backend/dist/**
+          if-no-files-found: error
+  titiler:
+    name: Build titiler (uv)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: titiler
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Setup uv
+        uses: astral-sh/setup-uv@v5
+      - name: Build
+        run: uv build
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: titiler-dist
+          path: titiler/dist/**
+          if-no-files-found: error
+  webfront-deploy:
+    name: Deploy webfront to server
+    needs: webfront
+    runs-on: ubuntu-latest
+    # Optional: Add condition, e.g., deploy only on main branch
+    # if: github.ref == 'refs/heads/main'
+    steps:
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: webfront-dist
+          path: ./dist
+      
+      - name: Zip for deployment
+        run: |
+          cd dist
+          zip -r ../webfront-dist.zip .
+      
+      - name: Upload via SCP
+        uses: appleboy/scp-action@v1
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          password: ${{ secrets.SSH_PASS }}
+          source: "webfront-dist.zip"
+          target: ${{ secrets.SSH_TARGET_PATH }}
+          
+      - name: Execute remote SSH commands
+        uses: appleboy/ssh-action@v1.2.2
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          password: ${{ secrets.SSH_PASS }}
+          script: |
+            cd ${{ secrets.SSH_TARGET_PATH }}
+            
+            # uncompress the zip file to the target directory
+            rm -rf /var/www/site-analyzer/* || true
+            unzip -o webfront-dist.zip -d /var/www/site-analyzer/
+            
+            # reload nginx to apply changes
+            sudo systemctl reload nginx.service
+
+  backend-deploy:
+    name: Deploy backend to server
+    needs: backend
+    runs-on: ubuntu-latest
+    # Optional: Add condition, e.g., deploy only on main branch
+    # if: github.ref == 'refs/heads/main'
+    steps:
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: backend-dist
+          path: ./backend-dist
+      
+      - name: Prepare for deployment
+        run: |
+          mv backend-dist/backend-0.1.0.tar.gz ./
+      - name: Backup existing backend on server
+        uses: appleboy/ssh-action@v1.2.2
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          password: ${{ secrets.SSH_PASS }}
+          script: |
+            cd ${{ secrets.SSH_TARGET_PATH }}
+            mkdir -p backup || true
+            rm -f backup/backend-0.1.0.tar.gz || true
+            mv backend-0.1.0.tar.gz backup/
+      - name: Upload via SCP
+        uses: appleboy/scp-action@v1
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          password: ${{ secrets.SSH_PASS }}
+          source: "backend-0.1.0.tar.gz"
+          target: ${{ secrets.SSH_TARGET_PATH }}
+          
+      - name: Execute remote SSH commands
+        uses: appleboy/ssh-action@v1.2.2
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          password: ${{ secrets.SSH_PASS }}
+          script: |
+            cd ${{ secrets.SSH_TARGET_PATH }}
+            rm -rf backend-0.1.0
+            tar -xzf backend-0.1.0.tar.gz
+            cd backend-0.1.0
+            uv sync
+            sudo systemctl restart backend.service
+  titiler-deploy:
+    name: Deploy titiler to server
+    needs: titiler
+    runs-on: ubuntu-latest
+    # Optional: Add condition, e.g., deploy only on main branch
+    # if: github.ref == 'refs/heads/main'
+    steps:
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: titiler-dist
+          path: ./titiler-dist
+      
+      - name: Prepare for deployment
+        run: |
+          mv titiler-dist/titiler-0.1.0.tar.gz ./
+      - name: Backup existing backend on server
+        uses: appleboy/ssh-action@v1.2.2
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          password: ${{ secrets.SSH_PASS }}
+          script: |
+            cd ${{ secrets.SSH_TARGET_PATH }}
+            mkdir -p backup || true
+            rm -f backup/titiler-0.1.0.tar.gz || true
+            mv titiler-0.1.0.tar.gz backup/
+      - name: Upload via SCP
+        uses: appleboy/scp-action@v1
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          password: ${{ secrets.SSH_PASS }}
+          source: "titiler-0.1.0.tar.gz"
+          target: ${{ secrets.SSH_TARGET_PATH }}
+          
+      - name: Execute remote SSH commands
+        uses: appleboy/ssh-action@v1.2.2
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          password: ${{ secrets.SSH_PASS }}
+          script: |
+            cd ${{ secrets.SSH_TARGET_PATH }}
+            rm -rf titiler-0.1.0
+            tar -xzf titiler-0.1.0.tar.gz
+            cd titiler-0.1.0
+            uv sync
+            sudo systemctl restart titiler.service
