@@ -187,6 +187,9 @@ uv tree
 
 # See Python version used by uv
 uv run python -V
+
+# Create a distributable package (tar.gz)
+uv build
 ```
 
 ## Time and time zones (UTC policy)
