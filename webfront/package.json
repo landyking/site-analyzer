@@ -6,6 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "zip": "cd dist && zip -r ../webfront-dist.zip . -x \"*.DS_Store\"",
+    "build:zip": "npm run build && npm run zip",
     "lint": "eslint .",
     "preview": "vite preview",
     "generate-client": "openapi-ts"
