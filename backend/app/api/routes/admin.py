@@ -21,6 +21,7 @@ from app.api.routes._mappers import to_map_task as _to_map_task
 from app.api.routes._mappers import to_map_task_details as _to_map_task_details
 from app.core.security import gen_tile_signature
 from app.api.routes._mappers import as_aware_utc as _as_aware_utc
+from app.core import storage
 
 router = APIRouter(tags=["Admin"])
 
@@ -130,3 +131,10 @@ async def admin_get_map_task_progress(session: SessionDep, current_user: Current
         row.updated_at = _as_aware_utc(row.updated_at)
     progress_list = [MapTaskProgress.model_validate(row.model_dump()) for row in rows]
     return MapTaskProgressListResp(error=0, list=progress_list)
+
+@router.get("/admin/inputs-initialize", response_model=BaseResp, summary="Initialize input directory for admin")
+async def admin_initialize_input_directory(session: SessionDep, current_user: CurrentAdminUser):
+    result = storage.initialize_input_dir_from_bucket()
+    if result.get("error"):
+        raise HTTPException(status_code=500, detail="Failed to initialize input directory")
+    return BaseResp(error=0)
