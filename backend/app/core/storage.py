@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 # Connect to MinIO
 s3 = boto3.client(
     "s3",
-    endpoint_url=settings.STORAGE_ENDPOINT,
+    endpoint_url= settings.STORAGE_ENDPOINT if settings.STORAGE_ENDPOINT != "#" else None,
     aws_access_key_id=settings.STORAGE_ACCESS_KEY,
     aws_secret_access_key=settings.STORAGE_SECRET_KEY,
     region_name=settings.STORAGE_REGION
