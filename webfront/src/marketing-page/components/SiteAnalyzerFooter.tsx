@@ -80,7 +80,7 @@ export default function SiteAnalyzerFooter() {
           <IconButton
             color="inherit"
             size="small"
-            href="mailto:support@site-analyzer.com"
+            href="mailto:nz@y2ki.com"
             aria-label="Email Support"
             sx={{ alignSelf: 'center' }}
           >
@@ -89,8 +89,8 @@ export default function SiteAnalyzerFooter() {
           <IconButton
             color="inherit"
             size="small"
-            href="https://www.linkedin.com/school/university-of-waikato"
-            aria-label="University of Waikato LinkedIn"
+            href="https://www.linkedin.com/in/landy-dev"
+            aria-label="Landy's LinkedIn"
             sx={{ alignSelf: 'center' }}
           >
             <LinkedInIcon />
