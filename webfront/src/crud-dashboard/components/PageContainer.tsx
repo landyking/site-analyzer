@@ -54,7 +54,7 @@ export default function PageContainer(props: PageContainerProps) {
     <Container sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
       <Stack sx={{ flex: 1, my: 2 }} spacing={2}>
         <Stack>
-          <PageHeaderBreadcrumbs
+          {/* <PageHeaderBreadcrumbs
             aria-label="breadcrumb"
             separator={<NavigateNextRoundedIcon fontSize="small" />}
           >
@@ -80,7 +80,7 @@ export default function PageContainer(props: PageContainerProps) {
                   );
                 })
               : null}
-          </PageHeaderBreadcrumbs>
+          </PageHeaderBreadcrumbs> */}
           <PageContentHeader>
             {title ? <Typography variant="h4">{title}</Typography> : null}
             <PageHeaderToolbar>{actions}</PageHeaderToolbar>
