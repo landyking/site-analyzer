@@ -96,7 +96,7 @@ const StyledTypography = styled(Typography)({
 
 export default function SiteAnalyzerFeatures() {
   return (
-    <Container id="features" sx={{ py: { xs: 8, sm: 16 } }}>
+    <Container id="features" sx={{ py: { xs: 0, sm: 0 } }}>
       <Box sx={{ mb: 6, textAlign: 'center' }}>
         <Typography
           component="h2"
