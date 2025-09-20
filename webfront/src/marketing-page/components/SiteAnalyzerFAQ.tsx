@@ -33,7 +33,7 @@ const faqData = [
   {
     id: 'panel5',
     question: 'How long does a typical analysis take to complete?',
-    answer: 'Analysis time depends on the size of your study area and complexity of datasets. Small to medium districts typically process within 10-30 minutes, while larger regions with high-resolution data may take 1-2 hours. You can monitor progress through our real-time status dashboard.',
+    answer: 'Analysis time depends on the size of your study area and complexity of datasets. Small to medium districts typically process within 1-3 minutes, while larger regions with high-resolution data may take 5-10 minutes. You can monitor progress through our real-time status dashboard.',
   },
   {
     id: 'panel6',
