@@ -1,5 +1,6 @@
 import React from 'react';
 import SectionPaper from '../SectionPaper';
+import BlockIcon from '@mui/icons-material/Block';
 import Typography from '@mui/material/Typography';
 import List from '@mui/material/List';
 import ListItem from '@mui/material/ListItem';
@@ -17,7 +18,7 @@ const restrictions = [
 interface Props { mapTask: MapTaskDetails; }
 
 const RestrictionsSection: React.FC<Props> = ({ mapTask }) => (
-  <SectionPaper id="restrictions" title="Restrictions">
+  <SectionPaper id="restrictions" title="Restrictions" icon={<BlockIcon fontSize="small" color="primary" />}>
     <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
       Restricted factors represent areas where development is not allowed or strongly discouraged. The following restricted layers are considered together.
     </Typography>

@@ -1,10 +1,8 @@
 import React from 'react';
 import SectionPaper from '../SectionPaper';
+import PublicIcon from '@mui/icons-material/Public';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
-import Paper from '@mui/material/Paper';
-import Divider from '@mui/material/Divider';
-import Button from '@mui/material/Button';
 import type { MapTaskDetails } from '../../../../../client/types.gen';
 
 interface Props {
@@ -16,7 +14,7 @@ const OverallSection: React.FC<Props> = ({ mapTask }) => {
   const suitabilityCount = mapTask.suitability_factors?.length || 0;
   const restrictionsCount = mapTask.constraint_factors?.length || 0;
   return (
-    <SectionPaper id="overall" title="Overall summary">
+    <SectionPaper id="overall" title="Overall summary" icon={<PublicIcon fontSize="small" color="primary" />}>
 
       <Box>
         <Typography variant="body2" color="text.secondary">

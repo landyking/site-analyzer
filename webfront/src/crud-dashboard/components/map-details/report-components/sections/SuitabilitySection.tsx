@@ -1,5 +1,6 @@
 import React from 'react';
 import SectionPaper from '../SectionPaper';
+import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import Typography from '@mui/material/Typography';
 import FactorCard from '../FactorCard';
 import MapPlaceholder from '../MapPlaceholder';
@@ -18,7 +19,7 @@ const factors = [
 interface Props { mapTask: MapTaskDetails; }
 
 const SuitabilitySection: React.FC<Props> = ({ mapTask }) => (
-  <SectionPaper id="suitability" title="Suitability Scoring">
+  <SectionPaper id="suitability" title="Suitability Scoring" icon={<TrendingUpIcon fontSize="small" color="primary" />}>
     <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
       The Suitability Scoring section breaks down each suitability factor into its own subsection with
       description, user-defined scoring rules, and a visualization of the corresponding layer.
