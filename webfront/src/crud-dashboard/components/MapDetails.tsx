@@ -149,7 +149,7 @@ function MapTabs({ mapTask, isOngoing, admin }: { mapTask: NonNullable<UserUserG
         )}
         {/* Report Tab */}
         {tabValue === visibleTabs.findIndex(t => t.label === 'Report') && (
-          <ReportTab mapTaskId={mapTask.id} />
+          <ReportTab mapTask={mapTask} />
         )}
         {/* Progress Tab */}
         {tabValue === visibleTabs.findIndex(t => t.label === 'Progress') && <ProgressTab mapTask={mapTask} admin={admin} />}

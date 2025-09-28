@@ -7,12 +7,17 @@ import List from '@mui/material/List';
 import ListItem from '@mui/material/ListItem';
 import ListItemText from '@mui/material/ListItemText';
 import Box from '@mui/material/Box';
+import type { MapTaskDetails } from '../../../../../client/types.gen';
 
-interface Factor { key: string; title: string; description?: string }
+const factors = [
+  { key: 'slope', title: 'Slope', description: 'Slope in degrees. Lower is preferable.' },
+  { key: 'distance_roads', title: 'Distance to roads', description: 'Distance to nearest road. Closer may be better for access.' },
+  { key: 'land_cover', title: 'Land cover', description: 'Categorical land cover suitability scores.' },
+];
 
-interface Props { factors: Factor[] }
+interface Props { mapTask: MapTaskDetails; }
 
-const SuitabilitySection: React.FC<Props> = ({ factors }) => (
+const SuitabilitySection: React.FC<Props> = ({ mapTask }) => (
   <SectionPaper id="suitability" title="Suitability Scoring">
     <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
       The Suitability Scoring section breaks down each suitability factor into its own subsection with

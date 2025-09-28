@@ -8,12 +8,19 @@ import ListItemText from '@mui/material/ListItemText';
 import Collapse from '@mui/material/Collapse';
 import ExpandLess from '@mui/icons-material/ExpandLess';
 import ExpandMore from '@mui/icons-material/ExpandMore';
+import type { MapTaskDetails } from '../../../../../client/types.gen';
+
+const factors = [
+  { key: 'slope', title: 'Slope', description: 'Slope in degrees. Lower is preferable.' },
+  { key: 'distance_roads', title: 'Distance to roads', description: 'Distance to nearest road. Closer may be better for access.' },
+  { key: 'land_cover', title: 'Land cover', description: 'Categorical land cover suitability scores.' },
+];
 
 interface Props {
-  factors: { key: string; title: string }[];
+  mapTask: MapTaskDetails;
 }
 
-const Outline: React.FC<Props> = ({ factors }) => {
+const Outline: React.FC<Props> = ({ mapTask }) => {
   const [suitOpen, setSuitOpen] = useState<boolean>(false);
   return (
     <Box id="report-overview" sx={{ mb: 2 }}>
