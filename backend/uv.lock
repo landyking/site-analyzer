@@ -47,6 +47,7 @@ name = "backend"
 version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
+    { name = "bcrypt" },
     { name = "boto3" },
     { name = "fastapi", extra = ["standard"] },
     { name = "geopandas" },
@@ -62,6 +63,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
+    { name = "bcrypt", specifier = "==4.3.0" },
     { name = "boto3", specifier = ">=1.40.18" },
     { name = "fastapi", extras = ["standard"], specifier = ">=0.116.1" },
     { name = "geopandas", specifier = ">=1.1.1" },
