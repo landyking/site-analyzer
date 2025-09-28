@@ -16,6 +16,7 @@ import Tabs from '@mui/material/Tabs';
 import Tab from '@mui/material/Tab';
 import { useState } from 'react';
 import MapTab from './map-details/MapTab';
+import ReportTab from './map-details/ReportTab';
 import ProgressTab from './map-details/ProgressTab';
 import FilesTab from './map-details/FilesTab';
 import { useNavigate, useParams } from '@tanstack/react-router';
@@ -112,9 +113,10 @@ function MapTabs({ mapTask, isOngoing, admin }: { mapTask: NonNullable<UserUserG
   // If files are missing/empty or status !== 3, show a tip instead of the Map tab
   const noMapToDisplay = !Array.isArray(mapTask.files) || mapTask.files.length === 0 || mapTask.status !== 3;
 
-  // Tabs: Map, Progress, Files (Files only if noMapToDisplay is false)
+  // Tabs: Map, Report, Progress, Files (Files only if noMapToDisplay is false)
   const tabs = [
     { label: 'Map', show: true },
+    { label: 'Report', show: true },
     { label: 'Progress', show: true },
     { label: 'Files', show: !noMapToDisplay },
   ];
@@ -144,6 +146,10 @@ function MapTabs({ mapTask, isOngoing, admin }: { mapTask: NonNullable<UserUserG
           ) : (
             <MapTab mapTask={mapTask} />
           )
+        )}
+        {/* Report Tab */}
+        {tabValue === visibleTabs.findIndex(t => t.label === 'Report') && (
+          <ReportTab mapTaskId={mapTask.id} />
         )}
         {/* Progress Tab */}
         {tabValue === visibleTabs.findIndex(t => t.label === 'Progress') && <ProgressTab mapTask={mapTask} admin={admin} />}
