@@ -1,3 +1,10 @@
+export const RESTRICTION_LABELS: Record<string, string> = {
+  rivers: 'Rivers',
+  lakes: 'Lakes',
+  coastlines: 'Coastlines',
+  residential: 'Residential areas',
+};
+
 export type ConstraintDisplayItem = {
   kind: string;
   label?: string;
