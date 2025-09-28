@@ -8,6 +8,7 @@ import Checkbox from '@mui/material/Checkbox';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import Typography from '@mui/material/Typography';
 import Paper from '@mui/material/Paper';
+import Box from '@mui/material/Box';
 // Divider removed; inputs are inline next to checkbox
 import type { SelectOptionItem } from '../../../client/types.gen';
 import { UserService } from '../../../client/sdk.gen';
@@ -99,16 +100,26 @@ const ConstraintFactorsStep = forwardRef<ConstraintFactorsStepHandle, Constraint
     }
 
     return (
-      <Stack spacing={2}>
+      <Box sx={{ mb: 2 }}>
+  <Box sx={{ p: 2, bgcolor: 'background.paper', borderRadius: 1,  }}>
+          <Typography variant="h6" component="h2">
+            Constraint factors
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            Select the constraint factors that should influence site suitability. For each selected
+            factor, enter the required minimum distance (in meters). Values must be positive numbers
+            — for example, enter how far a site must be from rivers, lakes, powerlines, or
+            residential areas. These constraints will be used when excluding unsuitable sites during
+            analysis.
+          </Typography>
+        </Box>
+  <Box sx={{ p: 2, pt: 0,}}>
+          <Stack spacing={2}>
         {/* Top-level helper/error for selection requirement */}
         <FormControl error={Boolean(kindsError)}>
           {kindsError ? (
             <FormHelperText>{kindsError}</FormHelperText>
-          ) : (
-            <FormHelperText>
-              Select constraints; each selected constraint requires a distance value.
-            </FormHelperText>
-          )}
+          ) : null}
         </FormControl>
 
         {kindOptions.map((opt) => {
@@ -152,7 +163,9 @@ const ConstraintFactorsStep = forwardRef<ConstraintFactorsStepHandle, Constraint
             </Paper>
           );
         })}
-      </Stack>
+          </Stack>
+        </Box>
+      </Box>
     );
   },
 );

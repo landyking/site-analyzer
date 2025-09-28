@@ -3,6 +3,8 @@ import TextField from '@mui/material/TextField';
 import Stack from '@mui/material/Stack';
 import FormControl from '@mui/material/FormControl';
 import FormHelperText from '@mui/material/FormHelperText';
+import Typography from '@mui/material/Typography';
+import Box from '@mui/material/Box';
 import Autocomplete from '@mui/material/Autocomplete';
 import CircularProgress from '@mui/material/CircularProgress';
 import type { SelectOptionItem } from '../../../client/types.gen';
@@ -71,7 +73,17 @@ const BaseInfoStep = forwardRef<BaseInfoStepHandle, BaseInfoStepProps>(
     }, [keyword]);
 
     return (
-      <Stack spacing={2}>
+      <Box sx={{ mb: 2 }}>
+        <Box sx={{ p: 2, bgcolor: 'background.paper', borderRadius: 1 }}>
+          <Typography variant="h6" component="h2" gutterBottom>
+            Create a new map
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            Give your map a short name and pick the Territorial Authority that the map analysis will cover.
+          </Typography>
+        </Box>
+        <Box sx={{ p: 2 }}>
+          <Stack spacing={2}>
         <TextField
           required
           fullWidth
@@ -118,7 +130,9 @@ const BaseInfoStep = forwardRef<BaseInfoStepHandle, BaseInfoStepProps>(
           />
           {!districtError && <FormHelperText>Select a district by name.</FormHelperText>}
         </FormControl>
-      </Stack>
+          </Stack>
+        </Box>
+      </Box>
     );
   },
 );
