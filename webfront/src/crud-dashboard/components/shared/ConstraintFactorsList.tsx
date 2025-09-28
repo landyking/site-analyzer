@@ -2,7 +2,7 @@ import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import List from '@mui/material/List';
 import ListItem from '@mui/material/ListItem';
-import { normalizeConstraints, type ConstraintDisplayItem } from './constraint-utils';
+import { CONSTRAINT_LABELS, normalizeConstraints, type ConstraintDisplayItem } from './constraint-utils';
 
 function ConstraintFactorsList({
   items,
@@ -20,7 +20,7 @@ function ConstraintFactorsList({
   return (
     <List dense={dense}>
       {constraints.map((cf) => {
-        const label = cf.label || cf.kind;
+        const label =  CONSTRAINT_LABELS[cf.kind] || cf.label;
         return (
           <ListItem key={cf.kind} sx={{ py: 0.5 }}>
             <Box sx={{ display: 'flex', alignItems: 'center' }}>
