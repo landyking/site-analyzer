@@ -5,7 +5,7 @@ import Box from '@mui/material/Box';
 import Outline from './report-components/sections/Outline';
 import OverallSection from './report-components/sections/OverallSection';
 import SuitabilitySection from './report-components/sections/SuitabilitySection';
-import RestrictionsSection from './report-components/sections/RestrictionsSection';
+import ConstraintsSection from './report-components/sections/ConstraintsSection';
 import FinalSection from './report-components/sections/FinalSection';
 import type { MapTaskDetails } from '../../../client/types.gen';
 
@@ -22,7 +22,7 @@ const ReportTab: React.FC<ReportTabProps> = ({ mapTask }) => {
       <Outline mapTask={mapTask} />
       <OverallSection mapTask={mapTask} />
       <SuitabilitySection mapTask={mapTask} />
-      <RestrictionsSection mapTask={mapTask} />
+      <ConstraintsSection mapTask={mapTask} />
       <FinalSection mapTask={mapTask} />
     </Box>
   );

@@ -5,7 +5,7 @@ import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import type { MapTaskDetails } from '../../../../../client/types.gen';
 import { SUITABILITY_LABELS } from '../../../shared/suitability-utils';
-import { RESTRICTION_LABELS } from '../../../shared/constraint-utils';
+import { CONSTRAINT_LABELS } from '../../../shared/constraint-utils';
 
 interface Props {
   mapTask: MapTaskDetails;
@@ -17,7 +17,7 @@ const OverallSection: React.FC<Props> = ({ mapTask }) => {
   const restrictionsCount = mapTask.constraint_factors?.length || 0;
 
   const suitabilityNames = mapTask.suitability_factors?.map(f => SUITABILITY_LABELS[f.kind] || f.kind).join(', ') || '';
-  const constraintNames = mapTask.constraint_factors?.map(f => RESTRICTION_LABELS[f.kind] || f.kind).join(', ') || '';
+  const constraintNames = mapTask.constraint_factors?.map(f => CONSTRAINT_LABELS[f.kind] || f.kind).join(', ') || '';
 
   const formatDuration = (ms: number): string => {
     const seconds = Math.floor(ms / 1000);

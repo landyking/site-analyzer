@@ -1,4 +1,4 @@
-export const RESTRICTION_LABELS: Record<string, string> = {
+export const CONSTRAINT_LABELS: Record<string, string> = {
   rivers: 'Rivers',
   lakes: 'Lakes',
   coastlines: 'Coastlines',

@@ -10,29 +10,29 @@ import MapPlaceholder from '../MapPlaceholder';
 import type { MapTaskDetails } from '../../../../../client/types.gen';
 
 
-const restrictions = [
+const constraints = [
   { key: 'protected_areas', title: 'Protected areas' },
   { key: 'water_bodies', title: 'Water bodies' },
 ];
 
 interface Props { mapTask: MapTaskDetails; }
 
-const RestrictionsSection: React.FC<Props> = ({ mapTask }) => (
-  <SectionPaper id="restrictions" title="Restrictions" icon={<BlockIcon fontSize="small" color="primary" />}>
+const ConstraintsSection: React.FC<Props> = ({ mapTask }) => (
+  <SectionPaper id="constraints" title="Constraints" icon={<BlockIcon fontSize="small" color="primary" />}>
     <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-      Restricted factors represent areas where development is not allowed or strongly discouraged. The following restricted layers are considered together.
+      Constraint factors represent areas where development is not allowed or strongly discouraged. The following constrained layers are considered together.
     </Typography>
     <Box sx={{ mb: 2 }}>
       <List>
-        {restrictions.map(r => (
+        {constraints.map(r => (
           <ListItem key={r.key} disablePadding>
             <ListItemText primary={r.title} />
           </ListItem>
         ))}
       </List>
     </Box>
-    <MapPlaceholder caption="Combined restrictions map" />
+    <MapPlaceholder caption="Combined constraints map" />
   </SectionPaper>
 );
 
-export default RestrictionsSection;
+export default ConstraintsSection;

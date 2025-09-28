@@ -61,14 +61,14 @@ const Outline: React.FC<Props> = ({ mapTask }) => {
           </Collapse>
 
           <ListItem disablePadding sx={{ py: 0.08 }}>
-            <ListItemButton component="a" href="#restrictions" sx={{ py: 0.25, minHeight: 22 }}>
-              <ListItemText primary={<span style={{ fontSize: '0.9rem' }}>Restrictions</span>} />
+            <ListItemButton component="a" href="#constraints" sx={{ py: 0.25, minHeight: 22 }}>
+              <ListItemText primary={<span style={{ fontSize: '0.9rem' }}>Constraints</span>} />
             </ListItemButton>
           </ListItem>
 
           <ListItem disablePadding sx={{ py: 0.08 }}>
             <ListItemButton component="a" href="#final" sx={{ py: 0.25, minHeight: 22 }}>
-              <ListItemText primary={<span style={{ fontSize: '0.9rem' }}>Final</span>} />
+              <ListItemText primary={<span style={{ fontSize: '0.9rem' }}>Final result</span>} />
             </ListItemButton>
           </ListItem>
         </List>
