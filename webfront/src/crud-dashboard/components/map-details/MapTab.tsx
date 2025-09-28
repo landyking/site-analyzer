@@ -223,7 +223,7 @@ const MapInner:React.FC<MapTabInnerProps> = ({ mapTask }) => {
         const mapping = colorMapMapping[e.name];
         if (mapping) {
           const [cm, min, max] = mapping;
-          const url = `${TITILER_URL}/titiler/colorMaps/${cm}?orientation=vertical&format=png&min=${min}&max=${max}&width=20&height=150`;
+          const url = `${TITILER_URL}/titiler/colorMaps/${cm}?orientation=vertical&f=png&format=png&min=${min}&max=${max}&width=20&height=150`;
           updateLegend(min, max, url);
         }else{
           updateLegend(0,0,'');
