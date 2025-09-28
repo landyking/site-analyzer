@@ -31,8 +31,20 @@ const ConfirmationStep = forwardRef<ConfirmationStepHandle, ConfirmationStepProp
   const districtLabel = data.districtLabel || data.district;
 
   return (
-    <Stack spacing={2}>
-      <Paper variant="outlined" sx={{ p: 2 }}>
+    <Box sx={{ mb: 1 }}>
+      <Box sx={{ p:2 ,pt: 0, bgcolor: 'background.paper', borderRadius: 1, }}>
+        <Typography variant="h6" component="h2">
+          Review & confirm
+        </Typography>
+        <Typography variant="body2" color="text.secondary">
+          This page shows a summary of the map you are about to create. Confirm the map name, chosen Territorial Authority,
+          selected constraint factors (with distances) and suitability factors (weights & scoring rules). If everything looks
+          correct, proceed to create the map.
+        </Typography>
+      </Box>
+      <Box sx={{ px: 2, pt: 0 }}>
+        <Stack spacing={2}>
+          <Paper variant="outlined" sx={{ p: 2 }}>
         <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
           Basics
         </Typography>
@@ -81,7 +93,9 @@ const ConfirmationStep = forwardRef<ConfirmationStepHandle, ConfirmationStepProp
           </Paper>
         </Box>
       </Box>
-    </Stack>
+        </Stack>
+      </Box>
+    </Box>
   );
 });
 

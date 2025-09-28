@@ -74,7 +74,7 @@ const BaseInfoStep = forwardRef<BaseInfoStepHandle, BaseInfoStepProps>(
 
     return (
       <Box sx={{ mb: 2 }}>
-        <Box sx={{ p: 2, bgcolor: 'background.paper', borderRadius: 1 }}>
+        <Box sx={{ p: 2, pt: 0, bgcolor: 'background.paper', borderRadius: 1 }}>
           <Typography variant="h6" component="h2" gutterBottom>
             Create a new map
           </Typography>

@@ -9,6 +9,7 @@ import HistogramCanvas from './HistogramCanvas';
 import TextField from '@mui/material/TextField';
 import Slider from '@mui/material/Slider';
 import Stack from '@mui/material/Stack';
+import Box from '@mui/material/Box';
 import FormControl from '@mui/material/FormControl';
 import FormHelperText from '@mui/material/FormHelperText';
 import Checkbox from '@mui/material/Checkbox';
@@ -61,7 +62,7 @@ function FactorSelector({ selectionError }: { selectionError?: string }) {
   return (
     <FormControl error={Boolean(selectionError)}>
       <FormHelperText>
-        {selectionError ?? 'Select suitability factors; each selected factor requires a weight and scoring rules.'}
+        {selectionError ?? ''}
       </FormHelperText>
     </FormControl>
   );
@@ -506,8 +507,21 @@ const SuitabilityFactorsStepInner = forwardRef<SuitabilityFactorsStepHandle, Sui
     useImperativeHandle(ref, () => ({ validate }));
 
     return (
-      <Stack spacing={2}>
-        <FactorSelector selectionError={selectionError} />
+      <Box sx={{ mb: 2 }}>
+        <Box sx={{ p: 2, pt: 0, bgcolor: 'background.paper', borderRadius: 1,  }}>
+          <Typography variant="h6" component="h2">
+            Suitability factors
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            Choose which environmental and infrastructure factors should influence site suitability. For each selected
+            factor, set a weight (importance) and define scoring rules (breakpoints and points). Use the data
+            distribution plots to help pick sensible breakpoints. We recommend adding weights so the model can
+            balance multiple factors when ranking candidate sites.
+          </Typography>
+        </Box>
+        <Box sx={{ p: 2, pt: 0 }}>
+          <Stack spacing={2}>
+            <FactorSelector selectionError={selectionError} />
         {ALL_FACTORS.map((opt) => {
           const selected = selectedMap.get(opt.code);
           const err = errors[opt.code];
@@ -572,6 +586,8 @@ const SuitabilityFactorsStepInner = forwardRef<SuitabilityFactorsStepHandle, Sui
           );
         })}
       </Stack>
+        </Box>
+      </Box>
     );
   },
   );

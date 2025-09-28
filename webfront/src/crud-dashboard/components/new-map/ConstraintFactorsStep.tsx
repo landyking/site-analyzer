@@ -101,7 +101,7 @@ const ConstraintFactorsStep = forwardRef<ConstraintFactorsStepHandle, Constraint
 
     return (
       <Box sx={{ mb: 2 }}>
-  <Box sx={{ p: 2, bgcolor: 'background.paper', borderRadius: 1,  }}>
+  <Box sx={{ p: 2, pt:0, bgcolor: 'background.paper', borderRadius: 1,  }}>
           <Typography variant="h6" component="h2">
             Constraint factors
           </Typography>
