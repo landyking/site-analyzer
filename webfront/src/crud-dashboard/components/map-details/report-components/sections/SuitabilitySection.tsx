@@ -24,7 +24,7 @@ const SuitabilitySection: React.FC<Props> = ({ mapTask }) => {
         description, user-defined scoring rules, and a visualization of the corresponding layer.
       </Typography>
 
-      <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(500px, 1fr))', gap: 2 }}>
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)' }, gap: 2 }}>
         {suitabilityFactors.map(f => (
           <FactorCard key={f.kind} factor={f} file={mapTask.files?.find(file => file.file_type == f.kind)} />
         ))}
