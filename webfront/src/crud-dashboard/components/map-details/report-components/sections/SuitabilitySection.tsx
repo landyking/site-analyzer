@@ -23,7 +23,7 @@ const SuitabilitySection: React.FC<Props> = ({ mapTask }) => {
       </Typography>
 
       {suitabilityFactors.map(f => (
-        <FactorCard key={f.kind} factor={f} />
+        <FactorCard key={f.kind} factor={f} file={mapTask.files?.find(file => file.file_type == f.kind)} />
       ))}
 
       <SectionPaper title="Aggregated suitability (weighted sum)">

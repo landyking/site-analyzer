@@ -2,15 +2,16 @@ import React from 'react';
 import Paper from '@mui/material/Paper';
 import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
-import MapPlaceholder from '../MapPlaceholder';
-import type { SuitabilityFactor } from '../../../../../client/types.gen';
+import type { MapTaskFile, SuitabilityFactor } from '../../../../../client/types.gen';
 import { SUITABILITY_LABELS } from '@/crud-dashboard/components/shared/suitability-utils';
+import LeafletMap from '../../LeafletMap';
 
 interface Props {
   factor: SuitabilityFactor;
+  file: MapTaskFile | undefined;
 }
 
-const FactorCard: React.FC<Props> = ({ factor }) => {
+const FactorCard: React.FC<Props> = ({ factor, file }) => {
   const title = SUITABILITY_LABELS[factor.kind] || factor.kind;
   const description= '';
   return (
@@ -25,7 +26,8 @@ const FactorCard: React.FC<Props> = ({ factor }) => {
           </Box>
         </Box>
         <Box>
-          <MapPlaceholder caption={title} />
+          {/* <MapPlaceholder caption={title} /> */}
+          <LeafletMap fileUrl={file ? file.file_path : ''} fileTag={factor.kind} mapHeight={450} />
         </Box>
       </Box>
     </Paper>
