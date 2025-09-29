@@ -9,8 +9,6 @@ import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
 import Box from '@mui/material/Box';
 import Paper from '@mui/material/Paper';
 import Alert from '@mui/material/Alert';
-import TuneRoundedIcon from '@mui/icons-material/TuneRounded';
-import StarRoundedIcon from '@mui/icons-material/StarRounded';
 import Tabs from '@mui/material/Tabs';
 import Tab from '@mui/material/Tab';
 import { useState } from 'react';
@@ -18,11 +16,10 @@ import { useState } from 'react';
 import ReportTab from './map-details/ReportTab';
 import ProgressTab from './map-details/ProgressTab';
 import FilesTab from './map-details/FilesTab';
+import InputFactorsTab from './map-details/InputFactorsTab';
 import { useNavigate, useParams } from '@tanstack/react-router';
 import { useQuery } from '@tanstack/react-query';
 import { UserService,AdminService } from '../../client/sdk.gen';
-import ConstraintFactorsList from './shared/ConstraintFactorsList';
-import SuitabilityFactorsList from './shared/SuitabilityFactorsList';
 
 
 
@@ -94,14 +91,17 @@ function MapTabs({ mapTask, isOngoing, admin }: { mapTask: NonNullable<UserUserG
     return (
       <>
         <Tabs
-          value={0}
+          value={tabValue}
+          onChange={(_, v) => setTabValue(v)}
           aria-label="Map details tabs"
           sx={{ borderBottom: 1, borderColor: 'divider', px: 2 }}
         >
-          <Tab label="Progress" />
+          <Tab key="Progress" label="Progress" />
+          <Tab key="Input Factors" label="Input Factors" />
         </Tabs>
         <Box sx={{ p: 0 }}>
-          <ProgressTab mapTask={mapTask} admin={admin} />
+          {tabValue === 0 && <ProgressTab mapTask={mapTask} admin={admin} />}
+          {tabValue === 1 && <InputFactorsTab mapTask={mapTask} />}
         </Box>
       </>
     );
@@ -114,6 +114,7 @@ function MapTabs({ mapTask, isOngoing, admin }: { mapTask: NonNullable<UserUserG
   const tabs = [
     { label: 'Report', show: true },
     { label: 'Progress', show: true },
+    { label: 'Input Factors', show: true },
     { label: 'Files', show: !noMapToDisplay },
   ];
   const visibleTabs = tabs.filter(t => t.show);
@@ -149,46 +150,16 @@ function MapTabs({ mapTask, isOngoing, admin }: { mapTask: NonNullable<UserUserG
         {visibleTabs.some(t => t.label === 'Files') && tabValue === visibleTabs.findIndex(t => t.label === 'Files') && (
           <FilesTab mapTask={mapTask} />
         )}
+        {/* Input Factors Tab */}
+        {visibleTabs.some(t => t.label === 'Input Factors') && tabValue === visibleTabs.findIndex(t => t.label === 'Input Factors') && (
+          <InputFactorsTab mapTask={mapTask} />
+        )}
       </Box>
     </>
   );
 }
 
 // Define types for the suitability factors
-
-function MapSettings({ mapTask }: { mapTask: NonNullable<UserUserGetMapTaskResponse['data']> }) {
-  const constraints = mapTask.constraint_factors || [];
-  // Suitability factors displayed via shared component with internal normalization
-  const suitability = mapTask.suitability_factors || [];
-  return (
-    <Box
-      sx={{
-        display: 'grid',
-        gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' },
-        gap: 2,
-      }}
-    >
-      <Paper variant="outlined" sx={{ p: 2 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-          <TuneRoundedIcon color="secondary" fontSize="small" />
-          <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-            Constraint Factors
-          </Typography>
-        </Box>
-  <ConstraintFactorsList items={constraints} />
-      </Paper>
-      <Paper variant="outlined" sx={{ p: 2 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-          <StarRoundedIcon color="secondary" fontSize="small" />
-          <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-            Suitability Factors
-          </Typography>
-        </Box>
-  <SuitabilityFactorsList items={suitability} />
-      </Paper>
-    </Box>
-  );
-}
 
 interface MapDetailsProps {
   admin: boolean;
@@ -279,9 +250,6 @@ const MapDetails: React.FC<MapDetailsProps> = ({ admin }) =>  {
         <Paper variant="outlined" sx={{ p: 2, mb: 1 }}>
           <MapTabs mapTask={mapTask} isOngoing={isOngoing} admin={admin} />
         </Paper>
-
-        {/* Settings section */}
-        <MapSettings mapTask={mapTask} />
       </Stack>
     </PageContainer>
   );
