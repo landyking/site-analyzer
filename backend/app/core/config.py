@@ -1,3 +1,4 @@
+import logging
 import secrets
 import warnings
 from typing import Annotated, Any, Literal
@@ -16,6 +17,7 @@ from pydantic_core import MultiHostUrl
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from typing_extensions import Self
 
+logger = logging.getLogger(__name__)
 
 def parse_cors(v: Any) -> list[str] | str:
     if isinstance(v, str) and not v.startswith("["):
@@ -151,7 +153,18 @@ class Settings(BaseSettings):
 
         return self
 
-
 settings = Settings()  # type: ignore
 # print(settings.INPUT_DATA_DIR, settings.OUTPUT_DATA_DIR)
 # print(settings.GOOGLE_CLIENT_ID, settings.GOOGLE_CLIENT_SECRET)
+
+def print_settings_info() -> None:
+    if settings.RELEASE_ALLOW_REGISTRATION is False:
+        logger.info(
+            "User registration is disabled."
+        )
+    
+
+    if settings.RELEASE_READ_ONLY:
+        logger.info(
+            "The application is in read-only mode."
+        )
