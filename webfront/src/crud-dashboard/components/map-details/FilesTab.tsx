@@ -17,6 +17,17 @@ function getExpirationTime(filePath: string): string {
   }
 }
 
+const fileTypeLabels: Record<string, string> = {
+  slope: 'Slope',
+  powerlines: 'Powerlines',
+  roads: 'Roads',
+  solar: 'Solar Radiation',
+  temperature: 'Temperature',
+  weighted: 'Weighted Overlay',
+  final: 'Final Suitability Map',
+  restricted: 'Constraint Areas',
+};
+
 export default function FilesTab({ mapTask }: { mapTask: NonNullable<UserUserGetMapTaskResponse['data']> }) {
   const files = Array.isArray(mapTask.files) ? mapTask.files : [];
   if (!files.length) {
@@ -41,7 +52,7 @@ export default function FilesTab({ mapTask }: { mapTask: NonNullable<UserUserGet
               <InsertDriveFileRoundedIcon color="action" />
             </ListItemIcon>
             <ListItemText
-              primary={file.file_type}
+              primary={fileTypeLabels[file.file_type] || file.file_type}
               secondary={getExpirationTime(file.file_path)}
             />
           </ListItem>
