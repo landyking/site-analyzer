@@ -89,6 +89,9 @@ class Settings(BaseSettings):
     STORAGE_REGION: str
     STORAGE_SIGN_EXPIRE_SECONDS: int = 3600  # 1 hour
 
+    RELEASE_READ_ONLY: bool = False
+    RELEASE_ALLOW_REGISTRATION: bool = True
+
     @computed_field  # type: ignore[prop-decorator]
     @property
     def SQLALCHEMY_DATABASE_URI(self) -> MySQLDsn:

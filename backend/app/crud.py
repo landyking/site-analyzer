@@ -2,6 +2,8 @@ import json
 import uuid
 from typing import Any
 from datetime import datetime, timezone
+from app.core.config import settings
+from fastapi import Depends, HTTPException, status
 
 from sqlmodel import Session, select, delete
 from fastapi import BackgroundTasks
@@ -39,6 +41,11 @@ def touch_last_login(*, session: Session, user: UserDB) -> UserDB:
 
 
 def create_user(*, session: Session, user_create: UserCreate) -> UserDB:
+    if settings.RELEASE_ALLOW_REGISTRATION is False:
+        raise HTTPException(
+            status_code=400,
+            detail="New user registration is disabled",
+        )
     db_obj = UserDB.model_validate(
         user_create, update={"password_hash": get_password_hash(user_create.password)}
     )
@@ -113,6 +120,11 @@ def authenticate(*, session: Session, email: str, password: str) -> UserDB | Non
 #     return db_item
 
 def create_map_task(*, session: Session, user_id: int, payload: CreateMapTaskReq, background_tasks: BackgroundTasks | None = None) -> MapTaskDB:
+    if settings.RELEASE_READ_ONLY:
+        raise HTTPException(
+            status_code=400,
+            detail="System is in read-only mode; cannot create new tasks",
+        )
     db_obj = MapTaskDB.model_validate(
         payload,
         update={
@@ -255,6 +267,11 @@ def duplicate_map_task(
 
     Returns the newly created MapTaskDB or None if the source task is not found.
     """
+    if settings.RELEASE_READ_ONLY:
+        raise HTTPException(
+            status_code=400,
+            detail="System is in read-only mode; cannot create new tasks",
+        )
     src = get_map_task(session=session, user_id=user_id, task_id=task_id)
     if not src:
         return None

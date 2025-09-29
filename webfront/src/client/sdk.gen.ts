@@ -14,6 +14,7 @@ import type {
 	AdminAdminGetMapTaskResponse,
 	AdminAdminGetMapTaskProgressData,
 	AdminAdminGetMapTaskProgressResponse,
+	AdminAdminInitializeInputDirectoryResponse,
 	AuthUserLoginData,
 	AuthUserLoginResponse,
 	AuthGetUserInfoResponse,
@@ -169,6 +170,18 @@ export class AdminService {
 			errors: {
 				422: "Validation Error",
 			},
+		});
+	}
+
+	/**
+	 * Initialize input directory for admin
+	 * @returns BaseResp Successful Response
+	 * @throws ApiError
+	 */
+	public static adminInitializeInputDirectory(): CancelablePromise<AdminAdminInitializeInputDirectoryResponse> {
+		return __request(OpenAPI, {
+			method: "GET",
+			url: "/api/v1/admin/inputs-initialize",
 		});
 	}
 }

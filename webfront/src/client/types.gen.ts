@@ -255,6 +255,8 @@ export type AdminAdminGetMapTaskProgressData = {
 
 export type AdminAdminGetMapTaskProgressResponse = MapTaskProgressListResp;
 
+export type AdminAdminInitializeInputDirectoryResponse = BaseResp;
+
 export type AuthUserLoginData = {
 	formData: Body_Auth_user_login;
 };
