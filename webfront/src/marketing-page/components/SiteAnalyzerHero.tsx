@@ -467,7 +467,7 @@ const HeroButtons = () => {
       </Button>
       <Button
         component={RouterLink}
-        to="/"
+        to="/sign-in"
         variant="outlined"
         color="primary"
         size="large"

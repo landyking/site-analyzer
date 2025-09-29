@@ -6,6 +6,7 @@ import Container from '@mui/material/Container';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import { styled } from '@mui/material/styles';
+import { Link as RouterLink } from '@tanstack/react-router';
 
 import SolarPowerIcon from '@mui/icons-material/SolarPower';
 import TerrainIcon from '@mui/icons-material/Terrain';
@@ -125,6 +126,8 @@ export default function SiteAnalyzerFeatures() {
           sx={{ justifyContent: 'center' }}
         >
           <Button
+            component={RouterLink}
+            to="/sign-in"
             variant="contained"
             color="primary"
             size="large"
@@ -133,6 +136,8 @@ export default function SiteAnalyzerFeatures() {
             Start New Analysis
           </Button>
           <Button
+            component={RouterLink}
+            to="/sign-in"
             variant="outlined"
             color="primary"
             size="large"
