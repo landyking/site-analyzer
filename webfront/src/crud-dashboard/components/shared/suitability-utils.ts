@@ -12,8 +12,8 @@ export type SuitabilityDisplayFactor = {
 };
 
 export const SUITABILITY_LABELS: Record<string, string> = {
-  solar: 'Annual solar radiation',
-  temperature: 'Annual average temperature',
+  solar: 'Mean annual solar radiation',
+  temperature: 'Mean annual temperature',
   roads: 'Road distances',
   powerlines: 'Powerline distances',
   slope: 'Land slope',
