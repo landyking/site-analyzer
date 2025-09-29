@@ -3,7 +3,6 @@ import SectionPaper from '../SectionPaper';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import Typography from '@mui/material/Typography';
 import FactorCard from './FactorCard';
-import MapPlaceholder from '../MapPlaceholder';
 import List from '@mui/material/List';
 import ListItem from '@mui/material/ListItem';
 import ListItemText from '@mui/material/ListItemText';
@@ -23,9 +22,11 @@ const SuitabilitySection: React.FC<Props> = ({ mapTask }) => {
         description, user-defined scoring rules, and a visualization of the corresponding layer.
       </Typography>
 
-      {suitabilityFactors.map(f => (
-        <FactorCard key={f.kind} factor={f} file={mapTask.files?.find(file => file.file_type == f.kind)} />
-      ))}
+      <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(500px, 1fr))', gap: 2 }}>
+        {suitabilityFactors.map(f => (
+          <FactorCard key={f.kind} factor={f} file={mapTask.files?.find(file => file.file_type == f.kind)} />
+        ))}
+      </Box>
 
       <SectionPaper title="Aggregated suitability (weighted sum)">
         <Typography variant="body2" color="text.secondary">This subsection shows how individual suitability factors are combined using weights to compute an aggregated suitability score.</Typography>

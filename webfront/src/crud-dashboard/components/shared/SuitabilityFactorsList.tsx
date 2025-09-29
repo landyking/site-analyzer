@@ -20,7 +20,7 @@ function SuitabilityFactorsList({ items, emptyMessage = 'No suitability factors 
     <List dense={dense}>
       {suitability.map((sf) => {
         const label = labelsMap[sf.kind] ?? sf.label ?? sf.kind;
-        const header = `${label} – Weight: ${Number.isFinite(sf.weight as number) ? sf.weight : '0'}`;
+        const header = `${label} - Weight: ${Number.isFinite(sf.weight as number) ? sf.weight : '0'}`;
         return (
           <ListItem key={sf.kind} alignItems="flex-start" sx={{ display: 'block', py: 0 }}>
             <Typography component="div" sx={{ fontWeight: 500, mb: 0.5, color: 'secondary.main' }}>

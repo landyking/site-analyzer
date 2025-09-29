@@ -9,12 +9,7 @@ import Collapse from '@mui/material/Collapse';
 import ExpandLess from '@mui/icons-material/ExpandLess';
 import ExpandMore from '@mui/icons-material/ExpandMore';
 import type { MapTaskDetails } from '../../../../../client/types.gen';
-
-const factors = [
-  { key: 'slope', title: 'Slope', description: 'Slope in degrees. Lower is preferable.' },
-  { key: 'distance_roads', title: 'Distance to roads', description: 'Distance to nearest road. Closer may be better for access.' },
-  { key: 'land_cover', title: 'Land cover', description: 'Categorical land cover suitability scores.' },
-];
+import { SUITABILITY_LABELS } from '@/crud-dashboard/components/shared/suitability-utils';
 
 interface Props {
   mapTask: MapTaskDetails;
@@ -22,6 +17,7 @@ interface Props {
 
 const Outline: React.FC<Props> = ({ mapTask }) => {
   const [suitOpen, setSuitOpen] = useState<boolean>(false);
+  const suitabilityFactors= mapTask.suitability_factors?.sort((a, b) => b.weight - a.weight) || [];
   return (
     <Box id="report-overview" sx={{ mb: 2 }}>
       <Box sx={{ position: 'relative', display: 'flex', alignItems: 'stretch' }}>
@@ -50,10 +46,10 @@ const Outline: React.FC<Props> = ({ mapTask }) => {
 
           <Collapse in={suitOpen} timeout="auto" unmountOnExit>
             <List component="div" disablePadding>
-              {factors.map(f => (
-                <ListItem key={`toc-${f.key}`} disablePadding sx={{ py: 0.05 }}>
-                  <ListItemButton component="a" href={`#suitability-${f.key}`} sx={{ pl: 2, py: 0.2, minHeight: 20 }}>
-                    <ListItemText primary={<span style={{ fontSize: '0.86rem', color: 'var(--mui-palette-text-secondary)' }}>{f.title}</span>} />
+              {suitabilityFactors.map(f => (
+                <ListItem key={`toc-${f.kind}`} disablePadding sx={{ py: 0.05 }}>
+                  <ListItemButton component="a" href={`#suitability-${f.kind}`} sx={{ pl: 2, py: 0.2, minHeight: 20 }}>
+                    <ListItemText primary={<span style={{ fontSize: '0.86rem', color: 'var(--mui-palette-text-secondary)' }}>{SUITABILITY_LABELS[f.kind] || f.kind}</span>} />
                   </ListItemButton>
                 </ListItem>
               ))}

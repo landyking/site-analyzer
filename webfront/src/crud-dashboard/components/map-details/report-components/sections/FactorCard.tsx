@@ -17,8 +17,8 @@ const FactorCard: React.FC<Props> = ({ factor, file }) => {
   return (
     <Paper id={`suitability-${factor.kind}`} variant="outlined" sx={{ p: 2, mb: 2 }}>
       <Typography variant="subtitle1" sx={{ mb: 1 }}>{title}</Typography>
-      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '7fr 5fr' }, gap: 2 }}>
-        <Box>
+      <Box>
+        <Box sx={{ mb: 2 }}>
           <Typography variant="body2" color="text.secondary">{description}</Typography>
           <Box sx={{ mt: 1 }}>
             <Typography variant="caption">User-defined scoring rules (placeholder)</Typography>
