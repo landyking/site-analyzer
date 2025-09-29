@@ -206,6 +206,11 @@ def delete_map_task(*, session: Session, user_id: int, task_id: int) -> MapTaskD
     Raises ValueError if the task is still pending/processing and cannot be deleted safely.
     Also removes related files and progress rows when present.
     """
+    if settings.RELEASE_READ_ONLY:
+        raise HTTPException(
+            status_code=400,
+            detail="System is in read-only mode; cannot delete tasks",
+        )
     db_obj = get_map_task(session=session, user_id=user_id, task_id=task_id)
     if not db_obj:
         return None
