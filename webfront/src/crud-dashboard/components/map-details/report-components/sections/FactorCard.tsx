@@ -7,6 +7,7 @@ import { SUITABILITY_LABELS, normalizeSuitabilityFactors, SuitabilityDisplayFact
 import LeafletMap from '../../LeafletMap';
 import Chip from '@mui/material/Chip';
 import Avatar from '@mui/material/Avatar';
+import Link from '@mui/material/Link';
 
 // Solar farm suitability factors descriptions
 const descriptionMap: Record<string, string> = {
@@ -26,9 +27,10 @@ const FactorCard: React.FC<Props> = ({ factor, file }) => {
   const title = SUITABILITY_LABELS[factor.kind] || factor.kind;
   const description = descriptionMap[factor.kind] || 'No description available.';
   const sf: SuitabilityDisplayFactor = normalizeSuitabilityFactors([factor] as unknown[])[0];
+  const fileUrl = file?.file_path || '';
   return (
     <Paper id={`suitability-${factor.kind}`} variant="outlined" sx={{ p: 2, mb: 2 }}>
-      <Typography variant="subtitle1" sx={{ mb: 0 }}>{title}</Typography>
+      <Typography variant="subtitle1" sx={{ mb: 0 }}>{title} </Typography>
       <Box>
         <Box sx={{ mb: 1 }}>
           <Typography variant="body2" color="text.secondary">{description}</Typography>
@@ -51,7 +53,10 @@ const FactorCard: React.FC<Props> = ({ factor, file }) => {
           </Box>
         </Box>
         <Box>
-          <Typography variant="body2" sx={{ mt: 1 }} color="text.secondary">{"Darker map areas indicate higher scores according to the scoring rules."}</Typography>
+          <Typography variant="body2" sx={{ mt: 1 }} color="text.secondary">
+            Darker map areas indicate higher scores according to the scoring rules.
+            &nbsp;<Link href={fileUrl} target="_blank" rel="noopener" fontSize="small" color='text.secondary' download underline="none">Download</Link>
+          </Typography>
           <LeafletMap fileUrl={file ? file.file_path : ''} fileTag={factor.kind} mapHeight={450} />
         </Box>
       </Box>
