@@ -10,11 +10,14 @@ import Box from '@mui/material/Box';
 import type { MapTaskDetails } from '../../../../../client/types.gen';
 import { SUITABILITY_LABELS } from '@/crud-dashboard/components/shared/suitability-utils';
 import LeafletMap from '../../LeafletMap';
+import Chip from '@mui/material/Chip';
+import Avatar from '@mui/material/Avatar';
+import Paper from '@mui/material/Paper';
 
 interface Props { mapTask: MapTaskDetails; }
 
 const SuitabilitySection: React.FC<Props> = ({ mapTask }) => {
-  const suitabilityFactors= mapTask.suitability_factors?.sort((a, b) => b.weight - a.weight) || [];
+  const suitabilityFactors = mapTask.suitability_factors?.sort((a, b) => b.weight - a.weight) || [];
   return (
     <SectionPaper id="suitability" title="Suitability Scoring" icon={<TrendingUpIcon fontSize="small" color="primary" />}>
       <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
@@ -27,23 +30,29 @@ const SuitabilitySection: React.FC<Props> = ({ mapTask }) => {
           <FactorCard key={f.kind} factor={f} file={mapTask.files?.find(file => file.file_type == f.kind)} />
         ))}
       </Box>
-
-      <SectionPaper title="Aggregated suitability (weighted sum)">
-        <Typography variant="body2" color="text.secondary">This subsection shows how individual suitability factors are combined using weights to compute an aggregated suitability score.</Typography>
-        <Box sx={{ mt: 2 }}>
-          <Typography variant="subtitle2">Weights (example)</Typography>
-          <List>
-            {suitabilityFactors.map(f => (
-              <ListItem key={f.kind} disablePadding>
-                <ListItemText primary={`${SUITABILITY_LABELS[f.kind] || f.kind}: weight = 0.33 (placeholder)`} />
-              </ListItem>
-            ))}
-          </List>
-        </Box>
-        <Box sx={{ mt: 0 }}>
+      <Paper id={`suitability-weighted`} variant="outlined" sx={{ p: 2, mb: 2 }}>
+        <Typography variant="subtitle1" sx={{ mb: 0 }}>Weighted Overlay</Typography>
+        <Box>
+          <Box sx={{ mb: 1 }}>
+            <Typography variant="body2" color="text.secondary">
+              A weighted overlay map combines all individual suitability factors into a single comprehensive map,
+              reflecting the overall suitability based on the assigned weights for each factor. 
+            </Typography>
+            <Typography variant="subtitle2" sx={{ mt: 1, mb: -1 }}>Factor weights: </Typography>
+            <Box sx={{ mt: 1 }}>
+            {suitabilityFactors.map((f) => {
+              const label = SUITABILITY_LABELS[f.kind] || f.kind;
+              return <Chip color="default" variant='outlined' size='small' avatar={<Avatar>{f.weight}</Avatar>} label={label} style={{ marginRight: 2 }} />;
+            })
+            }
+          </Box>
+          </Box>
+          <Box>
+            <Typography variant="body2" sx={{ mt: 1 }} color="text.secondary">Darker areas indicate higher overall suitability scores based on the combined weighted factors.</Typography>
           <LeafletMap fileUrl={mapTask.files?.find(file => file.file_type == 'weighted')?.file_path || ''} fileTag="weighted" mapHeight={450} />
+          </Box>
         </Box>
-      </SectionPaper>
+      </Paper>
     </SectionPaper>
   )
 };
