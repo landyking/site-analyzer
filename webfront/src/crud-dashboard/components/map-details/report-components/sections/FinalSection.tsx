@@ -10,7 +10,7 @@ interface Props {
 const FinalSection: React.FC<Props> = ({ mapTask }) => (
   <SectionPaper id="final" title="Final result" icon={<CheckCircleIcon fontSize="small" color="primary" />}>
     <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-      The final map removes constrained areas from the weighted-overlay suitability map, providing a clear visualization of locations suitable for solar farm development while respecting the defined constraints.
+      The final map removes constrained areas from the weighted-overlay suitability layer, providing a clear visualization of locations suitable for solar farm development while respecting the defined constraints.
     </Typography>
     <Typography variant="body2" color="text.secondary" sx={{ mb: 0 }}>
       Darker areas indicate higher overall suitability scores.

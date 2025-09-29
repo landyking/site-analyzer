@@ -2,7 +2,7 @@ import React from 'react';
 import Box from '@mui/material/Box';
 
 // components moved to sections/* and imported below
-import Outline from './report-components/sections/Outline';
+// import Outline from './report-components/sections/Outline';
 import OverallSection from './report-components/sections/OverallSection';
 import SuitabilitySection from './report-components/sections/SuitabilitySection';
 import ConstraintsSection from './report-components/sections/ConstraintsSection';
@@ -19,7 +19,7 @@ const ReportTab: React.FC<ReportTabProps> = ({ mapTask }) => {
   return (
     <Box sx={{ p: 2 }}>
       {/* Outline / Table of contents */}
-      <Outline mapTask={mapTask} />
+      {/* <Outline mapTask={mapTask} /> */}
       <OverallSection mapTask={mapTask} />
       <SuitabilitySection mapTask={mapTask} />
       <ConstraintsSection mapTask={mapTask} />

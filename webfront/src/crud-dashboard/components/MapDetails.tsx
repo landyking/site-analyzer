@@ -9,13 +9,12 @@ import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
 import Box from '@mui/material/Box';
 import Paper from '@mui/material/Paper';
 import Alert from '@mui/material/Alert';
-// (lists used inside shared components)
 import TuneRoundedIcon from '@mui/icons-material/TuneRounded';
 import StarRoundedIcon from '@mui/icons-material/StarRounded';
 import Tabs from '@mui/material/Tabs';
 import Tab from '@mui/material/Tab';
 import { useState } from 'react';
-import MapTab from './map-details/MapTab';
+// import MapTab from './map-details/MapTab';
 import ReportTab from './map-details/ReportTab';
 import ProgressTab from './map-details/ProgressTab';
 import FilesTab from './map-details/FilesTab';
@@ -25,8 +24,6 @@ import { UserService,AdminService } from '../../client/sdk.gen';
 import ConstraintFactorsList from './shared/ConstraintFactorsList';
 import SuitabilityFactorsList from './shared/SuitabilityFactorsList';
 
-// Reuse labels from ConfirmationStep
-// Labels centralized in shared suitability utils
 
 
 // Helper to format date/time
@@ -115,7 +112,6 @@ function MapTabs({ mapTask, isOngoing, admin }: { mapTask: NonNullable<UserUserG
 
   // Tabs: Map, Report, Progress, Files (Files only if noMapToDisplay is false)
   const tabs = [
-    { label: 'Map', show: true },
     { label: 'Report', show: true },
     { label: 'Progress', show: true },
     { label: 'Files', show: !noMapToDisplay },
@@ -136,20 +132,16 @@ function MapTabs({ mapTask, isOngoing, admin }: { mapTask: NonNullable<UserUserG
       </Tabs>
       <Box sx={{ p: 0 }}>
         {/* Map Tab */}
-        {tabValue === visibleTabs.findIndex(t => t.label === 'Map') && (
+        {tabValue === visibleTabs.findIndex(t => t.label === 'Report') && (
           noMapToDisplay ? (
             <Box sx={{ p: 3, textAlign: 'center' }}>
               <Typography color="text.secondary">
-                No map is available to display yet. Please check the progress or try again later.
+                No report is available to display yet. Please check the progress or try again later.
               </Typography>
             </Box>
           ) : (
-            <MapTab mapTask={mapTask} />
+            <ReportTab mapTask={mapTask} />
           )
-        )}
-        {/* Report Tab */}
-        {tabValue === visibleTabs.findIndex(t => t.label === 'Report') && (
-          <ReportTab mapTask={mapTask} />
         )}
         {/* Progress Tab */}
         {tabValue === visibleTabs.findIndex(t => t.label === 'Progress') && <ProgressTab mapTask={mapTask} admin={admin} />}

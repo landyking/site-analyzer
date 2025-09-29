@@ -40,7 +40,7 @@ const OverallSection: React.FC<Props> = ({ mapTask }) => {
           Welcome to the site suitability analysis report for <Box component="span" sx={{ fontWeight: 'bold' }}>"{mapTask.name}"</Box> in <Box component="span" sx={{ fontWeight: 'bold' }}>{mapTask.district_name}</Box>.
           This report summarizes the processing steps and outputs for task ID: <Box component="span" sx={{ fontWeight: 'bold' }}>{mapTaskId ?? 'N/A'}</Box>.
           The analysis incorporates <Box component="span" sx={{ fontWeight: 'bold' }}>{suitabilityCount}</Box> suitability factors{suitabilityNames && ` (${suitabilityNames})`} and <Box component="span" sx={{ fontWeight: 'bold' }}>{restrictionsCount}</Box> constraint factors{constraintNames && ` (${constraintNames}) `}
-          to help you identify optimal locations for your project.
+          to help you identify optimal locations for your analysis.
           {duration && <> The task was completed in <Box component="span" sx={{ fontWeight: 'bold' }}>{duration}</Box>.</>}
         </Typography>
       </Box>
