@@ -10,6 +10,7 @@ import ListItemText from '@mui/material/ListItemText';
 import Box from '@mui/material/Box';
 import type { MapTaskDetails } from '../../../../../client/types.gen';
 import { SUITABILITY_LABELS } from '@/crud-dashboard/components/shared/suitability-utils';
+import LeafletMap from '../../LeafletMap';
 
 interface Props { mapTask: MapTaskDetails; }
 
@@ -38,8 +39,8 @@ const SuitabilitySection: React.FC<Props> = ({ mapTask }) => {
             ))}
           </List>
         </Box>
-        <Box sx={{ mt: 2 }}>
-          <MapPlaceholder caption="Aggregated suitability map" />
+        <Box sx={{ mt: 0 }}>
+          <LeafletMap fileUrl={mapTask.files?.find(file => file.file_type == 'weighted')?.file_path || ''} fileTag="weighted" mapHeight={450} />
         </Box>
       </SectionPaper>
     </SectionPaper>

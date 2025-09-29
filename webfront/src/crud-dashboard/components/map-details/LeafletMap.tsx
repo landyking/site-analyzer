@@ -239,10 +239,10 @@ const LeafletMap: React.FC<LeafletMapProps> = ({ fileUrl, fileTag, mapHeight }) 
   }, [fileTag, fileUrl]);
 
   return (
-    <Box sx={{ p: 2 }}>
+    <Box >
       <div
         ref={mapRef}
-        style={{ height: mapHeight, width: '100%', borderRadius: 8, marginBottom: 16 }}
+        style={{ height: mapHeight, width: '100%', borderRadius: 4, marginBottom: 0 }}
       />
       {/* Inline legend style for SSR/CSR consistency */}
       <style>{`.legend {${legendStyle.styles}}`}</style>

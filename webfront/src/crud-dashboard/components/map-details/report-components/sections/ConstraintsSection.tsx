@@ -8,6 +8,7 @@ import ListItemText from '@mui/material/ListItemText';
 import Box from '@mui/material/Box';
 import MapPlaceholder from '../MapPlaceholder';
 import type { MapTaskDetails } from '../../../../../client/types.gen';
+import LeafletMap from '../../LeafletMap';
 
 
 const constraints = [
@@ -31,7 +32,7 @@ const ConstraintsSection: React.FC<Props> = ({ mapTask }) => (
         ))}
       </List>
     </Box>
-    <MapPlaceholder caption="Combined constraints map" />
+    <LeafletMap fileUrl={mapTask.files?.find(file => file.file_type == 'restricted')?.file_path || ''} fileTag="restricted" mapHeight={450} />
   </SectionPaper>
 );
 
