@@ -107,10 +107,9 @@ const ConstraintFactorsStep = forwardRef<ConstraintFactorsStepHandle, Constraint
           </Typography>
           <Typography variant="body2" color="text.secondary">
             Select the constraint factors that should influence site suitability. For each selected
-            factor, enter the required minimum distance (in meters). Values must be positive numbers
-            — for example, enter how far a site must be from rivers, lakes, powerlines, or
-            residential areas. These constraints will be used when excluding unsuitable sites during
-            analysis.
+            factor, enter the maximum distance (in meters) that defines the restricted area. Values must be positive numbers — for example, enter how close a site may be to
+            rivers, lakes, powerlines, or residential areas. These constraints will be used when
+            excluding unsuitable sites during analysis.
           </Typography>
         </Box>
   <Box sx={{ p: 2, pt: 0,}}>
@@ -151,7 +150,7 @@ const ConstraintFactorsStep = forwardRef<ConstraintFactorsStepHandle, Constraint
                         startAdornment: (
                           <InputAdornment position="start">
                             {`Distance from ${opt.label} `}
-                            {'>='}
+                            {' ≤ '}
                           </InputAdornment>
                         ),
                         endAdornment: <InputAdornment position="end">m</InputAdornment>,
