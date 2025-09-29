@@ -47,7 +47,7 @@ function ConstraintFactorsList({
                   color: 'success.main',
                 }}
               >
-                ≥ {Number.isFinite(cf.value) ? `${cf.value} m` : 'x m'}
+              ≤ {Number.isFinite(cf.value) ? `${cf.value} m` : 'x m'}
               </Typography>
             </Box>
           </ListItem>
