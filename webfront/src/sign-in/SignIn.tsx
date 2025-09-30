@@ -21,6 +21,7 @@ import { useNavigate } from '@tanstack/react-router';
 import { useMutation } from '@tanstack/react-query';
 import { ApiError, AuthService } from '../client';
 import { useGoogleLogin } from '@react-oauth/google';
+import { ShowDemo } from '@/utils/ShowDemo';
 
 const Card = styled(MuiCard)(({ theme }) => ({
   display: 'flex',
@@ -179,7 +180,7 @@ export default function SignIn(props: { disableCustomTheme?: boolean }) {
   };
 
   return (
-    <AppTheme {...props}>
+    <AppTheme {...props} disableCustomTheme={true}>
       <CssBaseline enableColorScheme />
       <SignInContainer direction="column" justifyContent="space-between">
         <ColorModeSelect sx={{ position: 'fixed', top: '1rem', right: '1rem' }} />
@@ -201,6 +202,7 @@ export default function SignIn(props: { disableCustomTheme?: boolean }) {
           >
             Sign in
           </Typography>
+          <ShowDemo />
           <Box
             component="form"
             onSubmit={handleSubmit}

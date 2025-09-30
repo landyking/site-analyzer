@@ -7,6 +7,7 @@ import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import PageContainer from './PageContainer';
 import Button from '@mui/material/Button';
 import { Link as RouterLink } from '@tanstack/react-router';
+import { ReadOnlyMode } from '@/utils/ReadOnlyMode';
 
 export default function Welcome() {
   return (
@@ -25,6 +26,7 @@ export default function Welcome() {
       }
     >
       <Stack spacing={3} sx={{ maxWidth: 900 }}>
+        <ReadOnlyMode />
         <Typography variant="body1" color="text.secondary">
           Welcome to the Site Analyzer. Use the sidebar to create and manage map
           analysis tasks. Submit a new task with your district and factor weights,

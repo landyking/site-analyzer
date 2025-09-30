@@ -18,7 +18,7 @@ const themeComponents = {
 
 export default function CrudDashboard(props: { disableCustomTheme?: boolean }) {
   return (
-    <AppTheme {...props} themeComponents={themeComponents}>
+    <AppTheme {...props} disableCustomTheme={true} themeComponents={themeComponents}>
       <CssBaseline enableColorScheme />
       <NotificationsProvider>
         <DialogsProvider>

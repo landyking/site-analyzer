@@ -48,6 +48,10 @@ jobs:
           VITE_API_URL: ${{ secrets.VITE_API_URL }}
           VITE_TITILER_URL: ${{ secrets.VITE_TITILER_URL }}
           VITE_GOOGLE_CLIENT_ID: ${{ secrets.VITE_GOOGLE_CLIENT_ID }}
+          VITE_RELEASE_READ_ONLY: ${{ secrets.VITE_RELEASE_READ_ONLY }}
+          VITE_RELEASE_DEMO: ${{ secrets.VITE_RELEASE_DEMO }}
+          VITE_RELEASE_DEMO_USERNAME: ${{ secrets.VITE_RELEASE_DEMO_USERNAME }}
+          VITE_RELEASE_DEMO_PASSWORD: ${{ secrets.VITE_RELEASE_DEMO_PASSWORD }}
         run: npm run build
       - name: Upload artifact
         uses: actions/upload-artifact@v4
