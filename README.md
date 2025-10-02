@@ -48,68 +48,7 @@ site-analyzer/
 
 ## 🔄 Continuous Integration & Deployment
 
-The project utilizes GitHub Actions for automated building and deployment, configured in [.github/workflows/site-analyzer-pipeline.yml](.github/workflows/site-analyzer-pipeline.yml).
-
-### Pipeline Overview
-
-The workflow consists of three build jobs and their corresponding deployment jobs:
-
-- **Webfront Build & Deploy**: Builds the frontend application and deploys it to the server.
-- **Backend Build & Deploy**: Compiles the Python backend and deploys it to the server.
-- **Titiler Build & Deploy**: Builds and deploys the titiler component.
-
-### Required Secrets
-
-To run the CI/CD pipeline, the following secrets must be configured in your GitHub repository:
-
-| Secret Name | Description |
-|-------------|-------------|
-| `SSH_HOST` | Target server hostname or IP address |
-| `SSH_USER` | Username for SSH connection |
-| `SSH_PASS` | Password for SSH authentication |
-| `SSH_TARGET_PATH` | Path where artifacts should be deployed on the server |
-| `VITE_API_URL` | API URL for the frontend application |
-| `VITE_TITILER_URL` | Titiler service URL for the frontend |
-| `VITE_GOOGLE_CLIENT_ID` | Google OAuth client ID (for authentication) |
-
-### Local Testing with Act
-
-You can test the GitHub Actions workflows locally using [act](https://github.com/nektos/act), a tool that runs GitHub Actions locally in Docker containers.
-
-1. **Install act**
-   ```bash
-   # For macOS
-   brew install act
-   ```
-
-2. **Configure local secrets**
-   Create a `.secrets` file in your repository root (ensure it's in .gitignore):
-   ```bash
-   SSH_HOST=your-server-hostname
-   SSH_USER=your-username
-   SSH_PASS=your-password
-   SSH_TARGET_PATH=/path/on/server
-   VITE_API_URL=http://localhost:8000
-   VITE_TITILER_URL=http://localhost:8001
-   VITE_GOOGLE_CLIENT_ID=your-client-id
-   ```
-
-3. **Run a specific job**
-   ```bash
-   # Run a specific job with artifacts path
-   act -j webfront --artifact-server-path /tmp/act-artifacts --secret-file .secrets
-   
-   # Run backend build job
-   act -j backend --artifact-server-path /tmp/act-artifacts --secret-file .secrets
-   
-   # Test deployment job
-   act -j webfront-deploy --artifact-server-path /tmp/act-artifacts --secret-file .secrets
-   ```
-
-4. **Important notes for local testing**
-   - Deployment jobs depend on build jobs, so you may need to run build jobs first
-   - The `--artifact-server-path` parameter is required to share artifacts between jobs
-   - Use `-P ubuntu-latest=catthehacker/ubuntu:act-latest` for a more compatible Ubuntu image
+The project uses GitHub Actions for automated CI/CD. For detailed information about the pipeline configuration, deployment process, and local testing, see [**CI/CD Documentation**](docs/CICD.md).
 
 ## 🧰 Data Preparation
 
