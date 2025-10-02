@@ -152,6 +152,8 @@ def process_map_task(task_id: int) -> None:
 		error_msg=None,
 	)
 	user_id = 0
+	# Initialize task_out to avoid UnboundLocalError in finally block
+	task_out = None
 	try:
 		# Reload current snapshot (avoid holding session for long)
 		task = _load_task(task_id)
@@ -243,14 +245,15 @@ def process_map_task(task_id: int) -> None:
 		)
 	finally:
 		# Cleanup all files under task output dir.
-		try:
-			if os.path.exists(task_out):
-				shutil.rmtree(task_out)
-				logger.info(f"Temporary out directory '{task_out}' has been removed successfully")
-			else:
-				logger.warning(f"Temporary out directory '{task_out}' does not exist")
-		except Exception as e:
-			logger.warning(f" Temporary out directory '{task_out}' cleanup error: {e}")
+		if task_out is not None:
+			try:
+				if os.path.exists(task_out):
+					shutil.rmtree(task_out)
+					logger.info(f"Temporary out directory '{task_out}' has been removed successfully")
+				else:
+					logger.warning(f"Temporary out directory '{task_out}' does not exist")
+			except Exception as e:
+				logger.warning(f" Temporary out directory '{task_out}' cleanup error: {e}")
 
 def build_ranges(breakpoints: list[float], points: list[int]) -> List[Tuple[float, float, int]]:
     intervals = [-float("inf")] + breakpoints + [float("inf")]
