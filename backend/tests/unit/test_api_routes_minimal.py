@@ -128,6 +128,76 @@ def test_admin_map_tasks_list_endpoint():
         body = r.json()
         assert body["error"] == 0
         assert body["total"] == 1
+        
+    def test_admin_map_task_progress_lists_rows():
+        app = make_app_with_overrides(current_user_is_admin=True)
+        client = TestClient(app)
+        row = SimpleNamespace(
+            id=1,
+            map_task_id=2,
+            percent=20,
+            description=None,
+            phase=None,
+            error_msg=None,
+            created_at=datetime.utcnow(),
+            updated_at=datetime.utcnow(),
+            model_dump=lambda: {
+                "id": 1,
+                "map_task_id": 2,
+                "percent": 20,
+                "description": None,
+                "phase": None,
+                "error_msg": None,
+                "created_at": datetime.utcnow(),
+                "updated_at": datetime.utcnow(),
+            },
+        )
+        with patch("app.api.routes.admin.crud.admin_get_map_task_progress", return_value=[row]):
+            r = client.get("/admin/map-tasks/2/progress")
+            assert r.status_code == 200
+            body = r.json()
+            assert body["error"] == 0
+            assert isinstance(body["list"], list)
+
+def test_user_district_histograms_success():
+    app = make_app_with_overrides()
+    client = TestClient(app)
+    # Choose a known district code from HISTOGRAMS file; '063' exists
+    r = client.get("/user/districts/063/histograms")
+    assert r.status_code == 200
+    body = r.json()
+    assert body["error"] == 0
+    assert isinstance(body["list"], list)
+
+def test_user_map_task_progress_lists_rows():
+    app = make_app_with_overrides()
+    client = TestClient(app)
+    row = SimpleNamespace(
+        id=1,
+        map_task_id=2,
+        percent=10,
+        description=None,
+        phase=None,
+        error_msg=None,
+        created_at=datetime.utcnow(),
+        updated_at=datetime.utcnow(),
+        model_dump=lambda: {
+            "id": 1,
+            "map_task_id": 2,
+            "percent": 10,
+            "description": None,
+            "phase": None,
+            "error_msg": None,
+            "created_at": datetime.utcnow(),
+            "updated_at": datetime.utcnow(),
+        },
+    )
+    with patch("app.api.routes.user.crud.get_map_task_progress", return_value=[row]):
+        r = client.get("/user/my-map-tasks/2/progress")
+        assert r.status_code == 200
+        body = r.json()
+        assert body["error"] == 0
+        assert isinstance(body["list"], list)
 
 def test_auth_logout_and_refresh():
     app = make_app_with_overrides()
