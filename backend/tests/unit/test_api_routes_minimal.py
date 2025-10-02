@@ -261,6 +261,14 @@ def test_user_tile_signature_success():
         assert body["error"] == 0
         assert "data" in body and "sig" in body["data"]
 
+def test_user_duplicate_map_task_admin_only():
+    # Use admin override since endpoint requires CurrentAdminUser
+    app = make_app_with_overrides(current_user_is_admin=True)
+    client = TestClient(app)
+    with patch("app.api.routes.user.crud.duplicate_map_task", return_value=SimpleNamespace(id=13)):
+        r = client.post("/user/my-map-tasks/13/duplicate")
+        assert r.status_code == 200
+
 def test_auth_logout_and_refresh():
     app = make_app_with_overrides()
     client = TestClient(app)

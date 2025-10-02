@@ -118,3 +118,24 @@ def test_oidc_token_invalid_jwt_decode():
          patch("app.api.routes.auth.jwt.decode", side_effect=Exception("bad token")):
         r = client.post("/oidc-token", json={"code": "dummy"})
         assert r.status_code == 400
+
+
+def test_oidc_token_success_flow():
+    app = _make_app_for_auth()
+    client = TestClient(app)
+    class Resp:
+        status_code = 200
+        def json(self):
+            return {"id_token": "xyz", "refresh_token": "r"}
+    decoded = {"email": "g@example.com", "sub": "sub123", "email_verified": True}
+    user_obj = MagicMock(id=2, role=UserRole.USER, status=UserStatus.ACTIVE)
+    with patch("app.api.routes.auth.requests.post", return_value=Resp()), \
+         patch("app.api.routes.auth.jwt.decode", return_value=decoded), \
+         patch("app.api.routes.auth.crud.get_user_by_email", return_value=None), \
+         patch("app.api.routes.auth.crud.create_user", return_value=user_obj), \
+         patch("app.api.routes.auth.crud.touch_last_login", return_value=user_obj), \
+         patch("app.api.routes.auth.security.create_access_token", return_value="tok"):
+        r = client.post("/oidc-token", json={"code": "dummy"})
+        assert r.status_code == 200
+        body = r.json()
+        assert body["access_token"] == "tok"
