@@ -2,7 +2,7 @@
 
 [![CI/CD Pipeline](https://github.com/landyking/site-analyzer/actions/workflows/site-analyzer-pipeline.yml/badge.svg?branch=main)](https://github.com/landyking/site-analyzer/actions/workflows/site-analyzer-pipeline.yml)
 
-A comprehensive platform for Solar Power Site Suitability Analysis, featuring both a backend API service and a web-based frontend. The system enables users to analyze geographical areas for solar power installation suitability, manage analysis tasks, and visualize results.
+A comprehensive platform for Solar Power Site Suitability Analysis, featuring a backend API service, a web-based frontend, and a raster tile service (TiTiler). The system enables users to analyze geographical areas for solar power installation suitability, manage analysis tasks, and visualize results.
 
 ## 📋 Overview
 
@@ -10,7 +10,7 @@ Site Analyzer empowers users to assess map regions for solar power site suitabil
 
 ## 🏗️ Architecture
 
-The platform consists of two main components:
+The platform consists of three main components:
 
 - **Backend API Service**:
 
@@ -25,6 +25,12 @@ The platform consists of two main components:
   - Display of suitability analysis results
   - User authentication
 
+- **TiTiler Tile Service**:
+
+  - Dynamic raster tiling for Cloud-Optimized GeoTIFFs (COGs)
+  - On-the-fly rendering and XYZ/WMTS tile endpoints
+  - Serves analysis outputs and base layers to the web frontend
+
 ## 🚀 Getting Started
 
 1. **Clone the repository**  
@@ -37,12 +43,16 @@ The platform consists of two main components:
 3. **Frontend Setup**
    - See [`/webfront/README.md`](/webfront/README.md) for web app installation and usage.
 
+4. **TiTiler Setup**
+   - See [`/titiler/README.md`](/titiler/README.md) for running the tile server used by the frontend.
+
 ## 📦 Project Structure
 
 ```
 site-analyzer/
 ├── backend/      # API service and core logic
-├── frontend/     # Web application
+├── webfront/     # Web application (frontend)
+├── titiler/      # Raster tiling service (COG tiles)
 ├── docs/         # Documentation
 ├── test-data/    # Test datasets
 ├── output-data/  # Analysis outputs
