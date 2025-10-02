@@ -644,7 +644,9 @@ class TestProcessMapTask:
     def test_process_map_task_cleanup_directory_missing(self, mock_logger, mock_exists, mock_rmtree):
         """Test cleanup when output directory doesn't exist."""
         # Arrange
-        with patch.object(processor_module, '_load_task') as mock_load_task:
+        with patch.object(processor_module, '_load_task') as mock_load_task, \
+             patch.object(processor_module, '_quick_update_task') as mock_quick_update, \
+             patch.object(processor_module, 'MapTaskMonitor') as mock_monitor_class:
             mock_task = Mock()
             mock_task.status = MapTaskStatus.PENDING
             mock_load_task.side_effect = [mock_task, None]  # Task disappears during processing
@@ -667,7 +669,9 @@ class TestProcessMapTask:
     def test_process_map_task_cleanup_error(self, mock_mkdir, mock_settings, mock_logger, mock_exists, mock_rmtree):
         """Test cleanup when rmtree fails."""
         # Arrange
-        with patch.object(processor_module, '_load_task') as mock_load_task:
+        with patch.object(processor_module, '_load_task') as mock_load_task, \
+             patch.object(processor_module, '_quick_update_task') as mock_quick_update, \
+             patch.object(processor_module, 'MapTaskMonitor') as mock_monitor_class:
             mock_task = Mock()
             mock_task.id = 123
             mock_task.user_id = 456
