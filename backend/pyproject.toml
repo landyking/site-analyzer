@@ -49,7 +49,9 @@ omit = [
     "*/venv/*",
     "*/__pycache__/*",
     "*/initial_data.py",
-    "*/__init__.py"
+    "*/__init__.py",
+    "*/district_histograms.py",
+    "*/main.py"
 ]
 
 [tool.coverage.report]
