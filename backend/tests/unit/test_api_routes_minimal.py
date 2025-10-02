@@ -199,6 +199,68 @@ def test_user_map_task_progress_lists_rows():
         assert body["error"] == 0
         assert isinstance(body["list"], list)
 
+def test_admin_user_status_update_404_and_success():
+    app = make_app_with_overrides(current_user_is_admin=True)
+    client = TestClient(app)
+    # 404 when update returns False
+    with patch("app.api.routes.admin.crud.admin_update_user_status", return_value=False):
+        r = client.post("/admin/user-status", json={"user_id": 1, "status": 1})
+        assert r.status_code == 404
+    # success
+    with patch("app.api.routes.admin.crud.admin_update_user_status", return_value=True):
+        r = client.post("/admin/user-status", json={"user_id": 1, "status": 1})
+        assert r.status_code == 200
+
+def test_admin_get_map_task_404():
+    app = make_app_with_overrides(current_user_is_admin=True)
+    client = TestClient(app)
+    with patch("app.api.routes.admin.crud.admin_get_map_task", return_value=None):
+        r = client.get("/admin/map-tasks/99")
+        assert r.status_code == 404
+
+def test_admin_inputs_initialize_error_branch():
+    app = make_app_with_overrides(current_user_is_admin=True)
+    client = TestClient(app)
+    with patch("app.core.storage.initialize_input_dir_from_bucket", return_value={"error": 1}):
+        r = client.get("/admin/inputs-initialize")
+        assert r.status_code == 500
+
+def test_user_delete_map_task_branches():
+    app = make_app_with_overrides()
+    client = TestClient(app)
+    # running task → raises ValueError -> 400
+    with patch("app.api.routes.user.crud.delete_map_task", side_effect=ValueError("running")):
+        r = client.delete("/user/my-map-tasks/10")
+        assert r.status_code == 400
+    # not found -> 404
+    with patch("app.api.routes.user.crud.delete_map_task", return_value=None):
+        r = client.delete("/user/my-map-tasks/10")
+        assert r.status_code == 404
+    # success -> 200
+    with patch("app.api.routes.user.crud.delete_map_task", return_value=SimpleNamespace(id=10)):
+        r = client.delete("/user/my-map-tasks/10")
+        assert r.status_code == 200
+
+def test_user_cancel_map_task_not_found_and_success():
+    app = make_app_with_overrides()
+    client = TestClient(app)
+    with patch("app.api.routes.user.crud.cancel_map_task", return_value=None):
+        r = client.post("/user/my-map-tasks/11/cancel")
+        assert r.status_code == 404
+    with patch("app.api.routes.user.crud.cancel_map_task", return_value=SimpleNamespace(id=11)):
+        r = client.post("/user/my-map-tasks/11/cancel")
+        assert r.status_code == 200
+
+def test_user_tile_signature_success():
+    app = make_app_with_overrides()
+    client = TestClient(app)
+    with patch("app.api.routes.user.crud.get_map_task", return_value=SimpleNamespace(id=12, user_id=1)):
+        r = client.get("/user/my-map-tasks/12/tile-signature")
+        assert r.status_code == 200
+        body = r.json()
+        assert body["error"] == 0
+        assert "data" in body and "sig" in body["data"]
+
 def test_auth_logout_and_refresh():
     app = make_app_with_overrides()
     client = TestClient(app)

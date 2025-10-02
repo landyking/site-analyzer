@@ -55,3 +55,66 @@ def test_user_register_duplicate_and_success():
         assert r.status_code == 200
         body = r.json()
         assert body["email"] == "u@e.com"
+
+
+def test_user_login_incorrect_password():
+    app = _make_app_for_auth()
+    client = TestClient(app)
+    with patch("app.api.routes.auth.crud.authenticate", return_value=None):
+        r = client.post("/user-login", data={"username": "u@e.com", "password": "bad"})
+        assert r.status_code == 400
+
+
+def test_user_login_inactive_user():
+    app = _make_app_for_auth()
+    client = TestClient(app)
+    inactive_user = MagicMock(id=1, role=UserRole.USER, status=UserStatus.LOCKED)
+    with patch("app.api.routes.auth.crud.authenticate", return_value=inactive_user):
+        r = client.post("/user-login", data={"username": "u@e.com", "password": "x"})
+        assert r.status_code == 400
+
+
+def test_oidc_info_endpoint():
+    app = _make_app_for_auth()
+    client = TestClient(app)
+    r = client.get("/oidc-info")
+    assert r.status_code == 200
+    assert "login_url" in r.json()
+
+
+def test_oidc_token_missing_id_token():
+    app = _make_app_for_auth()
+    client = TestClient(app)
+    class Resp:
+        status_code = 200
+        def json(self):
+            return {"access_token": "abc", "token_type": "bearer"}
+    with patch("app.api.routes.auth.requests.post", return_value=Resp()):
+        r = client.post("/oidc-token", json={"code": "dummy"})
+        assert r.status_code == 400
+
+
+def test_oidc_token_exchange_error():
+    app = _make_app_for_auth()
+    client = TestClient(app)
+    class Resp:
+        status_code = 500
+        text = "error"
+        def json(self):
+            return {}
+    with patch("app.api.routes.auth.requests.post", return_value=Resp()):
+        r = client.post("/oidc-token", json={"code": "dummy"})
+        assert r.status_code == 400
+
+
+def test_oidc_token_invalid_jwt_decode():
+    app = _make_app_for_auth()
+    client = TestClient(app)
+    class Resp:
+        status_code = 200
+        def json(self):
+            return {"id_token": "xyz"}
+    with patch("app.api.routes.auth.requests.post", return_value=Resp()), \
+         patch("app.api.routes.auth.jwt.decode", side_effect=Exception("bad token")):
+        r = client.post("/oidc-token", json={"code": "dummy"})
+        assert r.status_code == 400
