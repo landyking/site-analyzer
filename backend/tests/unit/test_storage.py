@@ -84,3 +84,84 @@ class TestInitializationHelpers:
         with patch.object(storage, "_safe_extract_tgz", side_effect=[["x/1", "x/2"], ["y/1"]]):
             summary = storage.extract_archives_to_input_dir([str(tmp_path/"a.tgz"), str(tmp_path/"b.tgz")], str(tmp_path/"out"))
             assert summary == {"archives": 2, "extracted_files": 3}
+
+
+class TestMoreStorage:
+    def test_generate_presigned_url(self):
+        import importlib
+        storage = importlib.import_module("app.core.storage")
+        s3_mock = MagicMock()
+        s3_mock.generate_presigned_url.return_value = "http://signed"
+        with patch.object(storage, "s3", s3_mock):
+            url = storage.generate_presigned_url("outputs/1/2/file.tif", expires_in_seconds=123)
+            assert url == "http://signed"
+            s3_mock.generate_presigned_url.assert_called_once()
+
+    def test_list_tgz_keys_under_prefix(self):
+        import importlib
+        storage = importlib.import_module("app.core.storage")
+
+        class FakePaginator:
+            def paginate(self, **kwargs):
+                # Ensure prefix ends with '/'
+                assert kwargs["Prefix"].endswith("/")
+                return [
+                    {"Contents": [{"Key": "inputs/a.tgz"}, {"Key": "inputs/skip.txt"}]},
+                    {"Contents": [{"Key": "inputs/b.tgz"}]},
+                ]
+
+        s3_mock = MagicMock()
+        s3_mock.get_paginator.return_value = FakePaginator()
+        with patch.object(storage, "s3", s3_mock):
+            keys = storage._list_tgz_keys_under_prefix("inputs")
+            assert keys == ["inputs/a.tgz", "inputs/b.tgz"]
+
+    def test_safe_extract_tgz_skips_bad_members(self, tmp_path):
+        import importlib, io, tarfile, os
+        storage = importlib.import_module("app.core.storage")
+
+        # Build a tar.gz containing:
+        # - a safe file 'dir/file.txt'
+        # - a directory 'dir/sub'
+        # - a symlink 'dir/l' (should be skipped)
+        # - a traversal '../evil.txt' (should be skipped)
+        tar_path = tmp_path / "arch.tgz"
+        with tarfile.open(tar_path, "w:gz") as tf:
+            # safe file
+            data = io.BytesIO(b"hello")
+            info = tarfile.TarInfo(name="dir/file.txt")
+            info.size = len(data.getbuffer())
+            tf.addfile(info, data)
+
+            # directory
+            d = tarfile.TarInfo(name="dir/sub")
+            d.type = tarfile.DIRTYPE
+            tf.addfile(d)
+
+            # symlink
+            sym = tarfile.TarInfo(name="dir/l")
+            sym.type = tarfile.SYMTYPE
+            sym.linkname = "file.txt"
+            tf.addfile(sym)
+
+            # traversal
+            evil = tarfile.TarInfo(name="../evil.txt")
+            evil.size = 0
+            tf.addfile(evil, io.BytesIO(b""))
+
+        out_dir = tmp_path / "out"
+        extracted = storage._safe_extract_tgz(str(tar_path), str(out_dir))
+        # Should include created directory 'dir/sub' and file 'dir/file.txt', but not symlink or traversal
+        assert any(p.endswith("dir/sub") for p in extracted)
+        assert any(p.endswith("dir/file.txt") for p in extracted)
+        assert not (out_dir / "evil.txt").exists()
+        assert not (out_dir / "dir" / "l").exists()
+
+    def test_initialize_input_dir_from_bucket(self, tmp_path):
+        import importlib
+        storage = importlib.import_module("app.core.storage")
+        with patch.object(storage, "download_tgz_archives", return_value=[str(tmp_path/"a.tgz"), str(tmp_path/"b.tgz")]), \
+             patch.object(storage, "extract_archives_to_input_dir", return_value={"archives": 2, "extracted_files": 3}), \
+             patch.object(storage.settings, "INPUT_DATA_DIR", tmp_path):
+            summary = storage.initialize_input_dir_from_bucket()
+            assert summary == {"downloaded": 2, "archives": 2, "extracted_files": 3}
