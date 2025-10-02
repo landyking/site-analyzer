@@ -52,3 +52,55 @@ def temp_shapefile_path(tmp_path):
 def temp_raster_path(tmp_path):
     """Create a temporary raster path for testing."""
     return str(tmp_path / "test.tif")
+
+
+@pytest.fixture
+def sample_geodataframe():
+    """Create a sample GeoDataFrame for testing."""
+    import geopandas as gpd
+    from shapely.geometry import Point, Polygon
+    
+    # Create sample geometries
+    points = [Point(0, 0), Point(1, 1), Point(2, 2)]
+    polygons = [
+        Polygon([(0, 0), (1, 0), (1, 1), (0, 1)]),
+        Polygon([(1, 1), (2, 1), (2, 2), (1, 2)]),
+        Polygon([(2, 2), (3, 2), (3, 3), (2, 3)])
+    ]
+    
+    return gpd.GeoDataFrame({
+        'id': [1, 2, 3],
+        'name': ['A', 'B', 'C'],
+        'value': [10, 20, 30],
+        'geometry': polygons
+    }, crs='EPSG:4326')
+
+
+@pytest.fixture
+def sample_raster_metadata():
+    """Sample raster metadata for testing."""
+    return {
+        'driver': 'GTiff',
+        'dtype': 'uint8',
+        'nodata': 255,
+        'width': 10,
+        'height': 10,
+        'count': 1,
+        'crs': 'EPSG:4326',
+        'transform': [1.0, 0.0, 0.0, 0.0, -1.0, 10.0]
+    }
+
+
+@pytest.fixture
+def mock_transform():
+    """Mock rasterio transform for testing."""
+    from unittest.mock import MagicMock
+    transform = MagicMock()
+    transform.a = 30.0  # pixel size
+    return transform
+
+
+@pytest.fixture
+def temp_raster_path(tmp_path):
+    """Create a temporary raster path for testing."""
+    return str(tmp_path / "test.tif")
