@@ -1,5 +1,5 @@
 [project]
-name = "site-analyzer-backend"
+name = "backend"
 version = "0.1.0"
 description = "FastAPI backend service for the Site Analyzer GIS application"
 readme = "README.md"
