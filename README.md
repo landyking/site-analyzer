@@ -46,6 +46,15 @@ The platform consists of three main components:
 4. **TiTiler Setup**
    - See [`/titiler/README.md`](/titiler/README.md) for running the tile server used by the frontend.
 
+## 🌐 Live Demo
+
+Try the hosted demo at https://solar.y2ki.com/
+
+- Access: Use the Demo account shown on the sign-in page to log in.
+- Limitations: The demo environment runs under a read-only mode due to resource constraints and security considerations.
+- Explore: Browse the built-in example map data to see typical analysis outputs and interactions.
+- Full experience: For all features and best performance, run the platform locally following the Backend, Webfront, and TiTiler setup guides above.
+
 ## 📦 Project Structure
 
 ```
