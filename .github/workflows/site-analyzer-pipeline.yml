@@ -74,6 +74,12 @@ jobs:
           python-version: '3.13'
       - name: Setup uv
         uses: astral-sh/setup-uv@v5
+      - name: Install test dependencies
+        run: uv sync --group test
+      - name: Run tests
+        run: uv run pytest tests/unit/ --cov=app --cov-report=xml --cov-report=term-missing --tb=short
+      - name: Install build dependencies
+        run: uv sync
       - name: Build
         run: uv build
       - name: Upload artifact

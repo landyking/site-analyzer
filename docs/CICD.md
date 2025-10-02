@@ -7,8 +7,34 @@ The project utilizes GitHub Actions for automated building and deployment, confi
 The workflow consists of three build jobs and their corresponding deployment jobs:
 
 - **Webfront Build & Deploy**: Builds the frontend application and deploys it to the server.
-- **Backend Build & Deploy**: Compiles the Python backend and deploys it to the server.
+- **Backend Build & Deploy**: Runs unit tests with coverage reporting, compiles the Python backend, and deploys it to the server.
 - **Titiler Build & Deploy**: Builds and deploys the titiler component.
+
+## Testing Integration
+
+The backend build job includes comprehensive testing:
+
+- **Test Dependencies**: Uses `uv sync --group test` to install test dependencies
+- **Unit Tests**: Runs pytest with the complete test suite (84 tests)
+- **Coverage Reporting**: Generates coverage reports in XML and terminal formats
+- **Coverage Reports**: Generates local coverage reports in XML and terminal formats
+- **Quality Gates**: Tests must pass before the build proceeds
+- **Build Dependencies**: Uses `uv sync` to install all production dependencies for building
+- **Package Build**: Creates distributable package using `uv build`
+
+### Local Testing Commands
+
+To run tests locally (same as CI):
+
+```bash
+# Install test dependencies
+uv sync --group test
+
+# Run tests with coverage
+uv run pytest tests/unit/ --cov=app --cov-report=xml --cov-report=term-missing --tb=short
+```
+
+For more testing options, see the [Backend Testing Guide](../backend/TESTING.md).
 
 ## Required Secrets
 
@@ -22,6 +48,8 @@ To run the CI/CD pipeline, the following secrets must be configured in your GitH
 | `SSH_USER` | Username for SSH connection |
 | `SSH_PASS` | Password for SSH authentication |
 | `SSH_TARGET_PATH` | Path where artifacts should be deployed on the server |
+
+
 
 ### Frontend Environment Variables
 
