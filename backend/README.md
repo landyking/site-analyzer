@@ -151,16 +151,40 @@ git commit -m "Add requests dependency"
 ```
 backend/
 ├── app/
-│   └── main.py        # Main FastAPI application
+│   ├── main.py        # Main FastAPI application
+│   ├── core/          # Core functionality (config, security, database)
+│   ├── api/           # API routes and endpoints
+│   ├── models.py      # Pydantic models
+│   └── gis/           # GIS processing modules
+├── tests/
+│   └── unit/          # Unit tests with comprehensive coverage
 ├── pyproject.toml     # Project config + dependencies (managed by uv)
 ├── uv.lock            # Locked, reproducible dependency set (managed by uv)
 ├── .venv/             # Virtual environment (created by `uv sync`, git-ignored)
+├── TESTING.md         # Comprehensive testing guide
 └── README.md          # This file
 ```
 
 ### Environment variables (general)
 
 You can define additional variables as needed (e.g., `DEBUG`, `DATABASE_URL`, etc.). Prefer using `.env.local` for development and a secret manager or `.env.production` for production. Ensure these are available in the process environment when launching the app.
+
+## Testing
+
+This project includes comprehensive unit tests with coverage reporting. For detailed testing instructions, see [TESTING.md](TESTING.md).
+
+### Quick Test Commands
+
+```bash
+# Install test dependencies
+uv sync --group test
+
+# Run all tests with coverage
+uv run pytest tests/unit/ --cov=app --cov-report=term-missing
+
+# Generate HTML coverage report
+uv run pytest tests/unit/ --cov=app --cov-report=html:htmlcov
+```
 
 ## API Documentation
 
