@@ -7,6 +7,13 @@ import 'leaflet.fullscreen';
 import 'leaflet.fullscreen/Control.FullScreen.css';
 import axios from 'axios';
 
+// Type helper for the fullscreen plugin to avoid using `any`
+interface LeafletWithFullscreen {
+  control?: {
+    fullscreen?: (opts?: { position?: string }) => L.Control;
+  };
+}
+
 interface LeafletMapProps {
   fileUrl: string;
   fileTag: string;
@@ -147,6 +154,33 @@ async function addRasterOverlay(params: {
     console.error('Error fetching raster stats:', e);
   }
 }
+
+// Helper: fetch raster value at a point (lat/lon) from TiTiler
+type TitilerPointResponse = {
+  values?: number[];
+  value?: number | number[];
+  b1?: number;
+};
+
+async function fetchPointValue(url: string, lat: number, lon: number): Promise<number | null> {
+  try {
+    const resp = await axios.get(`${TITILER_URL}/titiler/point/${lon},${lat}`, {
+      params: { url },
+    });
+    // TiTiler responses can vary by version; handle common shapes
+    // Example shapes: {"values":[v]} or {"value":[v]} or {"b1": v}
+    const data = resp.data as TitilerPointResponse;
+    if (!data) return null;
+    if (Array.isArray(data.values) && data.values.length) return data.values[0];
+    if (Array.isArray(data.value) && data.value.length) return data.value[0] as number;
+    if (typeof data.b1 === 'number') return data.b1 as number;
+    if (typeof data.value === 'number') return data.value as number;
+    return null;
+  } catch (e) {
+    console.error('Error fetching point value:', e);
+    return null;
+  }
+}
 const LeafletMap: React.FC<LeafletMapProps> = ({ fileUrl, fileTag, mapHeight }) => {
 
   const mapRef = useRef<HTMLDivElement>(null);
@@ -186,8 +220,9 @@ const LeafletMap: React.FC<LeafletMapProps> = ({ fileUrl, fileTag, mapHeight }) 
       if (bounds) map.fitBounds(bounds);
 
       // Add fullscreen control if plugin is loaded
-      if ((L as any).control?.fullscreen) {
-        (L as any).control.fullscreen({ position: 'topleft' }).addTo(map);
+      const Lfs = L as unknown as LeafletWithFullscreen;
+      if (Lfs.control?.fullscreen) {
+        Lfs.control.fullscreen({ position: 'topleft' }).addTo(map);
       }
 
       // 4. Grouped layer control
@@ -220,6 +255,48 @@ const LeafletMap: React.FC<LeafletMapProps> = ({ fileUrl, fileTag, mapHeight }) 
         updateLegend(fileTag, 0, 0, '');
       });
 
+      // 6.5 Add click handler to query raster value and show popup
+      let clickHandler: ((e: L.LeafletMouseEvent) => void) | null = null;
+      clickHandler = async (e: L.LeafletMouseEvent) => {
+        const { lat, lng } = e.latlng;
+        // If click is outside raster bounds, do not query backend
+        if (bounds) {
+          const llb = Array.isArray(bounds)
+            ? L.latLngBounds(bounds as L.LatLngBoundsLiteral)
+            : (bounds as L.LatLngBounds);
+          if (!llb.contains(e.latlng)) {
+            L.popup()
+              .setLatLng(e.latlng)
+              .setContent('<div>No data</div>')
+              .openOn(map);
+            return;
+          }
+        }
+        const value = await fetchPointValue(fileUrl, lat, lng);
+        if (value == null || Number.isNaN(value)) {
+          L.popup().setLatLng(e.latlng).setContent('<div>No data</div>').openOn(map);
+          return;
+        }
+
+        // const mapping = colorMapMapping[fileTag];
+        const scoreHtml = '';
+        // if (mapping) {
+        //   const [, min, max] = mapping;
+        //   const denom = max - min;
+        //   const score01 = denom !== 0 ? (value - min) / denom : 0;
+        //   const scorePct = Math.max(0, Math.min(1, score01)) * 100;
+        //   scoreHtml = `<div>Score: ${scorePct.toFixed(1)} / 100</div>`;
+        // }
+        const content = `
+          <div>
+            <div><b>${fileTag}</b></div>
+            <div>Score: ${Number.isFinite(value) ? value.toFixed(0) : value}</div>
+            ${scoreHtml}
+          </div>`;
+        L.popup().setLatLng(e.latlng).setContent(content).openOn(map);
+      };
+      map.on('click', clickHandler);
+
       // 7. Add raster overlays
       await addRasterOverlay({
         colorMap: file_type_2_color_map(fileTag),
@@ -232,6 +309,8 @@ const LeafletMap: React.FC<LeafletMapProps> = ({ fileUrl, fileTag, mapHeight }) 
     return () => {
       isMounted = false;
       if (leafletMapRef.current) {
+        // Remove any listeners we attached
+        leafletMapRef.current.off('click');
         leafletMapRef.current.remove();
         leafletMapRef.current = null;
       }
