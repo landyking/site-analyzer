@@ -33,18 +33,62 @@ The platform consists of three main components:
 
 ## 🚀 Getting Started
 
-1. **Clone the repository**  
-    `git clone <repo-url>`
+Set up the full stack locally for development.
 
-2. **Backend Setup**
+Prerequisites:
+- Docker Desktop (with Compose v2)
+- Git, and the usual runtime tooling that each subproject requires (see each component's README)
 
-   - See [`/backend/README.md`](/backend/README.md) for API installation and configuration.
+1) Clone the repository
 
-3. **Frontend Setup**
-   - See [`/webfront/README.md`](/webfront/README.md) for web app installation and usage.
+  ```bash
+  git clone <repo-url>
+  ```
 
-4. **TiTiler Setup**
-   - See [`/titiler/README.md`](/titiler/README.md) for running the tile server used by the frontend.
+2) Prepare middleware/services via Docker Compose
+  - From the repository root:
+
+    ```bash
+    # Start databases, caches, and other dependencies defined in docker-compose.yml
+    docker compose up -d
+
+    # (Optional) Inspect logs if something doesn't start as expected
+    docker compose logs -f
+    ```
+
+  - To stop services later:
+
+    ```bash
+    docker compose down
+    ```
+
+3) Prepare input data
+  - Collect the geospatial layers listed in the `Default Datasets` section below (or your own equivalents) and place the source files under the `test-data/` directory.
+
+4) Start TiTiler (raster tile service)
+  - In a new terminal:
+    - `cd titiler`
+    - Follow the steps in [`titiler/README.md`](./titiler/README.md) to run the service.
+
+5) Start the Backend API
+  - In another terminal:
+    - `cd backend`
+    - Follow [`backend/README.md`](./backend/README.md) for local configuration and how to run the API server.
+
+6) Start the Web Frontend
+  - In another terminal:
+    - `cd webfront`
+    - Follow [`webfront/README.md`](./webfront/README.md) to install dependencies and start the dev server.
+
+7) Access the app
+  - Open the web frontend in your browser (port and URL as documented in `webfront/README.md`).
+  - Ensure the backend API and TiTiler endpoints configured in the frontend match your local ports.
+
+Notes:
+- If ports conflict on your machine, adjust them in the respective component configs or `docker-compose.yml` and keep them consistent across services.
+- For environment variables (database URLs, service endpoints, OIDC settings), use the examples and guidance in each component's README.
+
+ 
 
 ## 🌐 Live Demo
 
