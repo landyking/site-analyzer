@@ -28,6 +28,80 @@ Environment variables
 - `VITE_API_URL` (e.g., `http://localhost:8000`) points the SDK to the backend.
 - `VITE_GOOGLE_CLIENT_ID` is required for Google Sign-In (see section below).
 
+## Generating the OpenAPI client
+
+This project uses an auto-generated SDK under `src/client`, created from the backend's OpenAPI spec. Whenever backend endpoints change, regenerate the client.
+
+Prerequisites
+- Backend: dependencies installed (see `backend/pyproject.toml`) and the app importable (FastAPI app at `app.main.app`). `uv` is used to run the backend script.
+- Frontend: Node.js and npm installed, and web dependencies installed (run in `webfront/`: `npm ci`).
+
+Quick generate (recommended)
+- From the repository root, run:
+
+```sh
+chmod +x ./scripts/generate-client.sh  # once, if needed
+./scripts/generate-client.sh
+```
+
+What the script does
+- Runs the backend to print the OpenAPI JSON and writes it to `webfront/openapi.json`.
+- Invokes `npm run generate-client` in `webfront` to build the TypeScript SDK into `src/client` using `@hey-api/openapi-ts` (config: `openapi-ts.config.ts`).
+- Formats the generated code.
+
+Notes
+- If the script fails while importing `app.main`, ensure backend deps are installed (e.g., `cd backend && uv sync`) and any required env variables are set.
+- You can customize generation by editing `webfront/openapi-ts.config.ts`.
+
+## Setup, run, and release build
+
+Prerequisites
+- Node.js 18+ and npm installed.
+- Environment variables configured (see the Environment variables section above).
+
+1) Install dependencies
+
+```sh
+cd webfront
+npm ci
+```
+
+2) Start the dev server
+
+```sh
+npm run dev
+```
+
+This launches Vite’s dev server. Ensure `.env.development` has your `VITE_API_URL` and `VITE_GOOGLE_CLIENT_ID` values.
+
+3) Lint (optional)
+
+```sh
+npm run lint
+```
+
+4) Build for production
+
+```sh
+npm run build
+```
+
+The production bundle is emitted to `webfront/dist/`. Vite injects `VITE_*` env values at build time—update them and rebuild if they change.
+
+5) Preview the production build locally (optional)
+
+```sh
+npm run preview
+```
+
+6) Create a zipped release artifact (optional)
+
+```sh
+npm run build:zip
+```
+
+This produces `webfront-dist.zip` containing the built assets from `dist/`.
+
 ## Google Sign-In configuration (required)
 
 This frontend uses Google Sign-In. Configure the client ID via Vite env files (which are git-ignored):
