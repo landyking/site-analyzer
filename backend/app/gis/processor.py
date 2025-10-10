@@ -19,7 +19,11 @@ from app.gis.engine_models import (
     EngineSuitabilityFactor,
 )
 from app.models import MapTaskDB, MapTaskFileDB, MapTaskProgressDB, MapTaskStatus
+from concurrent.futures import ProcessPoolExecutor
+import asyncio
 
+executor = ProcessPoolExecutor()
+logging.basicConfig(format='%(asctime)s - %(name)s:%(process)d - %(levelname)s - %(message)s', level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
@@ -136,8 +140,13 @@ def _load_task(task_id: int) -> MapTaskDB | None:
         stmt = select(MapTaskDB).where(MapTaskDB.id == task_id)
         return session.exec(stmt).first()
 
+def call_engine(data_dir: str, task_out: str, configs: dict, selected: list[str], monitor: MapTaskMonitor) -> dict:
+    engine = SiteSuitabilityEngine(str(data_dir), str(task_out), configs)
+    monitor.update_progress(0, "init", "Starting")
+    results = engine.run(selected_districts=selected, monitor=monitor)
+    return results
 
-def process_map_task(task_id: int) -> None:
+async def process_map_task(task_id: int) -> None:
     """Background job: run GIS engine for a map task.
 
     Steps:
@@ -228,11 +237,11 @@ def process_map_task(task_id: int) -> None:
         task_out.mkdir(parents=True, exist_ok=True)
 
         # Run engine for the selected district code
-        engine = SiteSuitabilityEngine(str(data_dir), str(task_out), configs)
-        selected = [task.district]
+        
         monitor = MapTaskMonitor(task_id, user_id)
-        monitor.update_progress(0, "init", "Starting")
-        results = engine.run(selected_districts=selected, monitor=monitor)
+        selected = [task.district]
+        loop = asyncio.get_running_loop()
+        await loop.run_in_executor(executor, call_engine, str(data_dir), str(task_out), configs, selected, monitor)
         if not monitor.is_cancelled():
             monitor.update_progress(100, "success", "Completed")
 
