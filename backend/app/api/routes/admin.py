@@ -1,27 +1,24 @@
 from fastapi import APIRouter, HTTPException
 
-from app.api.deps import CurrentAdminUser, SessionDep
-from app.models import (
-    BaseResp,
-    MapTaskDB,
-    User4AdminPageData,
-    AdminUpdateUserStatusRequest,
-    MapTask4AdminPageData,
-    MapTaskProgressDB,
-    MapTaskProgress,
-    MyMapTaskTileSignature,
-    MyMapTaskTileSignatureResp,
-    AdminMapTaskResp,
-    MapTaskProgressListResp
-)
 from app import crud
-from datetime import datetime, timedelta, timezone
-from app.models import User4Admin
-from app.api.routes._mappers import to_map_task as _to_map_task
-from app.api.routes._mappers import to_map_task_details as _to_map_task_details
-from app.core.security import gen_tile_signature
-from app.api.routes._mappers import as_aware_utc as _as_aware_utc
+from app.api.deps import CurrentAdminUser, SessionDep
+from app.api.routes._mappers import (
+    as_aware_utc as _as_aware_utc,
+    to_map_task as _to_map_task,
+    to_map_task_details as _to_map_task_details,
+)
 from app.core import storage
+from app.models import (
+    AdminMapTaskResp,
+    AdminUpdateUserStatusRequest,
+    BaseResp,
+    MapTask4AdminPageData,
+    MapTaskProgress,
+    MapTaskProgressDB,
+    MapTaskProgressListResp,
+    User4Admin,
+    User4AdminPageData,
+)
 
 router = APIRouter(tags=["Admin"])
 
@@ -61,9 +58,9 @@ async def admin_get_user_list(
     return User4AdminPageData(
         error=0,
         list=users,
-    total=total,
-    current_page=cp,
-    page_size=ps,
+        total=total,
+        current_page=cp,
+        page_size=ps,
     )
 
 
@@ -81,7 +78,9 @@ async def admin_update_user_status(
     return BaseResp(error=0)
 
 
-@router.get("/admin/map-tasks", response_model=MapTask4AdminPageData, summary="Get map tasks for admin")
+@router.get(
+    "/admin/map-tasks", response_model=MapTask4AdminPageData, summary="Get map tasks for admin"
+)
 async def admin_get_map_tasks(
     session: SessionDep,
     current_user: CurrentAdminUser,
@@ -111,7 +110,11 @@ async def admin_get_map_tasks(
     )
 
 
-@router.get("/admin/map-tasks/{taskId}", response_model=AdminMapTaskResp, summary="Get map task details for admin")
+@router.get(
+    "/admin/map-tasks/{taskId}",
+    response_model=AdminMapTaskResp,
+    summary="Get map task details for admin",
+)
 async def admin_get_map_task(
     session: SessionDep,
     current_user: CurrentAdminUser,
@@ -123,16 +126,30 @@ async def admin_get_map_task(
     details = _to_map_task_details(session, data)
     return AdminMapTaskResp(error=0, data=details)
 
-@router.get("/admin/map-tasks/{taskId}/progress", response_model=MapTaskProgressListResp, summary="Get progress of a map task for admin")
-async def admin_get_map_task_progress(session: SessionDep, current_user: CurrentAdminUser, taskId: int):
-    rows: list[MapTaskProgressDB] = crud.admin_get_map_task_progress(session=session, task_id=taskId)
+
+@router.get(
+    "/admin/map-tasks/{taskId}/progress",
+    response_model=MapTaskProgressListResp,
+    summary="Get progress of a map task for admin",
+)
+async def admin_get_map_task_progress(
+    session: SessionDep, current_user: CurrentAdminUser, taskId: int
+):
+    rows: list[MapTaskProgressDB] = crud.admin_get_map_task_progress(
+        session=session, task_id=taskId
+    )
     for row in rows:
         row.created_at = _as_aware_utc(row.created_at)
         row.updated_at = _as_aware_utc(row.updated_at)
     progress_list = [MapTaskProgress.model_validate(row.model_dump()) for row in rows]
     return MapTaskProgressListResp(error=0, list=progress_list)
 
-@router.get("/admin/inputs-initialize", response_model=BaseResp, summary="Initialize input directory for admin")
+
+@router.get(
+    "/admin/inputs-initialize",
+    response_model=BaseResp,
+    summary="Initialize input directory for admin",
+)
 async def admin_initialize_input_directory(session: SessionDep, current_user: CurrentAdminUser):
     result = storage.initialize_input_dir_from_bucket()
     if result.get("error"):

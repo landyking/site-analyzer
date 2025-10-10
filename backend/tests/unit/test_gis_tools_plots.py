@@ -1,17 +1,19 @@
-from unittest.mock import MagicMock, patch
-from types import SimpleNamespace, ModuleType
 import sys
+from types import ModuleType, SimpleNamespace
+from unittest.mock import MagicMock, patch
 
 
 def test_version_is_timestamp_like():
     # Import module fresh and check string exists
     import importlib
+
     tools = importlib.import_module("app.gis.tools")
     assert isinstance(tools.version, str) and len(tools.version) >= 10
 
 
 def test_show_file_info_paths_and_errors(tmp_path, capsys):
     import importlib
+
     tools = importlib.import_module("app.gis.tools")
 
     # Create fake small files
@@ -45,6 +47,7 @@ def test_show_file_info_paths_and_errors(tmp_path, capsys):
 
 def test_plot_helpers_do_not_crash(tmp_path):
     import importlib
+
     tools = importlib.import_module("app.gis.tools")
 
     # Provide a fake matplotlib.pyplot to avoid import errors
@@ -57,12 +60,18 @@ def test_plot_helpers_do_not_crash(tmp_path):
     fake_pyplot.show = MagicMock()
     fake_pyplot.subplots = MagicMock(return_value=(MagicMock(), MagicMock()))
 
-    with patch.dict(sys.modules, {"matplotlib": ModuleType("matplotlib"), "matplotlib.pyplot": fake_pyplot}):
+    with patch.dict(
+        sys.modules, {"matplotlib": ModuleType("matplotlib"), "matplotlib.pyplot": fake_pyplot}
+    ):
         # Patch underlying IO
-        with patch("app.gis.tools.rasterio.open") as rio_open, \
-             patch("app.gis.tools.gpd.read_file") as read_file:
+        with (
+            patch("app.gis.tools.rasterio.open") as rio_open,
+            patch("app.gis.tools.gpd.read_file") as read_file,
+        ):
             # Raster
-            rio_open.return_value.__enter__.return_value = SimpleNamespace(read=lambda b: [[1, 2], [3, 0]], nodata=0)
+            rio_open.return_value.__enter__.return_value = SimpleNamespace(
+                read=lambda b: [[1, 2], [3, 0]], nodata=0
+            )
             tools.show_raster_plot("/tmp/f.tif")
             assert fake_pyplot.imshow.called
 

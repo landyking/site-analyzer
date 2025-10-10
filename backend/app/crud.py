@@ -1,29 +1,26 @@
 import json
-import uuid
-from typing import Any
-from datetime import datetime, timezone
+import logging
+from datetime import UTC, datetime
+
+from fastapi import BackgroundTasks, HTTPException
+from pydantic.json import pydantic_encoder
+from sqlmodel import Session, delete, select
+
+from app.core import storage
 from app.core.config import settings
-from fastapi import Depends, HTTPException, status
-
-from sqlmodel import Session, select, delete
-from fastapi import BackgroundTasks
-
 from app.core.security import get_password_hash, verify_password
+from app.db.pagination import paginate
+from app.gis.processor import process_map_task
 from app.models import (
     CreateMapTaskReq,
     MapTaskDB,
-    MapTaskStatus,
-    MapTaskProgressDB,
     MapTaskFileDB,
-    UserDB,
+    MapTaskProgressDB,
+    MapTaskStatus,
     UserCreate,
+    UserDB,
     UserRole,
 )
-from pydantic.json import pydantic_encoder
-from app.gis.processor import process_map_task
-from app.db.pagination import paginate
-from app.core import storage
-import logging
 
 logger = logging.getLogger(__name__)
 
@@ -33,7 +30,7 @@ def touch_last_login(*, session: Session, user: UserDB) -> UserDB:
 
     Returns the refreshed user row.
     """
-    user.last_login = datetime.now(timezone.utc)
+    user.last_login = datetime.now(UTC)
     session.add(user)
     session.commit()
     session.refresh(user)
@@ -80,21 +77,26 @@ def get_user_by_id(*, session: Session, user_id: int) -> UserDB | None:
     statement = select(UserDB).where(UserDB.id == user_id)
     return session.exec(statement).first()
 
-def get_files_by_id(*, session: Session, user_id: int, map_task_id: int) -> list[MapTaskFileDB] | None:
+
+def get_files_by_id(
+    *, session: Session, user_id: int, map_task_id: int
+) -> list[MapTaskFileDB] | None:
     """Fetch files for a specific map task."""
     statement = select(MapTaskFileDB).where(
-        MapTaskFileDB.user_id == user_id,
-        MapTaskFileDB.map_task_id == map_task_id
+        MapTaskFileDB.user_id == user_id, MapTaskFileDB.map_task_id == map_task_id
     )
     return session.exec(statement).all()
 
-def get_file_by_conditions(*, session: Session, map_task_id: int, file_type: str) -> MapTaskFileDB | None:
+
+def get_file_by_conditions(
+    *, session: Session, map_task_id: int, file_type: str
+) -> MapTaskFileDB | None:
     """Fetch a specific file for a map task by tag."""
     statement = select(MapTaskFileDB).where(
-        MapTaskFileDB.map_task_id == map_task_id,
-        MapTaskFileDB.file_type == file_type
+        MapTaskFileDB.map_task_id == map_task_id, MapTaskFileDB.file_type == file_type
     )
     return session.exec(statement).first()
+
 
 def authenticate(*, session: Session, email: str, password: str) -> UserDB | None:
     db_user = get_user_by_email(session=session, email=email)
@@ -119,7 +121,14 @@ def authenticate(*, session: Session, email: str, password: str) -> UserDB | Non
 #     session.refresh(db_item)
 #     return db_item
 
-def create_map_task(*, session: Session, user_id: int, payload: CreateMapTaskReq, background_tasks: BackgroundTasks | None = None) -> MapTaskDB:
+
+def create_map_task(
+    *,
+    session: Session,
+    user_id: int,
+    payload: CreateMapTaskReq,
+    background_tasks: BackgroundTasks | None = None,
+) -> MapTaskDB:
     if settings.RELEASE_READ_ONLY:
         raise HTTPException(
             status_code=400,
@@ -132,8 +141,10 @@ def create_map_task(*, session: Session, user_id: int, payload: CreateMapTaskReq
             "status": MapTaskStatus.PENDING,
             "district": payload.district_code,
             "constraint_factors": json.dumps(payload.constraint_factors, default=pydantic_encoder),
-            "suitability_factors": json.dumps(payload.suitability_factors , default=pydantic_encoder)
-        }
+            "suitability_factors": json.dumps(
+                payload.suitability_factors, default=pydantic_encoder
+            ),
+        },
     )
     session.add(db_obj)
     session.commit()
@@ -164,14 +175,16 @@ def cancel_map_task(*, session: Session, user_id: int, task_id: int) -> MapTaskD
     if db_obj.status not in (MapTaskStatus.SUCCESS, MapTaskStatus.CANCELLED):
         db_obj.status = MapTaskStatus.CANCELLED
         # Ensure timezone-aware UTC datetime so API responses include timezone info
-        db_obj.ended_at = db_obj.ended_at or datetime.now(timezone.utc)
+        db_obj.ended_at = db_obj.ended_at or datetime.now(UTC)
         session.add(db_obj)
         session.commit()
         session.refresh(db_obj)
     return db_obj
 
 
-def list_map_tasks(*, session: Session, user_id: int, completed: bool | None = None) -> list[MapTaskDB]:
+def list_map_tasks(
+    *, session: Session, user_id: int, completed: bool | None = None
+) -> list[MapTaskDB]:
     """List a user's map tasks with optional completion filter.
 
     completed=True  -> statuses in (SUCCESS, FAILURE, CANCELLED)
@@ -181,18 +194,22 @@ def list_map_tasks(*, session: Session, user_id: int, completed: bool | None = N
     statement = select(MapTaskDB).where(MapTaskDB.user_id == user_id)
     if completed is True:
         statement = statement.where(
-            MapTaskDB.status.in_([
-                MapTaskStatus.SUCCESS,
-                MapTaskStatus.FAILURE,
-                MapTaskStatus.CANCELLED,
-            ])
+            MapTaskDB.status.in_(
+                [
+                    MapTaskStatus.SUCCESS,
+                    MapTaskStatus.FAILURE,
+                    MapTaskStatus.CANCELLED,
+                ]
+            )
         )
     elif completed is False:
         statement = statement.where(
-            MapTaskDB.status.in_([
-                MapTaskStatus.PENDING,
-                MapTaskStatus.PROCESSING,
-            ])
+            MapTaskDB.status.in_(
+                [
+                    MapTaskStatus.PENDING,
+                    MapTaskStatus.PROCESSING,
+                ]
+            )
         )
     # Order by newest first
     statement = statement.order_by(MapTaskDB.created_at.desc())
@@ -300,16 +317,27 @@ def duplicate_map_task(
         background_tasks.add_task(process_map_task, new_task.id)
     return new_task
 
-def get_map_task_progress(*, session: Session, user_id: int, task_id: int) -> list[MapTaskProgressDB]:
+
+def get_map_task_progress(
+    *, session: Session, user_id: int, task_id: int
+) -> list[MapTaskProgressDB]:
     """Get the progress rows for a specific map task."""
-    statement = select(MapTaskProgressDB).where(MapTaskProgressDB.user_id == user_id, 
-                                                MapTaskProgressDB.map_task_id == task_id).order_by(MapTaskProgressDB.created_at.asc())
+    statement = (
+        select(MapTaskProgressDB)
+        .where(MapTaskProgressDB.user_id == user_id, MapTaskProgressDB.map_task_id == task_id)
+        .order_by(MapTaskProgressDB.created_at.asc())
+    )
     rows = session.exec(statement).all()
     return rows
 
+
 def admin_get_map_task_progress(*, session: Session, task_id: int) -> list[MapTaskProgressDB]:
     """Get the progress rows for a specific map task."""
-    statement = select(MapTaskProgressDB).where(MapTaskProgressDB.map_task_id == task_id).order_by(MapTaskProgressDB.created_at.asc())
+    statement = (
+        select(MapTaskProgressDB)
+        .where(MapTaskProgressDB.map_task_id == task_id)
+        .order_by(MapTaskProgressDB.created_at.asc())
+    )
     rows = session.exec(statement).all()
     return rows
 

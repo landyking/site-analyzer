@@ -1,9 +1,10 @@
+from unittest.mock import MagicMock, patch
+
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
-from unittest.mock import patch, MagicMock
 
-from app.api.main import api_router
 from app.api import deps as deps_module
+from app.api.main import api_router
 from app.models import UserRole, UserStatus
 
 
@@ -49,8 +50,20 @@ def test_user_register_duplicate_and_success():
         r = client.post("/user-register", json={"email": "u@e.com", "password": "12345678"})
         assert r.status_code == 400
     # success
-    with patch("app.api.routes.auth.crud.get_user_by_email", return_value=None), \
-         patch("app.api.routes.auth.crud.create_user", return_value=MagicMock(id=2, email="u@e.com", provider="local", sub="u@e.com", role=UserRole.USER, status=UserStatus.LOCKED)):
+    with (
+        patch("app.api.routes.auth.crud.get_user_by_email", return_value=None),
+        patch(
+            "app.api.routes.auth.crud.create_user",
+            return_value=MagicMock(
+                id=2,
+                email="u@e.com",
+                provider="local",
+                sub="u@e.com",
+                role=UserRole.USER,
+                status=UserStatus.LOCKED,
+            ),
+        ),
+    ):
         r = client.post("/user-register", json={"email": "u@e.com", "password": "12345678"})
         assert r.status_code == 200
         body = r.json()
@@ -85,10 +98,13 @@ def test_oidc_info_endpoint():
 def test_oidc_token_missing_id_token():
     app = _make_app_for_auth()
     client = TestClient(app)
+
     class Resp:
         status_code = 200
+
         def json(self):
             return {"access_token": "abc", "token_type": "bearer"}
+
     with patch("app.api.routes.auth.requests.post", return_value=Resp()):
         r = client.post("/oidc-token", json={"code": "dummy"})
         assert r.status_code == 400
@@ -97,11 +113,14 @@ def test_oidc_token_missing_id_token():
 def test_oidc_token_exchange_error():
     app = _make_app_for_auth()
     client = TestClient(app)
+
     class Resp:
         status_code = 500
         text = "error"
+
         def json(self):
             return {}
+
     with patch("app.api.routes.auth.requests.post", return_value=Resp()):
         r = client.post("/oidc-token", json={"code": "dummy"})
         assert r.status_code == 400
@@ -110,12 +129,17 @@ def test_oidc_token_exchange_error():
 def test_oidc_token_invalid_jwt_decode():
     app = _make_app_for_auth()
     client = TestClient(app)
+
     class Resp:
         status_code = 200
+
         def json(self):
             return {"id_token": "xyz"}
-    with patch("app.api.routes.auth.requests.post", return_value=Resp()), \
-         patch("app.api.routes.auth.jwt.decode", side_effect=Exception("bad token")):
+
+    with (
+        patch("app.api.routes.auth.requests.post", return_value=Resp()),
+        patch("app.api.routes.auth.jwt.decode", side_effect=Exception("bad token")),
+    ):
         r = client.post("/oidc-token", json={"code": "dummy"})
         assert r.status_code == 400
 
@@ -123,18 +147,23 @@ def test_oidc_token_invalid_jwt_decode():
 def test_oidc_token_success_flow():
     app = _make_app_for_auth()
     client = TestClient(app)
+
     class Resp:
         status_code = 200
+
         def json(self):
             return {"id_token": "xyz", "refresh_token": "r"}
+
     decoded = {"email": "g@example.com", "sub": "sub123", "email_verified": True}
     user_obj = MagicMock(id=2, role=UserRole.USER, status=UserStatus.ACTIVE)
-    with patch("app.api.routes.auth.requests.post", return_value=Resp()), \
-         patch("app.api.routes.auth.jwt.decode", return_value=decoded), \
-         patch("app.api.routes.auth.crud.get_user_by_email", return_value=None), \
-         patch("app.api.routes.auth.crud.create_user", return_value=user_obj), \
-         patch("app.api.routes.auth.crud.touch_last_login", return_value=user_obj), \
-         patch("app.api.routes.auth.security.create_access_token", return_value="tok"):
+    with (
+        patch("app.api.routes.auth.requests.post", return_value=Resp()),
+        patch("app.api.routes.auth.jwt.decode", return_value=decoded),
+        patch("app.api.routes.auth.crud.get_user_by_email", return_value=None),
+        patch("app.api.routes.auth.crud.create_user", return_value=user_obj),
+        patch("app.api.routes.auth.crud.touch_last_login", return_value=user_obj),
+        patch("app.api.routes.auth.security.create_access_token", return_value="tok"),
+    ):
         r = client.post("/oidc-token", json={"code": "dummy"})
         assert r.status_code == 200
         body = r.json()

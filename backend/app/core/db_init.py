@@ -1,8 +1,8 @@
-from sqlmodel import Session, create_engine, select
+from sqlmodel import Session, select
 
 from app import crud
 from app.core.config import settings
-from app.models import UserDB, UserCreate, UserRole, UserStatus
+from app.models import UserCreate, UserDB, UserRole, UserStatus
 
 # make sure all SQLModel models are imported (app.models) before initializing DB
 # otherwise, SQLModel might fail to initialize relationships properly
@@ -18,9 +18,7 @@ def init_db(session: Session) -> None:
     # This works because the models are already imported and registered from app.models
     # SQLModel.metadata.create_all(engine)
 
-    user = session.exec(
-        select(UserDB).where(UserDB.email == settings.FIRST_SUPERUSER)
-    ).first()
+    user = session.exec(select(UserDB).where(UserDB.email == settings.FIRST_SUPERUSER)).first()
     if not user:
         user_in = UserCreate(
             provider="local",

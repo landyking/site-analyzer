@@ -1,9 +1,9 @@
 import geopandas as gpd
+import numpy as np
+import pandas as pd
 import rasterio
 from rasterio.mask import mask
 from scipy.ndimage import distance_transform_edt
-import pandas as pd
-import numpy as np
 from shapely import box
 
 # from app.gis import tools
@@ -12,21 +12,23 @@ DISTANCE_NODATA = -9999
 Reclassify_NODATA = 255
 SCORED_NODATA = 255
 
+
 def RPL_Select_analysis(input_shp, output_shp, conditions_expression):
     """
     Selects features from the input shapefile based on a given expression and saves them to an output shapefile.
-    
+
     Parameters:
     - input_shp: Path to the input shapefile.
     - output_shp: Path to save the output shapefile.
     - conditions_expression: Expression to filter features. Example: "TA2025_V1_ == '001'".
-    
+
     Returns:
     - None
     """
     gdf = gpd.read_file(input_shp)
     selected_gdf = gdf.query(conditions_expression)
     selected_gdf.to_file(output_shp)
+
 
 def gen_bounding_box(input_shp, output_shp):
     """
@@ -35,32 +37,34 @@ def gen_bounding_box(input_shp, output_shp):
     gdf = gpd.read_file(input_shp)
     minx, miny, maxx, maxy = gdf.total_bounds
     bbox = box(minx, miny, maxx, maxy)
-    bbox_gdf = gpd.GeoDataFrame({'geometry': [bbox]}, crs=gdf.crs)
+    bbox_gdf = gpd.GeoDataFrame({"geometry": [bbox]}, crs=gdf.crs)
     bbox_gdf.to_file(output_shp)
+
 
 def RPL_Clip_analysis(output, whole_area, boundary):
     """
     Clips a whole area shapefile to a specified boundary and saves the result.
-    
+
     Parameters:
     - output: Path to save the clipped shapefile.
     - whole_area: Path to the whole area shapefile.
     - boundary: Path to the boundary shapefile.
-    
+
     Returns:
     - None
     """
     whole_area_gdf = gpd.read_file(whole_area)
     boundary_gdf = gpd.read_file(boundary)
-    
+
     clipped_gdf = gpd.clip(whole_area_gdf, boundary_gdf)
     clipped_gdf.to_file(output)
+
 
 def RPL_Buffer_analysis(input, output, buffer_distance):
     """
     Creates a buffer around features in a shapefile and saves the result.
     Users can use `[axis.unit_name for axis in gdf.crs.axis_info]` to get the unit of a shapefile.
-    
+
     Parameters:
     - input: Path to the input shapefile.
     - output: Path to save the buffered shapefile.
@@ -73,14 +77,15 @@ def RPL_Buffer_analysis(input, output, buffer_distance):
     buffered_gdf = gdf.buffer(distance=buffer_distance)
     buffered_gdf.to_file(output)
 
+
 def RPL_Union_analysis(inputs, output):
     """
     Unions multiple shapefiles into a single shapefile, merging geometries and discarding attributes.
-    
+
     Parameters:
     - inputs: List of paths to input shapefiles.
     - output: Path to save the unioned shapefile.
-    
+
     Returns:
     - None
     """
@@ -90,14 +95,15 @@ def RPL_Union_analysis(inputs, output):
     unioned = gpd.GeoSeries([gs_all.union_all()], crs=gds_list[0].crs)
     unioned.to_file(output)
 
+
 def RPL_ExtractByMask(input_raster, mask_shapefile, output_raster):
     """
     Extract the cells of a raster that fall within the area defined by a shapefile mask, setting other cells to nodata.
-    
+
     Parameters:
     - input_raster: Path to the input raster file.
     - mask_shapefile: Path to the shapefile defining the mask.
-    
+
     Returns:
     - None
     """
@@ -106,28 +112,30 @@ def RPL_ExtractByMask(input_raster, mask_shapefile, output_raster):
 
     # Open the raster file
     with rasterio.open(input_raster) as src:
-        
         # Mask the raster with the shapefile geometry
         out_image, out_transform = mask(src, mask_geoms, crop=True)
         # Copy the metadata
         out_meta = src.meta.copy()
-        out_meta.update({
-            # "driver": "GTiff",
-            "driver": "COG",
-            "height": out_image.shape[1],
-            "width": out_image.shape[2],
-            "transform": out_transform,
-            "compress": "lzw",
-            "nodata": src.nodata,  # Ensure nodata is preserved
-        })
+        out_meta.update(
+            {
+                # "driver": "GTiff",
+                "driver": "COG",
+                "height": out_image.shape[1],
+                "width": out_image.shape[2],
+                "transform": out_transform,
+                "compress": "lzw",
+                "nodata": src.nodata,  # Ensure nodata is preserved
+            }
+        )
 
     # Save the masked raster to file
     with rasterio.open(output_raster, "w", **out_meta) as dest:
         dest.write(out_image)
 
-def RPL_PolygonToRaster_conversion(input_shp, output_raster, template_raster, fill_nodata = False):
+
+def RPL_PolygonToRaster_conversion(input_shp, output_raster, template_raster, fill_nodata=False):
     """
-    Convert a polygon shapefile to a raster format according to a template raster. 
+    Convert a polygon shapefile to a raster format according to a template raster.
     Cells in polygons will be set to 1, others to 0.
 
     Parameters:
@@ -147,39 +155,40 @@ def RPL_PolygonToRaster_conversion(input_shp, output_raster, template_raster, fi
         out_shape = (src.height, src.width)
         crs = src.crs
         template_data = src.read(1)
-    
+
     gdf = gpd.read_file(input_shp)
     shapes = [(geom, 1) for geom in gdf.geometry]
     fill = src.nodata if fill_nodata else 0
     rasterized = rasterio.features.rasterize(
-            shapes=shapes,
-            out_shape=out_shape,
-            transform=transform,
-            fill=fill,
-            nodata=src.nodata,
-            dtype='uint8',
-            all_touched=True,
-        )
-    
+        shapes=shapes,
+        out_shape=out_shape,
+        transform=transform,
+        fill=fill,
+        nodata=src.nodata,
+        dtype="uint8",
+        all_touched=True,
+    )
+
     # Set nodata in the output raster where the template raster has nodata values
     rasterized[template_data == src.nodata] = src.nodata
 
     with rasterio.open(
         output_raster,
-        'w',
-        driver='COG',
+        "w",
+        driver="COG",
         height=out_shape[0],
         width=out_shape[1],
         count=1,
-        dtype='uint8',
+        dtype="uint8",
         crs=crs,
         transform=transform,
         nodata=src.nodata,
-        compress='lzw',
+        compress="lzw",
     ) as dst:
         dst.write(rasterized, 1)
 
-def RPL_DistanceAccumulation(input_raster,output_raster):
+
+def RPL_DistanceAccumulation(input_raster, output_raster):
     """
     Perform euclidean distance accumulation on a binary raster, where 1 represents target areas and 0 represents other areas.
     The output raster will contain the distance from each cell to the nearest target area.
@@ -187,7 +196,7 @@ def RPL_DistanceAccumulation(input_raster,output_raster):
     Parameters:
     - input_raster: Path to the input binary raster file.
     - output_raster: Path to save the output raster file with distance accumulation.
-    
+
     Returns:
     - None
     """
@@ -196,11 +205,11 @@ def RPL_DistanceAccumulation(input_raster,output_raster):
         raster_nodata = src.nodata
 
         if raster_nodata is not None:
-            nodata_mask = (raster_data == raster_nodata)
+            nodata_mask = raster_data == raster_nodata
         else:
             nodata_mask = np.zeros_like(raster_data, dtype=bool)
 
-        inverse_mask = (raster_data != 1)
+        inverse_mask = raster_data != 1
 
         # Calculate the distance transform
         distance = distance_transform_edt(inverse_mask)
@@ -213,11 +222,21 @@ def RPL_DistanceAccumulation(input_raster,output_raster):
         distance_in_meters[nodata_mask] = DISTANCE_NODATA
 
         # Save the result to a new raster file
-        with rasterio.open(output_raster, 'w', driver='COG', height=src.height, width=src.width,
-                           count=1, dtype='float32', crs=src.crs, transform=src.transform,
-                            nodata=DISTANCE_NODATA,compress='lzw',
-                           ) as dst:
-            dst.write(distance_in_meters.astype('float32'), 1)
+        with rasterio.open(
+            output_raster,
+            "w",
+            driver="COG",
+            height=src.height,
+            width=src.width,
+            count=1,
+            dtype="float32",
+            crs=src.crs,
+            transform=src.transform,
+            nodata=DISTANCE_NODATA,
+            compress="lzw",
+        ) as dst:
+            dst.write(distance_in_meters.astype("float32"), 1)
+
 
 def RPL_Reclassify(input_raster, output_raster, remap_range):
     """
@@ -245,21 +264,23 @@ def RPL_Reclassify(input_raster, output_raster, remap_range):
         remap_min = min([r[0] for r in remap_range])
         remap_max = max([r[1] for r in remap_range])
 
-        nodata_mask =  None
+        nodata_mask = None
         if nodata_value is not None:
-            nodata_mask = (data == nodata_value)
+            nodata_mask = data == nodata_value
         else:
             nodata_mask = np.zeros_like(data, dtype=bool)
-        
+
         without_nodata = data[~nodata_mask]
         min_value = np.nanmin(without_nodata)
         max_value = np.nanmax(without_nodata)
 
         # Ensure the remap range covers the data range
         if remap_min > min_value or remap_max < max_value:
-            raise ValueError("Remap range does not cover the data range. "
-                             f"Data range: [{min_value}, {max_value}], "
-                             f"Remap range: [{remap_min}, {remap_max}]")
+            raise ValueError(
+                "Remap range does not cover the data range. "
+                f"Data range: [{min_value}, {max_value}], "
+                f"Remap range: [{remap_min}, {remap_max}]"
+            )
 
         # Create a copy of the data to reclassify
         reclassified_data = np.copy(data)
@@ -272,12 +293,22 @@ def RPL_Reclassify(input_raster, output_raster, remap_range):
         reclassified_data[nodata_mask] = Reclassify_NODATA
         result_data = reclassified_data.astype(np.uint8)
         # Save the reclassified raster
-        with rasterio.open(output_raster, 'w', driver='COG', height=src.height, width=src.width,
-                           nodata=Reclassify_NODATA,
-                           compress='lzw',
-                           count=1, dtype=result_data.dtype, crs=src.crs, transform=src.transform) as dst:
+        with rasterio.open(
+            output_raster,
+            "w",
+            driver="COG",
+            height=src.height,
+            width=src.width,
+            nodata=Reclassify_NODATA,
+            compress="lzw",
+            count=1,
+            dtype=result_data.dtype,
+            crs=src.crs,
+            transform=src.transform,
+        ) as dst:
             dst.write(result_data, 1)
         # print(tools.get_data_range(output_raster))
+
 
 def RPL_Combine_rasters(inputs, output_raster):
     """
@@ -293,34 +324,32 @@ def RPL_Combine_rasters(inputs, output_raster):
     all_weights = [weight for _, weight in inputs]
     total_weight = sum(all_weights)
     normalized_weights = [weight / total_weight for weight in all_weights]
-    data_and_weight = list(zip([file for file, _ in inputs], normalized_weights))
+    data_and_weight = list(zip([file for file, _ in inputs], normalized_weights, strict=False))
     first_file, first_weight = data_and_weight[0]
     with rasterio.open(first_file) as src:
         out_meta = src.meta.copy()
-        
+
         first_data = src.read(1)
         raster_nodata = src.nodata
         nodata_mask = None
         if raster_nodata is not None:
-            nodata_mask = (first_data == src.nodata)
+            nodata_mask = first_data == src.nodata
         weighted_sum = first_data.astype(np.float32) * first_weight
         for file, weight in data_and_weight[1:]:
             with rasterio.open(file) as src:
                 data = src.read(1)
                 weighted_sum += data.astype(np.float32) * weight
-        
+
         if nodata_mask is not None:
             weighted_sum[nodata_mask] = SCORED_NODATA
-            out_meta['nodata'] = SCORED_NODATA
+            out_meta["nodata"] = SCORED_NODATA
         result_data = weighted_sum.astype(np.uint8)
-        out_meta.update({
-            "driver": "COG",
-            "count": 1,
-            "dtype": result_data.dtype,
-            "compress": "lzw"
-        })
-        with rasterio.open(output_raster, 'w', **out_meta) as dest:
+        out_meta.update(
+            {"driver": "COG", "count": 1, "dtype": result_data.dtype, "compress": "lzw"}
+        )
+        with rasterio.open(output_raster, "w", **out_meta) as dest:
             dest.write(result_data, 1)
+
 
 def RPL_Apply_mask(value_raster, mask_raster, output_path):
     """
@@ -341,14 +370,16 @@ def RPL_Apply_mask(value_raster, mask_raster, output_path):
             raise ValueError("Input rasters must have the same CRS.")
         value_data = src_value.read(1)
         mask_data = src_mask.read(1)
-        
+
         masked_data = value_data.copy()
         masked_data[mask_data == 1] = src_value.nodata
-    
+
         out_meta = src_value.meta.copy()
-        out_meta.update({
-            "driver": "COG",
-            "compress": "lzw",
-        })
-        with rasterio.open(output_path, 'w', **out_meta) as dst:
+        out_meta.update(
+            {
+                "driver": "COG",
+                "compress": "lzw",
+            }
+        )
+        with rasterio.open(output_path, "w", **out_meta) as dst:
             dst.write(masked_data, 1)

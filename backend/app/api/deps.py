@@ -13,12 +13,10 @@ from app.core.config import settings
 from app.core.db import engine
 from app.models import TokenPayload, UserDB, UserRole, UserStatus
 
-reusable_oauth2 = OAuth2PasswordBearer(
-    tokenUrl=f"{settings.API_V1_STR}/user-login"
-)
+reusable_oauth2 = OAuth2PasswordBearer(tokenUrl=f"{settings.API_V1_STR}/user-login")
 
 
-def get_db() -> Generator[Session, None, None]:
+def get_db() -> Generator[Session]:
     with Session(engine) as session:
         yield session
 
@@ -29,9 +27,7 @@ TokenDep = Annotated[str, Depends(reusable_oauth2)]
 
 def get_current_user(session: SessionDep, token: TokenDep) -> UserDB:
     try:
-        payload = jwt.decode(
-            token, settings.SECRET_KEY, algorithms=[security.ALGORITHM]
-        )
+        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[security.ALGORITHM])
         token_data = TokenPayload(**payload)
     except (InvalidTokenError, ValidationError):
         raise HTTPException(
@@ -51,9 +47,8 @@ CurrentUser = Annotated[UserDB, Depends(get_current_user)]
 
 def get_current_active_admin(current_user: CurrentUser) -> UserDB:
     if not current_user.role == UserRole.ADMIN:
-        raise HTTPException(
-            status_code=403, detail="The user doesn't have enough privileges"
-        )
+        raise HTTPException(status_code=403, detail="The user doesn't have enough privileges")
     return current_user
+
 
 CurrentAdminUser = Annotated[UserDB, Depends(get_current_active_admin)]

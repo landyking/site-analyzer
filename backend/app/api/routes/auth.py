@@ -1,38 +1,39 @@
 from datetime import timedelta
 from typing import Annotated, Any
+
+import jwt
+import requests
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import OAuth2PasswordRequestForm
-import jwt
-from app.core.config import settings
-from app.core import security
-import requests
 
+from app import crud
+from app.api.deps import CurrentUser, SessionDep
+from app.core import security
+from app.core.config import settings
 from app.models import (
-    LoginRequest,
-    RegisterRequest,
+    BaseResp,
     OidcInfoResp,
     OidcTokenRequest,
     PostLoginResp,
-    BaseResp,
+    RegisterRequest,
     Token,
     UserCreate,
+    UserPublic,
     UserRole,
     UserStatus,
-    UserPublic
 )
-from app import crud
-from app.api.deps import CurrentUser, SessionDep
 
 router = APIRouter(tags=["Auth"])
 
+
 @router.post("/user-login", response_model=Token, summary="Login with Local Users")
-async def user_login(session: SessionDep, form_data: Annotated[OAuth2PasswordRequestForm, Depends()]) -> Token:
+async def user_login(
+    session: SessionDep, form_data: Annotated[OAuth2PasswordRequestForm, Depends()]
+) -> Token:
     """
     OAuth2 compatible token login, get an access token for future requests
     """
-    user = crud.authenticate(
-        session=session, email=form_data.username, password=form_data.password
-    )
+    user = crud.authenticate(session=session, email=form_data.username, password=form_data.password)
     if not user:
         raise HTTPException(status_code=400, detail="Incorrect email or password")
     elif not user.status == UserStatus.ACTIVE:
@@ -44,20 +45,23 @@ async def user_login(session: SessionDep, form_data: Annotated[OAuth2PasswordReq
         )
     )
 
+
 @router.post("/user-info", response_model=UserPublic, summary="Get user information")
 def get_user_info(current_user: CurrentUser) -> Any:
     return current_user
 
 
 @router.post("/user-register", response_model=UserPublic, summary="Register a new user")
-async def user_register(session: SessionDep,user_in: RegisterRequest):
+async def user_register(session: SessionDep, user_in: RegisterRequest):
     user = crud.get_user_by_email(session=session, email=user_in.email)
     if user:
         raise HTTPException(
             status_code=400,
             detail="The user with this email already exists in the system",
         )
-    user_create = UserCreate(**user_in.model_dump(),provider="local", sub=user_in.email,status=UserStatus.LOCKED)
+    user_create = UserCreate(
+        **user_in.model_dump(), provider="local", sub=user_in.email, status=UserStatus.LOCKED
+    )
     user = crud.create_user(session=session, user_create=user_create)
     return user
 
@@ -69,7 +73,7 @@ async def get_oidc_info() -> OidcInfoResp:
 
 
 @router.post("/oidc-token", response_model=PostLoginResp, summary="Use code to get OIDC token")
-async def get_oidc_token(session: SessionDep,payload: OidcTokenRequest) -> PostLoginResp:
+async def get_oidc_token(session: SessionDep, payload: OidcTokenRequest) -> PostLoginResp:
     if not payload.code:
         raise HTTPException(status_code=400, detail="Code required")
     # print(settings.GOOGLE_CLIENT_ID, settings.GOOGLE_CLIENT_SECRET)
@@ -99,8 +103,8 @@ async def get_oidc_token(session: SessionDep,payload: OidcTokenRequest) -> PostL
         raise HTTPException(status_code=400, detail="No id_token in response")
 
     # print("ID Token:", id_token_str)
-    # decode jwt 
-    
+    # decode jwt
+
     try:
         idinfo = jwt.decode(id_token_str, options={"verify_signature": False})
     except Exception as e:
@@ -118,11 +122,7 @@ async def get_oidc_token(session: SessionDep,payload: OidcTokenRequest) -> PostL
     if not user:
         # Create a local account for this Google user (random password just to satisfy schema)
         user_create = UserCreate(
-            email=email,
-            password="#########",
-            provider="google",
-            sub=sub,
-            status=UserStatus.LOCKED
+            email=email, password="#########", provider="google", sub=sub, status=UserStatus.LOCKED
         )
         user = crud.create_user(session=session, user_create=user_create)
 
@@ -150,7 +150,13 @@ async def get_oidc_token(session: SessionDep,payload: OidcTokenRequest) -> PostL
 
 @router.post("/user/token-refresh", response_model=PostLoginResp, summary="Refresh user token")
 async def user_token_refresh() -> PostLoginResp:
-    return PostLoginResp(access_token="refreshed", refresh_token="dummy", token_type="bearer", expires_in=3600, error=0)
+    return PostLoginResp(
+        access_token="refreshed",
+        refresh_token="dummy",
+        token_type="bearer",
+        expires_in=3600,
+        error=0,
+    )
 
 
 @router.post("/user/logout", response_model=BaseResp, summary="Logout user")

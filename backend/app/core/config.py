@@ -1,8 +1,8 @@
 import logging
 import secrets
 import warnings
-from typing import Annotated, Any, Literal
 from pathlib import Path
+from typing import Annotated, Any, Literal, Self
 
 from pydantic import (
     AnyUrl,
@@ -15,9 +15,9 @@ from pydantic import (
 )
 from pydantic_core import MultiHostUrl
 from pydantic_settings import BaseSettings, SettingsConfigDict
-from typing_extensions import Self
 
 logger = logging.getLogger(__name__)
+
 
 def parse_cors(v: Any) -> list[str] | str:
     if isinstance(v, str) and not v.startswith("["):
@@ -46,7 +46,7 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         # Use top level .env file (one level above ./backend/)
         # env_file="../.env",
-        env_file=["../.env", "../.env.local","../.env.production"],
+        env_file=["../.env", "../.env.local", "../.env.production"],
         env_ignore_empty=True,
         extra="ignore",
     )
@@ -57,9 +57,7 @@ class Settings(BaseSettings):
     FRONTEND_HOST: str = "http://localhost:5173"
     ENVIRONMENT: Literal["local", "staging", "production"] = "local"
 
-    BACKEND_CORS_ORIGINS: Annotated[
-        list[AnyUrl] | str, BeforeValidator(parse_cors)
-    ] = []
+    BACKEND_CORS_ORIGINS: Annotated[list[AnyUrl] | str, BeforeValidator(parse_cors)] = []
 
     @computed_field  # type: ignore[prop-decorator]
     @property
@@ -147,24 +145,19 @@ class Settings(BaseSettings):
     def _enforce_non_default_secrets(self) -> Self:
         self._check_default_secret("SECRET_KEY", self.SECRET_KEY)
         self._check_default_secret("MYSQL_PASSWORD", self.MYSQL_PASSWORD)
-        self._check_default_secret(
-            "FIRST_SUPERUSER_PASSWORD", self.FIRST_SUPERUSER_PASSWORD
-        )
+        self._check_default_secret("FIRST_SUPERUSER_PASSWORD", self.FIRST_SUPERUSER_PASSWORD)
 
         return self
+
 
 settings = Settings()  # type: ignore
 # print(settings.INPUT_DATA_DIR, settings.OUTPUT_DATA_DIR)
 # print(settings.GOOGLE_CLIENT_ID, settings.GOOGLE_CLIENT_SECRET)
 
+
 def print_settings_info() -> None:
     if settings.RELEASE_ALLOW_REGISTRATION is False:
-        logger.info(
-            "User registration is disabled."
-        )
-    
+        logger.info("User registration is disabled.")
 
     if settings.RELEASE_READ_ONLY:
-        logger.info(
-            "The application is in read-only mode."
-        )
+        logger.info("The application is in read-only mode.")

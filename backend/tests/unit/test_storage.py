@@ -1,21 +1,23 @@
-from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
-from types import SimpleNamespace
-
-import pytest
 
 
 class TestDeleteFileOps:
     def test_delete_file_success_and_not_found(self):
-        import importlib, sys
+        import importlib
+
         # Import real module and patch on its namespace
         storage = importlib.import_module("app.core.storage")
 
         s3_mock = MagicMock()
+
         class FakeClientError(Exception):
             def __init__(self, code: str):
                 self.response = {"Error": {"Code": code}}
-        with patch.object(storage, "s3", s3_mock), patch.object(storage, "ClientError", FakeClientError):
+
+        with (
+            patch.object(storage, "s3", s3_mock),
+            patch.object(storage, "ClientError", FakeClientError),
+        ):
             # success path
             assert storage.delete_file("a/b/c.txt") is True
             s3_mock.delete_object.assert_called_once()
@@ -28,28 +30,38 @@ class TestDeleteFileOps:
 
     def test_delete_files_batch_mixed_results(self):
         import importlib
+
         storage = importlib.import_module("app.core.storage")
 
         s3_mock = MagicMock()
+
         class FakeClientError(Exception):
             def __init__(self, code: str = "Boom"):
                 self.response = {"Error": {"Code": code}}
+
         # First chunk returns some deleted, some errors
         # Use an iterator to yield different responses per call
-        side_effects = iter([
-            {"Deleted": [{"Key": "k1"}], "Errors": [{"Key": "k2"}]},
-            # Make subsequent calls raise a ClientError-like so storage.delete_files catches and counts
-            FakeClientError(),
-            FakeClientError(),
-        ])
+        side_effects = iter(
+            [
+                {"Deleted": [{"Key": "k1"}], "Errors": [{"Key": "k2"}]},
+                # Make subsequent calls raise a ClientError-like so storage.delete_files catches and counts
+                FakeClientError(),
+                FakeClientError(),
+            ]
+        )
+
         def delete_objects_side_effect(*args, **kwargs):
             res = next(side_effects)
             # Emulate raising on non-dict entries
             if not isinstance(res, dict):
                 raise res
             return res
+
         s3_mock.delete_objects.side_effect = delete_objects_side_effect
-        with patch.object(storage, "s3", s3_mock), patch.object(storage, "ClientError", FakeClientError):
+        with (
+            patch.object(storage, "s3", s3_mock),
+            patch.object(storage, "ClientError", FakeClientError),
+        ):
             keys = [f"k{i}" for i in range(2005)]  # 3 chunks (1000, 1000, 5)
             summary = storage.delete_files(keys)
             assert summary["requested"] == 2005
@@ -61,10 +73,13 @@ class TestDeleteFileOps:
 class TestInitializationHelpers:
     def test_list_and_download_and_extract(self, tmp_path):
         import importlib
+
         storage = importlib.import_module("app.core.storage")
 
         # Fake list returns two tgz keys
-        with patch.object(storage, "_list_tgz_keys_under_prefix", return_value=["inputs/a.tgz", "inputs/b.tgz"]):
+        with patch.object(
+            storage, "_list_tgz_keys_under_prefix", return_value=["inputs/a.tgz", "inputs/b.tgz"]
+        ):
             # Patch s3 client methods
             s3_mock = MagicMock()
             with patch.object(storage, "s3", s3_mock):
@@ -72,6 +87,7 @@ class TestInitializationHelpers:
                 def fake_download(bucket, key, local):
                     with open(local, "wb") as f:
                         f.write(b"dummy")
+
                 s3_mock.download_file.side_effect = fake_download
 
                 # Ensure os.path.exists and os.remove are exercised safely
@@ -82,13 +98,16 @@ class TestInitializationHelpers:
 
         # Now test extraction summarizer — patch the extractor to simulate extracted entries
         with patch.object(storage, "_safe_extract_tgz", side_effect=[["x/1", "x/2"], ["y/1"]]):
-            summary = storage.extract_archives_to_input_dir([str(tmp_path/"a.tgz"), str(tmp_path/"b.tgz")], str(tmp_path/"out"))
+            summary = storage.extract_archives_to_input_dir(
+                [str(tmp_path / "a.tgz"), str(tmp_path / "b.tgz")], str(tmp_path / "out")
+            )
             assert summary == {"archives": 2, "extracted_files": 3}
 
 
 class TestMoreStorage:
     def test_generate_presigned_url(self):
         import importlib
+
         storage = importlib.import_module("app.core.storage")
         s3_mock = MagicMock()
         s3_mock.generate_presigned_url.return_value = "http://signed"
@@ -99,6 +118,7 @@ class TestMoreStorage:
 
     def test_list_tgz_keys_under_prefix(self):
         import importlib
+
         storage = importlib.import_module("app.core.storage")
 
         class FakePaginator:
@@ -117,7 +137,10 @@ class TestMoreStorage:
             assert keys == ["inputs/a.tgz", "inputs/b.tgz"]
 
     def test_safe_extract_tgz_skips_bad_members(self, tmp_path):
-        import importlib, io, tarfile, os
+        import importlib
+        import io
+        import tarfile
+
         storage = importlib.import_module("app.core.storage")
 
         # Build a tar.gz containing:
@@ -159,9 +182,20 @@ class TestMoreStorage:
 
     def test_initialize_input_dir_from_bucket(self, tmp_path):
         import importlib
+
         storage = importlib.import_module("app.core.storage")
-        with patch.object(storage, "download_tgz_archives", return_value=[str(tmp_path/"a.tgz"), str(tmp_path/"b.tgz")]), \
-             patch.object(storage, "extract_archives_to_input_dir", return_value={"archives": 2, "extracted_files": 3}), \
-             patch.object(storage.settings, "INPUT_DATA_DIR", tmp_path):
+        with (
+            patch.object(
+                storage,
+                "download_tgz_archives",
+                return_value=[str(tmp_path / "a.tgz"), str(tmp_path / "b.tgz")],
+            ),
+            patch.object(
+                storage,
+                "extract_archives_to_input_dir",
+                return_value={"archives": 2, "extracted_files": 3},
+            ),
+            patch.object(storage.settings, "INPUT_DATA_DIR", tmp_path),
+        ):
             summary = storage.initialize_input_dir_from_bucket()
             assert summary == {"downloaded": 2, "archives": 2, "extracted_files": 3}

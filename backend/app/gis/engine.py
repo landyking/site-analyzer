@@ -1,32 +1,35 @@
-import os
-import app.gis.tools as tools
-import app.gis.consts as consts
 import logging
+import os
+
+import app.gis.consts as consts
+import app.gis.tools as tools
 from app.gis.engine_models import (
     EmptyTaskMonitor,
     EngineConfigs,
     TaskMonitor,
 )
 from app.gis.functions import (
-    RPL_Select_analysis,
-    RPL_Clip_analysis,
+    RPL_Apply_mask,
     RPL_Buffer_analysis,
-    RPL_Union_analysis,
+    RPL_Clip_analysis,
+    RPL_Combine_rasters,
+    RPL_DistanceAccumulation,
     RPL_ExtractByMask,
     RPL_PolygonToRaster_conversion,
-    RPL_DistanceAccumulation,
     RPL_Reclassify,
-    RPL_Combine_rasters,
-    RPL_Apply_mask,
-    gen_bounding_box
+    RPL_Select_analysis,
+    RPL_Union_analysis,
+    gen_bounding_box,
 )
 
 logger = logging.getLogger(__name__)
+
+
 class SiteSuitabilityEngine:
     def __init__(self, data_dir, output_dir, configs: EngineConfigs):
         """
         Initialize the Site Suitability Engine.
-        
+
         Parameters:
         - data_dir: Directory containing input data
         - output_dir: Directory to store output data
@@ -34,29 +37,50 @@ class SiteSuitabilityEngine:
         """
         self.data_dir = data_dir
         self.output_dir = output_dir
-        
+
         # Ensure output directories exist
         os.makedirs(output_dir, exist_ok=True)
         self.restrict_dir = os.path.join(output_dir, "restrict")
         self.clip_dir = os.path.join(output_dir, "clip")
         self.score_dir = os.path.join(output_dir, "score")
-        
+
         os.makedirs(self.restrict_dir, exist_ok=True)
         os.makedirs(self.clip_dir, exist_ok=True)
         os.makedirs(self.score_dir, exist_ok=True)
-        
+
         # Default input paths
-        self.in_territorial_authority = os.path.join(data_dir, "statsnz-territorial-authority-2025-clipped-SHP/territorial-authority-2025-clipped.shp")
-        self.in_lake_polygons = os.path.join(data_dir, "lds-nz-lake-polygons-topo-150k-SHP/nz-lake-polygons-topo-150k.shp")
-        self.in_river_centerlines = os.path.join(data_dir, "lds-nz-river-centrelines-topo-150k-SHP/nz-river-centrelines-topo-150k.shp")
-        self.in_coastline = os.path.join(data_dir, "lds-nz-coastlines-topo-150k-SHP/nz-coastlines-topo-150k.shp")
-        self.in_residential_area = os.path.join(data_dir, "lds-nz-residential-area-polygons-topo-150k-SHP/nz-residential-area-polygons-topo-150k.shp")
-        self.in_road_centerlines = os.path.join(data_dir, "lds-nz-road-centrelines-topo-150k-SHP/nz-road-centrelines-topo-150k.shp")
-        self.in_powerline_centerlines = os.path.join(data_dir, "lds-nz-powerline-centrelines-topo-150k-SHP/nz-powerline-centrelines-topo-150k.shp")
-        self.in_solar_radiation = os.path.join(data_dir, "lris-lenz-mean-annual-solar-radiation-GTiff/solar_2193.tif")
-        self.in_temperature = os.path.join(data_dir, "lris-lenz-mean-annual-temperature-GTiff/temperature_2193.tif")
+        self.in_territorial_authority = os.path.join(
+            data_dir,
+            "statsnz-territorial-authority-2025-clipped-SHP/territorial-authority-2025-clipped.shp",
+        )
+        self.in_lake_polygons = os.path.join(
+            data_dir, "lds-nz-lake-polygons-topo-150k-SHP/nz-lake-polygons-topo-150k.shp"
+        )
+        self.in_river_centerlines = os.path.join(
+            data_dir, "lds-nz-river-centrelines-topo-150k-SHP/nz-river-centrelines-topo-150k.shp"
+        )
+        self.in_coastline = os.path.join(
+            data_dir, "lds-nz-coastlines-topo-150k-SHP/nz-coastlines-topo-150k.shp"
+        )
+        self.in_residential_area = os.path.join(
+            data_dir,
+            "lds-nz-residential-area-polygons-topo-150k-SHP/nz-residential-area-polygons-topo-150k.shp",
+        )
+        self.in_road_centerlines = os.path.join(
+            data_dir, "lds-nz-road-centrelines-topo-150k-SHP/nz-road-centrelines-topo-150k.shp"
+        )
+        self.in_powerline_centerlines = os.path.join(
+            data_dir,
+            "lds-nz-powerline-centrelines-topo-150k-SHP/nz-powerline-centrelines-topo-150k.shp",
+        )
+        self.in_solar_radiation = os.path.join(
+            data_dir, "lris-lenz-mean-annual-solar-radiation-GTiff/solar_2193.tif"
+        )
+        self.in_temperature = os.path.join(
+            data_dir, "lris-lenz-mean-annual-temperature-GTiff/temperature_2193.tif"
+        )
         self.in_slope = os.path.join(data_dir, "lris-lenz-slope-GTiff/slope_2193.tif")
-        
+
         # Initialize factors list
         self.factors = []
         self._initialize_factors(configs)
@@ -102,12 +126,7 @@ class SiteSuitabilityEngine:
                 "method_prepare": self._clip_data,
                 "method_restricted_zone": lambda *args: None,
                 "score_weight": 1.5,
-                "evaluate_rules": [
-                    (0, 5, 10),
-                    (5, 10, 8),
-                    (10, 15, 5),
-                    (15, 90, 2)
-                ],
+                "evaluate_rules": [(0, 5, 10), (5, 10, 8), (10, 15, 5), (15, 90, 2)],
                 "method_evaluate": self._evaluate_slope,
             },
             {
@@ -120,7 +139,7 @@ class SiteSuitabilityEngine:
                     (0, 1000, 10),
                     (1000, 2000, 8),
                     (2000, 3000, 5),
-                    (3000, float('inf'), 2)
+                    (3000, float("inf"), 2),
                 ],
                 "method_evaluate": self._evaluate_distance_vector,
             },
@@ -134,7 +153,7 @@ class SiteSuitabilityEngine:
                     (0, 1000, 10),
                     (1000, 2000, 8),
                     (2000, 3000, 5),
-                    (3000, float('inf'), 2)
+                    (3000, float("inf"), 2),
                 ],
                 "method_evaluate": self._evaluate_distance_vector,
             },
@@ -150,7 +169,7 @@ class SiteSuitabilityEngine:
                     (135, 140, 6),
                     (140, 145, 8),
                     (145, 150, 9),
-                    (150, 155, 10)
+                    (150, 155, 10),
                 ],
                 "method_evaluate": self._evaluate_radiation,
             },
@@ -165,33 +184,40 @@ class SiteSuitabilityEngine:
                     (0, 50, 5),
                     (50, 120, 10),
                     (120, 140, 7),
-                    (140, 165, 3)
+                    (140, 165, 3),
                 ],
                 "method_evaluate": self._evaluate_temperature,
-            }
+            },
         ]
         apply_factors = []
-        
+
         for rfactor in configs.restricted_factors:
-            config = next((f for f in all_factors if f['name'] == rfactor.kind), None)
+            config = next((f for f in all_factors if f["name"] == rfactor.kind), None)
             if config:
-                config['buffer_distance'] = rfactor.buffer_distance
+                config["buffer_distance"] = rfactor.buffer_distance
                 apply_factors.append(config)
 
         for sfactor in configs.suitability_factors:
-            config = next((f for f in all_factors if f['name'] == sfactor.kind), None)
+            config = next((f for f in all_factors if f["name"] == sfactor.kind), None)
             if config:
-                config['score_weight'] = sfactor.weight
+                config["score_weight"] = sfactor.weight
                 if sfactor.ranges:
-                    config['evaluate_rules'] = sfactor.ranges
+                    config["evaluate_rules"] = sfactor.ranges
                 apply_factors.append(config)
-        
+
         self.factors = apply_factors
-    
-    def _clip_data(self, factor, prepared_data, district_name, district_boundary_shp, district_boundary_bbox_shp):
+
+    def _clip_data(
+        self,
+        factor,
+        prepared_data,
+        district_name,
+        district_boundary_shp,
+        district_boundary_bbox_shp,
+    ):
         """
         Clips the data to the district boundary.
-        
+
         Parameters:
         - factor: Factor dictionary containing dataset and name
         - prepared_data: Dictionary of already prepared data
@@ -202,8 +228,8 @@ class SiteSuitabilityEngine:
         Returns:
         - Path to the clipped data
         """
-        key = factor['name']
-        dataset = factor['dataset']
+        key = factor["name"]
+        dataset = factor["dataset"]
         logger.info(f"{district_name} # Clipping {key} data")
         out_path = os.path.join(self.clip_dir, f"clip_{key}")
 
@@ -218,10 +244,17 @@ class SiteSuitabilityEngine:
 
         return out_path
 
-    def _create_restricted_area(self, factor, prepared_data, district_name, district_boundary_shp, district_boundary_bbox_shp):
+    def _create_restricted_area(
+        self,
+        factor,
+        prepared_data,
+        district_name,
+        district_boundary_shp,
+        district_boundary_bbox_shp,
+    ):
         """
         Creates a buffer around the feature and clips it to the district boundary.
-        
+
         Parameters:
         - factor: Factor dictionary containing buffer_distance and name
         - prepared_data: Dictionary of already prepared data
@@ -232,7 +265,7 @@ class SiteSuitabilityEngine:
         Returns:
         - Path to the clipped buffered data
         """
-        feature = factor['name']
+        feature = factor["name"]
         distance = factor["buffer_distance"]
 
         logger.info(f"{district_name} # Creating buffer for {feature}...")
@@ -243,23 +276,23 @@ class SiteSuitabilityEngine:
         RPL_Clip_analysis(buffer_clipped_output, buffer_output, district_boundary_bbox_shp)
 
         return buffer_clipped_output
-    
+
     def _evaluate_distance_vector(self, factor, prepared_data, district_name, district_boundary):
         """
         Evaluates distance to vector features and creates a score raster.
-        
+
         Parameters:
         - factor: Factor dictionary
         - prepared_data: Dictionary of already prepared data
         - district_name: Name of the district
         - district_boundary: Path to the district boundary
-        
+
         Returns:
         - Path to the score raster
         """
-        vector_path = prepared_data[factor['name']]
+        vector_path = prepared_data[factor["name"]]
         template_raster = prepared_data["slope"]
-        
+
         # Create a binary raster from the vector
         binary_raster = os.path.join(self.score_dir, f"binary_{factor['name']}.tif")
         RPL_PolygonToRaster_conversion(vector_path, binary_raster, template_raster)
@@ -273,61 +306,61 @@ class SiteSuitabilityEngine:
         RPL_Reclassify(dist_raster, score_raster, factor["evaluate_rules"])
         logger.info(f"range {score_raster}: {tools.get_data_range(score_raster)}")
         return score_raster
-    
+
     def _evaluate_slope(self, factor, prepared_data, district_name, district_boundary):
         """
         Evaluates slope and creates a score raster.
-        
+
         Parameters:
         - factor: Factor dictionary
         - prepared_data: Dictionary of already prepared data
         - district_name: Name of the district
         - district_boundary: Path to the district boundary
-        
+
         Returns:
         - Path to the score raster
         """
-        slope_raster = prepared_data[factor['name']]
+        slope_raster = prepared_data[factor["name"]]
         score_raster = os.path.join(self.score_dir, f"score_{factor['name']}.tif")
         logger.info(f"range {slope_raster}: {tools.get_data_range(slope_raster)}")
         RPL_Reclassify(slope_raster, score_raster, factor["evaluate_rules"])
         logger.info(f"range {score_raster}: {tools.get_data_range(score_raster)}")
         return score_raster
-    
+
     def _evaluate_radiation(self, factor, prepared_data, district_name, district_boundary):
         """
         Evaluates solar radiation and creates a score raster.
-        
+
         Parameters:
         - factor: Factor dictionary
         - prepared_data: Dictionary of already prepared data
         - district_name: Name of the district
         - district_boundary: Path to the district boundary
-        
+
         Returns:
         - Path to the score raster
         """
-        radiation_raster = prepared_data[factor['name']]
+        radiation_raster = prepared_data[factor["name"]]
         score_raster = os.path.join(self.score_dir, f"score_{factor['name']}.tif")
         logger.info(f"range {radiation_raster}: {tools.get_data_range(radiation_raster)}")
         RPL_Reclassify(radiation_raster, score_raster, factor["evaluate_rules"])
         logger.info(f"range {score_raster}: {tools.get_data_range(score_raster)}")
         return score_raster
-    
+
     def _evaluate_temperature(self, factor, prepared_data, district_name, district_boundary):
         """
         Evaluates temperature and creates a score raster.
-        
+
         Parameters:
         - factor: Factor dictionary
         - prepared_data: Dictionary of already prepared data
         - district_name: Name of the district
         - district_boundary: Path to the district boundary
-        
+
         Returns:
         - Path to the score raster
         """
-        temperature_raster = prepared_data[factor['name']]
+        temperature_raster = prepared_data[factor["name"]]
         score_raster = os.path.join(self.score_dir, f"score_{factor['name']}.tif")
         logger.info(f"range {temperature_raster}: {tools.get_data_range(temperature_raster)}")
         RPL_Reclassify(temperature_raster, score_raster, factor["evaluate_rules"])
@@ -347,24 +380,28 @@ class SiteSuitabilityEngine:
         Returns:
         - str: Path to the selected or newly created template raster file.
         """
-        for it in ['solar','temperature','slope']:
+        for it in ["solar", "temperature", "slope"]:
             file = prepared_data.get(it)
             if file is not None and os.path.exists(file):
                 logger.info(f"Using existing {it} raster as template")
                 return file
-        logger.info("No suitable raster found for template; using solar radiation raster by default")
-        template_raster_file = os.path.join(self.output_dir, f"template_raster.tif")
+        logger.info(
+            "No suitable raster found for template; using solar radiation raster by default"
+        )
+        template_raster_file = os.path.join(self.output_dir, "template_raster.tif")
         RPL_ExtractByMask(self.in_solar_radiation, district_boundary_shp, template_raster_file)
         return template_raster_file
 
-    def process_district(self, district_code, district_name, monitor: TaskMonitor = EmptyTaskMonitor()):
+    def process_district(
+        self, district_code, district_name, monitor: TaskMonitor = EmptyTaskMonitor()
+    ):
         """
         Processes a single district for site suitability analysis.
-        
+
         Parameters:
         - district_code: Code for the district
         - district_name: Name of the district
-        
+
         Returns:
         - Path to the final suitability raster
         """
@@ -374,79 +411,94 @@ class SiteSuitabilityEngine:
         logger.info(f"Start processing {district_name}")
 
         self.template_raster = None
-        
-        # Select the district boundary
-        district_boundary_shp = os.path.join(self.output_dir, f"district_boundary.shp")
-        RPL_Select_analysis(
-            self.in_territorial_authority, 
-            district_boundary_shp, 
-            f"TA2025_V1_ == '{district_code}'"
-        )
-        monitor.update_progress(10, "prepare", f"District boundary prepared")
 
-        district_boundary_bbox_shp = os.path.join(self.output_dir, f"district_boundary_bbox.shp")
+        # Select the district boundary
+        district_boundary_shp = os.path.join(self.output_dir, "district_boundary.shp")
+        RPL_Select_analysis(
+            self.in_territorial_authority, district_boundary_shp, f"TA2025_V1_ == '{district_code}'"
+        )
+        monitor.update_progress(10, "prepare", "District boundary prepared")
+
+        district_boundary_bbox_shp = os.path.join(self.output_dir, "district_boundary_bbox.shp")
         gen_bounding_box(district_boundary_shp, district_boundary_bbox_shp)
-        monitor.update_progress(15, "prepare", f"District boundary bounding box prepared")
+        monitor.update_progress(15, "prepare", "District boundary bounding box prepared")
         # show_shapefile_info(district_boundary_shp)
 
-        
         # Prepare data for each factor
         progress_num = 15
         prepared_data = {}
         for factor in self.factors:
             prepared_data[factor["name"]] = factor["method_prepare"](
-                factor, prepared_data, district_name, district_boundary_shp, district_boundary_bbox_shp
+                factor,
+                prepared_data,
+                district_name,
+                district_boundary_shp,
+                district_boundary_bbox_shp,
             )
             progress_num = progress_num + 1
             monitor.update_progress(progress_num, "prepare", f"Prepared factor: {factor['name']}")
             if monitor.is_cancelled():
-                logger.info("Processing cancelled for district %s during data preparation; aborting.", district_name)
+                logger.info(
+                    "Processing cancelled for district %s during data preparation; aborting.",
+                    district_name,
+                )
                 return None
 
         progress_num = 30
         self.template_raster = self._raster_template(prepared_data, district_boundary_shp)
-        monitor.update_progress(progress_num, "prepare", f"Raster template prepared")
+        monitor.update_progress(progress_num, "prepare", "Raster template prepared")
         # print(f"prepared_data: {prepared_data}")
         # for k,v in prepared_data.items():
-            # print(f"{k}: {v}")
-            # show_file_info(v)
-        
+        # print(f"{k}: {v}")
+        # show_file_info(v)
+
         # Create restricted zones for each factor
         restricted_zones = []
         for factor in self.factors:
             zone = factor["method_restricted_zone"](
-                factor, prepared_data, district_name, district_boundary_shp, district_boundary_bbox_shp
+                factor,
+                prepared_data,
+                district_name,
+                district_boundary_shp,
+                district_boundary_bbox_shp,
             )
             if zone is not None:
                 restricted_zones.append(zone)
                 progress_num = progress_num + 1
-                monitor.update_progress(progress_num, "restrict", f"Restricted zone created: {factor['name']}")
+                monitor.update_progress(
+                    progress_num, "restrict", f"Restricted zone created: {factor['name']}"
+                )
             if monitor.is_cancelled():
-                logger.info("Processing cancelled for district %s during restricted zone creation; aborting.", district_name)
+                logger.info(
+                    "Processing cancelled for district %s during restricted zone creation; aborting.",
+                    district_name,
+                )
                 return None
-        
-              # print(f"prepared_data: {prepared_data}")
+
+            # print(f"prepared_data: {prepared_data}")
         # for v in restricted_zones:
         #     print(f"{v}")
         #     show_file_info(v)
         # Union all restricted zones
         if restricted_zones:
-            restricted_union = os.path.join(self.restrict_dir, f"restricted_union.shp")
+            restricted_union = os.path.join(self.restrict_dir, "restricted_union.shp")
             RPL_Union_analysis(restricted_zones, restricted_union)
             # tools.show_file_info(restricted_union)
 
             # Convert the union to a raster mask
-            restricted_mask_raster = os.path.join(self.output_dir, f"zone_restricted.tif")
-            RPL_PolygonToRaster_conversion(restricted_union, restricted_mask_raster, self.template_raster, fill_nodata=True)
+            restricted_mask_raster = os.path.join(self.output_dir, "zone_restricted.tif")
+            RPL_PolygonToRaster_conversion(
+                restricted_union, restricted_mask_raster, self.template_raster, fill_nodata=True
+            )
             # tools.show_file_info(restricted_mask_raster)
 
-            monitor.update_progress(50, "restrict", f"Restricted zones combined")
+            monitor.update_progress(50, "restrict", "Restricted zones combined")
             monitor.record_file("restricted", restricted_mask_raster)
         else:
             logger.info(f"Warning: No restricted zones for {district_name}")
             # Create an empty mask if no restricted zones
             restricted_mask_raster = None
-        
+
         progress_num = 60
         # Evaluate and score each factor
         score_rasters = {}
@@ -460,11 +512,16 @@ class SiteSuitabilityEngine:
                     score_rasters[factor["name"]] = score_raster
                     monitor.record_file(factor["name"], score_raster)
                     progress_num = progress_num + 1
-                    monitor.update_progress(progress_num, "score", f"Factor scored: {factor['name']}")
+                    monitor.update_progress(
+                        progress_num, "score", f"Factor scored: {factor['name']}"
+                    )
             if monitor.is_cancelled():
-                logger.info("Processing cancelled for district %s during factor evaluation; aborting.", district_name)
+                logger.info(
+                    "Processing cancelled for district %s during factor evaluation; aborting.",
+                    district_name,
+                )
                 return None
-        monitor.update_progress(70, "score", f"All factors scored")
+        monitor.update_progress(70, "score", "All factors scored")
         # for k,v in score_rasters.items():
         #     print(f"{k}: {v}")
         #     show_file_info(v)
@@ -472,22 +529,22 @@ class SiteSuitabilityEngine:
         # Combine scores with weights
         if score_rasters:
             weighted_rasters = []
-            
+
             for factor in self.factors:
                 if factor["name"] in score_rasters and "score_weight" in factor:
                     weighted_rasters.append((score_rasters[factor["name"]], factor["score_weight"]))
 
-            weighted_sum_raster = os.path.join(self.output_dir, f"zone_weighted.tif")
+            weighted_sum_raster = os.path.join(self.output_dir, "zone_weighted.tif")
             if weighted_rasters:
                 RPL_Combine_rasters(weighted_rasters, weighted_sum_raster)
-                monitor.update_progress(80, "weight", f"All factors weighted and combined")
+                monitor.update_progress(80, "weight", "All factors weighted and combined")
                 monitor.record_file("weighted", weighted_sum_raster)
 
                 # Apply the restricted mask
                 if restricted_mask_raster:
-                    final_zone_raster = os.path.join(self.output_dir, f"zone_masked.tif")
+                    final_zone_raster = os.path.join(self.output_dir, "zone_masked.tif")
                     RPL_Apply_mask(weighted_sum_raster, restricted_mask_raster, final_zone_raster)
-                    monitor.update_progress(90, "mask", f"Mask applied to weighted raster")
+                    monitor.update_progress(90, "mask", "Mask applied to weighted raster")
                     monitor.record_file("final", final_zone_raster)
                     return final_zone_raster
                 else:
@@ -499,19 +556,19 @@ class SiteSuitabilityEngine:
         else:
             print(f"Warning: No score rasters for {district_name}")
             return None
-    
+
     def run(self, selected_districts=None, monitor: TaskMonitor = EmptyTaskMonitor()):
         """
         Run the site suitability analysis for all districts or selected districts.
-        
+
         Parameters:
         - selected_districts: List of district codes to process. If None, process all districts.
-        
+
         Returns:
         - Dictionary mapping district names to their final suitability raster paths
         """
         results = {}
-        
+
         districts_to_process = []
         if selected_districts:
             districts_to_process = [d for d in consts.districts if d[0] in selected_districts]

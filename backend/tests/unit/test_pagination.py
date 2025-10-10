@@ -1,8 +1,6 @@
 import math
-from typing import List
 
-import pytest
-from sqlmodel import Field, SQLModel, Session, create_engine, select
+from sqlmodel import Field, Session, SQLModel, create_engine, select
 
 from app.db.pagination import normalize_pagination, paginate
 
@@ -65,7 +63,7 @@ class TestPaginate:
                 session=session,
                 base_stmt=select(Item),
                 page_size=7,
-                current_page=math.ceil(23/7),
+                current_page=math.ceil(23 / 7),
                 # order by id to ensure numeric order rather than lexicographic name
                 order_by=[Item.id.asc()],
             )

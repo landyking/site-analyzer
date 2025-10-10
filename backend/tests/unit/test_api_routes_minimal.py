@@ -1,8 +1,9 @@
+from datetime import datetime
+from types import SimpleNamespace
+from unittest.mock import MagicMock, patch
+
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
-from unittest.mock import MagicMock, patch
-from types import SimpleNamespace
-from datetime import datetime
 
 from app.api.main import api_router
 
@@ -41,8 +42,10 @@ def make_app_with_overrides(current_user_is_admin: bool = False):
 def test_auth_user_login_calls_crud_authenticate():
     app = make_app_with_overrides()
     client = TestClient(app)
-    with patch("app.crud.authenticate", return_value=MagicMock(id=1, status=1, role=0)) as auth_mock, \
-         patch("app.core.security.create_access_token", return_value="token"):
+    with (
+        patch("app.crud.authenticate", return_value=MagicMock(id=1, status=1, role=0)) as auth_mock,
+        patch("app.core.security.create_access_token", return_value="token"),
+    ):
         resp = client.post("/user-login", data={"username": "a@b.com", "password": "x"})
         assert resp.status_code == 200
         auth_mock.assert_called_once()
@@ -74,10 +77,14 @@ def test_user_select_options_endpoints():
 def test_admin_inputs_initialize_uses_storage():
     app = make_app_with_overrides(current_user_is_admin=True)
     client = TestClient(app)
-    with patch("app.core.storage.initialize_input_dir_from_bucket", return_value={"downloaded": 0, "archives": 0, "extracted_files": 0}) as init_mock:
+    with patch(
+        "app.core.storage.initialize_input_dir_from_bucket",
+        return_value={"downloaded": 0, "archives": 0, "extracted_files": 0},
+    ) as init_mock:
         r = client.get("/admin/inputs-initialize")
         assert r.status_code == 200
         init_mock.assert_called_once()
+
 
 def test_admin_users_list_endpoint():
     app = make_app_with_overrides(current_user_is_admin=True)
@@ -101,12 +108,14 @@ def test_admin_users_list_endpoint():
         assert body["total"] == 1
         assert isinstance(body["list"], list)
 
+
 def test_user_get_map_task_not_found():
     app = make_app_with_overrides()
     client = TestClient(app)
     with patch("app.api.routes.user.crud.get_map_task", return_value=None):
         r = client.get("/user/my-map-tasks/12345")
         assert r.status_code == 404
+
 
 def test_admin_map_tasks_list_endpoint():
     app = make_app_with_overrides(current_user_is_admin=True)
@@ -121,14 +130,20 @@ def test_admin_map_tasks_list_endpoint():
         ended_at=None,
         created_at=datetime.utcnow(),
     )
-    with patch("app.api.routes.admin.crud.admin_list_map_tasks", return_value=([fake_row], 1, 20, 1)), \
-         patch("app.api.routes._mappers.crud.get_user_by_id", return_value=MagicMock(email="a@b.com")):
+    with (
+        patch(
+            "app.api.routes.admin.crud.admin_list_map_tasks", return_value=([fake_row], 1, 20, 1)
+        ),
+        patch(
+            "app.api.routes._mappers.crud.get_user_by_id", return_value=MagicMock(email="a@b.com")
+        ),
+    ):
         r = client.get("/admin/map-tasks?page_size=20&current_page=1")
         assert r.status_code == 200
         body = r.json()
         assert body["error"] == 0
         assert body["total"] == 1
-        
+
     def test_admin_map_task_progress_lists_rows():
         app = make_app_with_overrides(current_user_is_admin=True)
         client = TestClient(app)
@@ -159,6 +174,7 @@ def test_admin_map_tasks_list_endpoint():
             assert body["error"] == 0
             assert isinstance(body["list"], list)
 
+
 def test_user_district_histograms_success():
     app = make_app_with_overrides()
     client = TestClient(app)
@@ -168,6 +184,7 @@ def test_user_district_histograms_success():
     body = r.json()
     assert body["error"] == 0
     assert isinstance(body["list"], list)
+
 
 def test_user_map_task_progress_lists_rows():
     app = make_app_with_overrides()
@@ -199,6 +216,7 @@ def test_user_map_task_progress_lists_rows():
         assert body["error"] == 0
         assert isinstance(body["list"], list)
 
+
 def test_admin_user_status_update_404_and_success():
     app = make_app_with_overrides(current_user_is_admin=True)
     client = TestClient(app)
@@ -211,6 +229,7 @@ def test_admin_user_status_update_404_and_success():
         r = client.post("/admin/user-status", json={"user_id": 1, "status": 1})
         assert r.status_code == 200
 
+
 def test_admin_get_map_task_404():
     app = make_app_with_overrides(current_user_is_admin=True)
     client = TestClient(app)
@@ -218,12 +237,14 @@ def test_admin_get_map_task_404():
         r = client.get("/admin/map-tasks/99")
         assert r.status_code == 404
 
+
 def test_admin_inputs_initialize_error_branch():
     app = make_app_with_overrides(current_user_is_admin=True)
     client = TestClient(app)
     with patch("app.core.storage.initialize_input_dir_from_bucket", return_value={"error": 1}):
         r = client.get("/admin/inputs-initialize")
         assert r.status_code == 500
+
 
 def test_user_delete_map_task_branches():
     app = make_app_with_overrides()
@@ -241,6 +262,7 @@ def test_user_delete_map_task_branches():
         r = client.delete("/user/my-map-tasks/10")
         assert r.status_code == 200
 
+
 def test_user_cancel_map_task_not_found_and_success():
     app = make_app_with_overrides()
     client = TestClient(app)
@@ -251,15 +273,19 @@ def test_user_cancel_map_task_not_found_and_success():
         r = client.post("/user/my-map-tasks/11/cancel")
         assert r.status_code == 200
 
+
 def test_user_tile_signature_success():
     app = make_app_with_overrides()
     client = TestClient(app)
-    with patch("app.api.routes.user.crud.get_map_task", return_value=SimpleNamespace(id=12, user_id=1)):
+    with patch(
+        "app.api.routes.user.crud.get_map_task", return_value=SimpleNamespace(id=12, user_id=1)
+    ):
         r = client.get("/user/my-map-tasks/12/tile-signature")
         assert r.status_code == 200
         body = r.json()
         assert body["error"] == 0
         assert "data" in body and "sig" in body["data"]
+
 
 def test_user_duplicate_map_task_admin_only():
     # Use admin override since endpoint requires CurrentAdminUser
@@ -268,6 +294,7 @@ def test_user_duplicate_map_task_admin_only():
     with patch("app.api.routes.user.crud.duplicate_map_task", return_value=SimpleNamespace(id=13)):
         r = client.post("/user/my-map-tasks/13/duplicate")
         assert r.status_code == 200
+
 
 def test_auth_logout_and_refresh():
     app = make_app_with_overrides()

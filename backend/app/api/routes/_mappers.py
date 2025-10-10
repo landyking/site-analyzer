@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from datetime import datetime, timezone
+import json
+from datetime import UTC, datetime
 from typing import Any
 
 from app import crud
@@ -14,10 +15,10 @@ from app.models import (
     MapTaskFileDB,
     MapTaskStatus,
 )
-import json
 
 # Build a fast lookup for district code -> name
 _DISTRICT_CODE_TO_NAME = {code: name for code, name in districts}
+
 
 def _ensure_list(val):
     return json.loads(val) if isinstance(val, str) else val
@@ -27,8 +28,8 @@ def as_aware_utc(dt: datetime | None) -> datetime | None:
     if dt is None:
         return None
     if dt.tzinfo is None:
-        return dt.replace(tzinfo=timezone.utc)
-    return dt.astimezone(timezone.utc)
+        return dt.replace(tzinfo=UTC)
+    return dt.astimezone(UTC)
 
 
 def _status_desc(status: int) -> str | None:

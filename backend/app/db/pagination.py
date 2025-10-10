@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-from typing import Iterable
-from sqlalchemy.sql import Select
-from sqlalchemy import func
-from sqlmodel import Session, select
+from collections.abc import Iterable
 
+from sqlalchemy import func
+from sqlalchemy.sql import Select
+from sqlmodel import Session, select
 
 DEFAULT_PAGE_SIZE = 20
 MAX_PAGE_SIZE = 200

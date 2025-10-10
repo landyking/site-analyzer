@@ -3,6 +3,7 @@ from unittest.mock import patch
 
 def test_empty_task_monitor_logging():
     import importlib
+
     em = importlib.import_module("app.gis.engine_models")
     mon = em.EmptyTaskMonitor()
     with patch.object(em, "logger") as log:

@@ -1,11 +1,13 @@
-from datetime import datetime
-import rasterio
-import numpy as np
-import geopandas as gpd
 import os
+from datetime import datetime
+
+import geopandas as gpd
+import numpy as np
+import rasterio
 
 version = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
+
 def get_data_range(input_raster):
     """
     Returns the minimum, maximum (excluding nodata), and nodata value of a raster.
@@ -27,6 +29,8 @@ def get_data_range(input_raster):
         max_value = np.nanmax(data)
 
     return min_value, max_value, nodata_value
+
+
 def get_data_range(input_raster):
     """
     Returns the minimum, maximum (excluding nodata), and nodata value of a raster.
@@ -48,24 +52,29 @@ def get_data_range(input_raster):
         max_value = np.nanmax(data)
 
     return min_value, max_value, nodata_value
+
+
 def show_shapefile_plot(shapefile_path):
     """
     Visualizes a shapefile on a plot using GeoPandas.
-    
+
     Parameters:
     - shapefile_path: Path to the shapefile to visualize
-    
+
     Returns:
     - None
     """
     import matplotlib.pyplot as plt
+
     gdf = gpd.read_file(shapefile_path)
     fig, ax = plt.subplots(figsize=(5, 10))
-    gdf.plot(ax=ax, color='blue')
+    gdf.plot(ax=ax, color="blue")
     ax.set_xticks([])
     ax.set_yticks([])
     plt.show()
-def show_raster_plot(raster_path, cmap='viridis', title=None):
+
+
+def show_raster_plot(raster_path, cmap="viridis", title=None):
     """
     Visualizes a raster using Rasterio and Matplotlib, displaying nodata values as transparent.
 
@@ -78,6 +87,7 @@ def show_raster_plot(raster_path, cmap='viridis', title=None):
     - None
     """
     import matplotlib.pyplot as plt
+
     with rasterio.open(raster_path) as src:
         data = src.read(1)
         nodata = src.nodata
@@ -93,26 +103,29 @@ def show_raster_plot(raster_path, cmap='viridis', title=None):
     plt.colorbar(im, fraction=0.046, pad=0.04)
     if title:
         plt.title(title)
-    plt.axis('off')
+    plt.axis("off")
     plt.show()
+
 
 def show_shapefile_plot(shapefile_path):
     """
     Visualizes a shapefile on a plot using GeoPandas.
-    
+
     Parameters:
     - shapefile_path: Path to the shapefile to visualize
-    
+
     Returns:
     - None
     """
     import matplotlib.pyplot as plt
+
     gdf = gpd.read_file(shapefile_path)
     fig, ax = plt.subplots(figsize=(5, 10))
-    gdf.plot(ax=ax, color='blue')
+    gdf.plot(ax=ax, color="blue")
     ax.set_xticks([])
     ax.set_yticks([])
     plt.show()
+
 
 def show_file_info(file_path):
     """

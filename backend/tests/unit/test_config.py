@@ -6,8 +6,8 @@ configuration loading, validation, and environment variable handling.
 """
 
 import os
-import pytest
 from unittest.mock import patch
+
 from app.core.config import Settings
 
 
@@ -18,7 +18,7 @@ class TestSettings:
         """Test Settings with default values."""
         with patch.dict(os.environ, {}, clear=True):
             # Mock warnings to avoid actual warnings during testing
-            with patch('warnings.warn') as mock_warn:
+            with patch("warnings.warn") as mock_warn:
                 # Need to provide required fields since they don't have defaults
                 env_vars = {
                     "PROJECT_NAME": "Site Analyzer Test",
@@ -32,7 +32,7 @@ class TestSettings:
                     "STORAGE_ACCESS_KEY": "test-access-key",
                     "STORAGE_SECRET_KEY": "test-secret-key",
                     "STORAGE_BUCKET": "test-bucket",
-                    "STORAGE_REGION": "us-east-1"
+                    "STORAGE_REGION": "us-east-1",
                 }
                 with patch.dict(os.environ, env_vars, clear=True):
                     settings = Settings()
@@ -65,7 +65,7 @@ class TestSettings:
             "STORAGE_ACCESS_KEY": "test-access-key",
             "STORAGE_SECRET_KEY": "test-secret-key",
             "STORAGE_BUCKET": "test-bucket",
-            "STORAGE_REGION": "us-east-1"
+            "STORAGE_REGION": "us-east-1",
         }
 
         with patch.dict(os.environ, env_vars, clear=True):
@@ -93,7 +93,7 @@ class TestSettings:
             "STORAGE_SECRET_KEY": "test-secret-key",
             "STORAGE_BUCKET": "test-bucket",
             "STORAGE_REGION": "us-east-1",
-            "BACKEND_CORS_ORIGINS": "http://localhost:3000"
+            "BACKEND_CORS_ORIGINS": "http://localhost:3000",
         }
 
         with patch.dict(os.environ, env_vars, clear=True):
@@ -152,11 +152,11 @@ class TestSettings:
             "STORAGE_SECRET_KEY": "test-secret-key",
             "STORAGE_BUCKET": "test-bucket",
             "STORAGE_REGION": "us-east-1",
-            "ENVIRONMENT": "local"  # Should only warn in local environment
+            "ENVIRONMENT": "local",  # Should only warn in local environment
         }
 
         with patch.dict(os.environ, env_vars, clear=True):
-            with patch('warnings.warn') as mock_warn:
+            with patch("warnings.warn") as mock_warn:
                 Settings()
                 # Should warn about default secrets in local environment
                 assert mock_warn.call_count >= 1
@@ -177,11 +177,11 @@ class TestSettings:
             "STORAGE_ACCESS_KEY": "test-access-key",
             "STORAGE_SECRET_KEY": "test-secret-key",
             "STORAGE_BUCKET": "test-bucket",
-            "STORAGE_REGION": "us-east-1"
+            "STORAGE_REGION": "us-east-1",
         }
 
         with patch.dict(os.environ, env_vars, clear=True):
-            with patch('warnings.warn') as mock_warn:
+            with patch("warnings.warn") as mock_warn:
                 Settings()
                 # Should not warn with secure values
                 mock_warn.assert_not_called()
@@ -204,7 +204,7 @@ class TestSettings:
             "STORAGE_ENABLED": "true",
             "RELEASE_READ_ONLY": "false",
             "SMTP_TLS": "true",
-            "SMTP_SSL": "false"
+            "SMTP_SSL": "false",
         }
 
         with patch.dict(os.environ, env_vars, clear=True):
@@ -233,7 +233,7 @@ class TestSettings:
             "ACCESS_TOKEN_EXPIRE_MINUTES": "120",
             "MYSQL_PORT": "5432",
             "SMTP_PORT": "25",
-            "EMAIL_RESET_TOKEN_EXPIRE_HOURS": "24"
+            "EMAIL_RESET_TOKEN_EXPIRE_HOURS": "24",
         }
 
         with patch.dict(os.environ, env_vars, clear=True):
@@ -258,19 +258,19 @@ class TestSettings:
             "STORAGE_ACCESS_KEY": "test-access-key",
             "STORAGE_SECRET_KEY": "test-secret-key",
             "STORAGE_BUCKET": "test-bucket",
-            "STORAGE_REGION": "us-east-1"
+            "STORAGE_REGION": "us-east-1",
         }
 
         with patch.dict(os.environ, env_vars, clear=True):
             settings = Settings()
 
             # Should be a Pydantic model
-            assert hasattr(settings, 'model_config')
+            assert hasattr(settings, "model_config")
 
             # Should have expected attributes
-            assert hasattr(settings, 'PROJECT_NAME')
-            assert hasattr(settings, 'SECRET_KEY')
-            assert hasattr(settings, 'SQLALCHEMY_DATABASE_URI')
+            assert hasattr(settings, "PROJECT_NAME")
+            assert hasattr(settings, "SECRET_KEY")
+            assert hasattr(settings, "SQLALCHEMY_DATABASE_URI")
 
 
 class TestSettingsIntegration:
@@ -298,7 +298,7 @@ class TestSettingsIntegration:
             "STORAGE_ACCESS_KEY": "prod-access-key",
             "STORAGE_SECRET_KEY": "prod-secret-key",
             "STORAGE_BUCKET": "siteanalyzer-prod",
-            "STORAGE_REGION": "us-east-1"
+            "STORAGE_REGION": "us-east-1",
         }
 
         with patch.dict(os.environ, prod_env, clear=True):
@@ -313,7 +313,7 @@ class TestSettingsIntegration:
             assert settings.MYSQL_SERVER == "db.example.com"
             assert settings.MYSQL_USER == "siteanalyzer"
             assert settings.MYSQL_DB == "siteanalyzer_prod"
-            
+
             # Verify CORS origins
             assert len(settings.BACKEND_CORS_ORIGINS) == 2
             cors_origins_str = [str(origin) for origin in settings.BACKEND_CORS_ORIGINS]
@@ -342,12 +342,12 @@ class TestSettingsIntegration:
             "STORAGE_ACCESS_KEY": "dev-access-key",
             "STORAGE_SECRET_KEY": "dev-secret-key",
             "STORAGE_BUCKET": "siteanalyzer-dev",
-            "STORAGE_REGION": "us-east-1"
+            "STORAGE_REGION": "us-east-1",
         }
-        
+
         with patch.dict(os.environ, dev_env, clear=True):
             settings = Settings()
-            
+
             assert settings.PROJECT_NAME == "Site Analyzer Dev"
             assert settings.ACCESS_TOKEN_EXPIRE_MINUTES == 60
             assert "localhost" in str(settings.SQLALCHEMY_DATABASE_URI)
