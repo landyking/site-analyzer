@@ -13,6 +13,14 @@ from pathlib import Path
 from unittest.mock import MagicMock, Mock, patch
 
 import pytest
+import asyncio
+from unittest.mock import patch as _patch
+
+
+# Dummy loop implementation for tests: run_in_executor will call the target synchronously
+class DummyLoop:
+    async def run_in_executor(self, executor, func, *args):
+        return func(*args)
 
 # Ensure we import the REAL app.gis.processor module even if another test has mocked it globally.
 _maybe_mocked = sys.modules.get("app.gis.processor")
@@ -415,7 +423,8 @@ class TestProcessMapTask:
         mock_load_task.return_value = None
 
         # Act
-        process_map_task(123)
+        with _patch.object(processor_module.asyncio, "get_running_loop", return_value=DummyLoop()):
+            asyncio.run(process_map_task(123))
 
         # Assert
         mock_logger.warning.assert_called_once()
@@ -433,7 +442,8 @@ class TestProcessMapTask:
         mock_load_task.return_value = mock_task
 
         # Act
-        process_map_task(123)
+        with _patch.object(processor_module.asyncio, "get_running_loop", return_value=DummyLoop()):
+            asyncio.run(process_map_task(123))
 
         # Assert
         mock_logger.info.assert_called_once()
@@ -493,7 +503,8 @@ class TestProcessMapTask:
             mock_now = datetime(2025, 1, 1, 12, 0, 0, tzinfo=UTC)
             mock_datetime.now.return_value = mock_now
 
-            process_map_task(123)
+            with _patch.object(processor_module.asyncio, "get_running_loop", return_value=DummyLoop()):
+                asyncio.run(process_map_task(123))
 
         # Assert
         # Check task was updated to PROCESSING initially
@@ -544,7 +555,8 @@ class TestProcessMapTask:
         mock_exists.return_value = False
 
         # Act
-        process_map_task(123)
+        with _patch.object(processor_module.asyncio, "get_running_loop", return_value=DummyLoop()):
+            asyncio.run(process_map_task(123))
 
         # Assert
         mock_logger.info.assert_called()
@@ -597,7 +609,8 @@ class TestProcessMapTask:
         mock_exists.return_value = True
 
         # Act
-        process_map_task(123)
+        with _patch.object(processor_module.asyncio, "get_running_loop", return_value=DummyLoop()):
+            asyncio.run(process_map_task(123))
 
         # Assert
         mock_logger.exception.assert_called_once()
@@ -614,7 +627,7 @@ class TestProcessMapTask:
 
     @patch.object(processor_module.shutil, "rmtree")
     @patch.object(processor_module.os.path, "exists")
-    @patch.object(processor_module, "SiteSuitabilityEngine")
+    @patch.object(processor_module, "call_engine")
     @patch.object(processor_module, "MapTaskMonitor")
     @patch.object(processor_module, "_quick_update_task")
     @patch.object(processor_module, "_load_task")
@@ -629,7 +642,7 @@ class TestProcessMapTask:
         mock_load_task,
         mock_quick_update,
         mock_monitor_class,
-        mock_engine_class,
+        mock_call_engine,
         mock_exists,
         mock_rmtree,
     ):
@@ -653,20 +666,18 @@ class TestProcessMapTask:
         mock_monitor.is_cancelled.return_value = False
         mock_monitor_class.return_value = mock_monitor
 
-        mock_engine = Mock()
-        mock_engine.run.return_value = {}
-        mock_engine_class.return_value = mock_engine
-
         mock_exists.return_value = True
 
         # Act
-        process_map_task(123)
+        with _patch.object(processor_module.asyncio, "get_running_loop", return_value=DummyLoop()):
+            asyncio.run(process_map_task(123))
 
         # Assert - should still process with empty factor lists
-        mock_engine_class.assert_called_once()
-        engine_call_args = mock_engine_class.call_args[0][2]  # configs argument
-        assert len(engine_call_args.restricted_factors) == 0
-        assert len(engine_call_args.suitability_factors) == 0
+        mock_call_engine.assert_called_once()
+        # configs is the 3rd arg to call_engine
+        configs_arg = mock_call_engine.call_args[0][2]
+        assert len(configs_arg.restricted_factors) == 0
+        assert len(configs_arg.suitability_factors) == 0
 
     @patch.object(processor_module.shutil, "rmtree")
     @patch.object(processor_module.os.path, "exists")
@@ -688,7 +699,8 @@ class TestProcessMapTask:
             mock_exists.return_value = False
 
             # Act
-            process_map_task(123)
+            with _patch.object(processor_module.asyncio, "get_running_loop", return_value=DummyLoop()):
+                asyncio.run(process_map_task(123))
 
             # Assert
             mock_rmtree.assert_not_called()
@@ -732,7 +744,8 @@ class TestProcessMapTask:
             mock_rmtree.side_effect = Exception("Permission denied")
 
             # Act
-            process_map_task(123)
+            with _patch.object(processor_module.asyncio, "get_running_loop", return_value=DummyLoop()):
+                asyncio.run(process_map_task(123))
 
             # Assert - cleanup should be attempted even if it fails
             mock_rmtree.assert_called_once()
@@ -756,7 +769,8 @@ class TestProcessMapTask:
             mock_monitor_class.return_value = mock_monitor
 
             # Act
-            process_map_task(123)
+            with _patch.object(processor_module.asyncio, "get_running_loop", return_value=DummyLoop()):
+                asyncio.run(process_map_task(123))
 
             # Assert
             failure_call = mock_quick_update.call_args_list[-1]
