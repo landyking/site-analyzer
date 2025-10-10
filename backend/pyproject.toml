@@ -28,6 +28,11 @@ test = [
     "httpx>=0.25.0",
 ]
 
+# Developer tooling
+dev = [
+    "ruff>=0.6.9",
+]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 python_files = ["test_*.py", "*_test.py"]
@@ -62,3 +67,31 @@ exclude_lines = [
     "raise NotImplementedError",
     "if __name__ == .__main__.:"
 ]
+
+# Ruff: formatter and linter configuration
+[tool.ruff]
+line-length = 100
+target-version = "py313"
+extend-exclude = ["htmlcov", "htmlcov_functions", ".venv", "venv", "backend.egg-info"]
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "F",   # pyflakes
+    "I",   # isort (imports)
+    "UP",  # pyupgrade
+    "B",   # flake8-bugbear
+    "SIM", # flake8-simplify
+    "RUF"  # ruff-specific
+]
+ignore = []
+
+[tool.ruff.lint.isort]
+known-first-party = ["app"]
+combine-as-imports = true
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+line-ending = "auto"
+docstring-code-format = true

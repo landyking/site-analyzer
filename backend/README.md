@@ -216,6 +216,45 @@ uv run python -V
 uv build
 ```
 
+## Code formatting and linting (Ruff)
+
+This project uses Ruff for both formatting and linting, configured in `pyproject.toml` under `[tool.ruff]`.
+
+Quick commands (run from `backend/`):
+
+```zsh
+# Install dev tools (once or when lockfile changes)
+uv sync --group dev
+
+# Format the codebase (applies changes)
+uv run ruff format .
+
+# Check formatting without changing files (useful for CI)
+uv run ruff format --check .
+
+# Lint only
+uv run ruff check .
+
+# Lint with safe autofixes (import sorting, minor fixes)
+uv run ruff check --fix .
+```
+
+Notes
+- Target Python version: 3.13 (`target-version = "py313"`).
+- Line length: 100 characters (`line-length = 100`).
+- Imports are automatically organized (isort rules via Ruff).
+
+Optional (VS Code)
+Create `backend/.vscode/settings.json` to enable format-on-save with Ruff:
+
+```json
+{
+	"editor.defaultFormatter": "charliermarsh.ruff",
+	"editor.formatOnSave": true,
+	"ruff.organizeImports": true
+}
+```
+
 ## Time and time zones (UTC policy)
 
 To avoid time zone bugs, the backend stores and processes all instants in UTC. Keep these rules in mind:
