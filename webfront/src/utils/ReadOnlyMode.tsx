@@ -1,6 +1,9 @@
 import Alert from "@mui/material/Alert";
 
-// show demo account info
+/**
+ * Displays read-only mode warning when the system is in demo read-only state.
+ * @returns An alert component with read-only mode information or null.
+ */
 export function ReadOnlyMode() {
     if (import.meta.env.VITE_RELEASE_READ_ONLY === '1') {
         return (

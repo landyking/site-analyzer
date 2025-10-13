@@ -35,6 +35,9 @@ const homeRoute = createRoute({
 const signInRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/sign-in',
+  /**
+   * Redirects to dashboard if user is already logged in.
+   */
   beforeLoad: () => {
     if (isLoggedIn()) {
       throw redirect({ to: '/dashboard' })
@@ -52,6 +55,9 @@ const signUpRoute = createRoute({
 const dashboardRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/dashboard',
+  /**
+   * Protects the dashboard route by requiring authentication.
+   */
   beforeLoad: () => {
     // Protect the dashboard route: require an access token in localStorage
   const token = typeof window !== 'undefined' ? getAccessToken() : null
@@ -96,6 +102,9 @@ const newMapRoute = createRoute({
 const usersRoute = createRoute({
   getParentRoute: () => dashboardLayoutRoute,
   path: 'users',
+  /**
+   * Restricts access to admin users only.
+   */
   beforeLoad: () => {
     if (!isAdmin()) {
       throw redirect({ to: '/dashboard/welcome' })
@@ -107,6 +116,9 @@ const usersRoute = createRoute({
 const tasksRoute = createRoute({
   getParentRoute: () => dashboardLayoutRoute,
   path: 'tasks',
+  /**
+   * Restricts access to admin users only.
+   */
   beforeLoad: () => {
     if (!isAdmin()) {
       throw redirect({ to: '/dashboard/welcome' })
@@ -117,6 +129,9 @@ const tasksRoute = createRoute({
 const adminMapDetailsRoute = createRoute({
   getParentRoute: () => dashboardLayoutRoute,
   path: 'tasks/$taskId',
+  /**
+   * Restricts access to admin users only.
+   */
   beforeLoad: () => {
     if (!isAdmin()) {
       throw redirect({ to: '/dashboard/welcome' })
@@ -161,6 +176,10 @@ declare module '@tanstack/react-router' {
   }
 }
 
+/**
+ * Main application component that provides routing.
+ * @returns The router provider component.
+ */
 export default function App() {
   return <RouterProvider router={router} />
 }

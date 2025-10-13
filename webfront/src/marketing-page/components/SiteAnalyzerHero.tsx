@@ -116,6 +116,15 @@ const navigationArrowBaseStyles = (theme: any) => ({
 });
 
 // Carousel Navigation component
+/**
+ * Navigation component for the image carousel with arrows and dots.
+ * @param onPrev - Function to go to previous slide.
+ * @param onNext - Function to go to next slide.
+ * @param currentIndex - Current slide index.
+ * @param totalItems - Total number of slides.
+ * @param onSelectSlide - Function to select a specific slide.
+ * @returns The carousel navigation component.
+ */
 const CarouselNavigation = ({ 
   onPrev, 
   onNext, 
@@ -220,6 +229,11 @@ const CarouselNavigation = ({
 };
 
 // Carousel Description component
+/**
+ * Description overlay component for carousel items.
+ * @param item - The carousel item to display.
+ * @returns The description overlay component.
+ */
 const CarouselDescription = ({ item }: { item: CarouselItem }) => {
   return (
     <Box
@@ -276,6 +290,10 @@ const CarouselDescription = ({ item }: { item: CarouselItem }) => {
 };
 
 // Image carousel component
+/**
+ * Auto-rotating image carousel with navigation controls.
+ * @returns The image carousel component.
+ */
 const ImageCarousel = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
   
@@ -290,7 +308,10 @@ const ImageCarousel = () => {
     return () => clearInterval(interval);
   }, []);
   
-  // Navigation handlers
+  /**
+   * Handles navigation between carousel slides.
+   * @param direction - Direction to navigate ('next' or 'prev').
+   */
   const handleNavigation = (direction: 'next' | 'prev') => {
     if (direction === 'next') {
       setCurrentIndex((prevIndex) => 
@@ -303,6 +324,10 @@ const ImageCarousel = () => {
     }
   };
 
+  /**
+   * Navigates to a specific slide by index.
+   * @param index - The slide index to navigate to.
+   */
   const goToSlide = (index: number) => {
     setCurrentIndex(index);
   };
@@ -486,6 +511,10 @@ const HeroButtons = () => {
 };
 
 // Main component
+/**
+ * Hero section component for the Site Analyzer homepage with carousel.
+ * @returns The hero section component.
+ */
 export default function SiteAnalyzerHero() {
   return (
     <Box

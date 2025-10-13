@@ -65,6 +65,11 @@ const SignInContainer = styled(Stack)(({ theme }) => ({
   },
 }));
 
+/**
+ * Sign-in page component with email/password and Google OAuth login.
+ * @param props - Component props.
+ * @returns The sign-in form component.
+ */
 export default function SignIn(props: { disableCustomTheme?: boolean }) {
   const navigate = useNavigate();
   const [emailError, setEmailError] = React.useState(false);
@@ -93,6 +98,11 @@ export default function SignIn(props: { disableCustomTheme?: boolean }) {
     flow: 'auth-code',
   });
 
+  /**
+   * Extracts the detail message from an API error body.
+   * @param body - The error body object.
+   * @returns The detail string if present, otherwise undefined.
+   */
   const extractDetail = (body: unknown): string | undefined => {
     if (typeof body === 'object' && body !== null && 'detail' in body) {
       const detail = (body as { detail?: unknown }).detail;
@@ -127,14 +137,24 @@ export default function SignIn(props: { disableCustomTheme?: boolean }) {
     },
   });
 
+  /**
+   * Opens the forgot password dialog.
+   */
   const handleClickOpen = () => {
     setOpen(true);
   };
 
+  /**
+   * Closes the forgot password dialog.
+   */
   const handleClose = () => {
     setOpen(false);
   };
 
+  /**
+   * Handles form submission for user login.
+   * @param event - The form submit event.
+   */
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     // Client-side validation first
@@ -152,6 +172,10 @@ export default function SignIn(props: { disableCustomTheme?: boolean }) {
     loginMutation.mutate({ username: email, password });
   };
 
+  /**
+   * Validates the email and password input fields.
+   * @returns True if inputs are valid, false otherwise.
+   */
   const validateInputs = () => {
     const email = document.getElementById('email') as HTMLInputElement;
     const password = document.getElementById('password') as HTMLInputElement;

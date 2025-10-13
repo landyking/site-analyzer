@@ -16,6 +16,11 @@ const themeComponents = {
   ...sidebarCustomizations
 };
 
+/**
+ * Main dashboard component providing theming and context providers.
+ * @param props - Component props.
+ * @returns The dashboard layout with providers.
+ */
 export default function CrudDashboard(props: { disableCustomTheme?: boolean }) {
   return (
     <AppTheme {...props} disableCustomTheme={true} themeComponents={themeComponents}>

@@ -8,6 +8,11 @@ import SiteAnalyzerHighlights from './components/SiteAnalyzerHighlights';
 import SiteAnalyzerFAQ from './components/SiteAnalyzerFAQ';
 import SiteAnalyzerFooter from './components/SiteAnalyzerFooter';
 
+/**
+ * Home page component for the Site Analyzer marketing site.
+ * @param props - Component props.
+ * @returns The home page layout.
+ */
 export default function SiteAnalyzerHomePage(props: { disableCustomTheme?: boolean }) {
   return (
     <AppTheme {...props}>

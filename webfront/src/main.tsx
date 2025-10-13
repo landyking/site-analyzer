@@ -17,6 +17,11 @@ OpenAPI.BASE = import.meta.env.VITE_API_URL
 OpenAPI.TOKEN = async () => {
   return localStorage.getItem("access_token") || ""
 }
+
+/**
+ * Handles API errors by clearing cache and redirecting on auth failures.
+ * @param error - The error that occurred.
+ */
 const handleApiError = (error: Error) => {
   if (error instanceof ApiError && [401, 403].includes(error.status)) {
     try {

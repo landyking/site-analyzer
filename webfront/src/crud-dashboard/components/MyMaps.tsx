@@ -30,6 +30,11 @@ import { useDialogs } from '../hooks/useDialogs/useDialogs';
 import { isAdmin } from '../../utils/auth';
 import { formatDate, formatElapsed } from './shared/tableFormatters';
 
+/**
+ * Determines the color for a status chip based on the status description.
+ * @param desc - The status description.
+ * @returns The color variant for the chip.
+ */
 function statusColor(desc?: string | null): 'default' | 'success' | 'error' | 'warning' {
   const label = (desc || '').toLowerCase();
   if (label.includes('success')) return 'success';
@@ -38,6 +43,13 @@ function statusColor(desc?: string | null): 'default' | 'success' | 'error' | 'w
   return 'default';
 }
 
+/**
+ * Section component for organizing content with title and actions.
+ * @param title - The section title.
+ * @param actions - Optional action buttons.
+ * @param children - The section content.
+ * @returns The section component.
+ */
 function Section({ title, actions, children }: { title: string; actions?: React.ReactNode; children: React.ReactNode }) {
   return (
     <Paper variant="outlined" sx={{ p: 2 }}>
@@ -52,6 +64,10 @@ function Section({ title, actions, children }: { title: string; actions?: React.
   );
 }
 
+/**
+ * My Maps page component displaying user's map analysis tasks.
+ * @returns The My Maps page component.
+ */
 export default function MyMaps() {
   const queryClient = useQueryClient();
   const { show } = useNotifications();
@@ -97,6 +113,10 @@ export default function MyMaps() {
 
   // Dummy state to force re-render for elapsed time
   const [, forceRerender] = useState({});
+  
+  /**
+   * Handles refreshing the map tasks data.
+   */
   const handleRefresh = () => {
     refetchOngoing();
     refetchCompleted();
@@ -114,10 +134,18 @@ export default function MyMaps() {
     </IconButton>
   );
 
+  /**
+   * Navigates to the details page for a specific map task.
+   * @param task - The map task to view details for.
+   */
   const openDetails = (task: MapTaskDetails) => {
     navigate({ to: `/dashboard/my-maps/$taskId`, params: { taskId: String(task.id) } });
   };
 
+  /**
+   * Handles canceling a map task after user confirmation.
+   * @param task - The map task to cancel.
+   */
   const handleCancel = (task: MapTaskDetails) => {
     void confirm(
       <>Are you sure you want to cancel “{task.name}”?<br/>This will stop processing and cannot be undone.</>,

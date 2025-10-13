@@ -1,6 +1,9 @@
 import Alert from "@mui/material/Alert";
 
-// show demo account info
+/**
+ * Displays demo account information when in demo mode.
+ * @returns An alert component with demo credentials or null.
+ */
 export function ShowDemo() {
     if (import.meta.env.VITE_RELEASE_DEMO === '1') {
         return (

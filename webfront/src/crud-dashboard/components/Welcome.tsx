@@ -9,6 +9,10 @@ import Button from '@mui/material/Button';
 import { Link as RouterLink } from '@tanstack/react-router';
 import { ReadOnlyMode } from '@/utils/ReadOnlyMode';
 
+/**
+ * Welcome page component displaying introduction and tips for the dashboard.
+ * @returns The welcome page component.
+ */
 export default function Welcome() {
   return (
     <PageContainer
