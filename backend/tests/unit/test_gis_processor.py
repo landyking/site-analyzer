@@ -22,6 +22,7 @@ class DummyLoop:
     async def run_in_executor(self, executor, func, *args):
         return func(*args)
 
+
 # Ensure we import the REAL app.gis.processor module even if another test has mocked it globally.
 _maybe_mocked = sys.modules.get("app.gis.processor")
 if isinstance(_maybe_mocked, MagicMock):
@@ -503,7 +504,9 @@ class TestProcessMapTask:
             mock_now = datetime(2025, 1, 1, 12, 0, 0, tzinfo=UTC)
             mock_datetime.now.return_value = mock_now
 
-            with _patch.object(processor_module.asyncio, "get_running_loop", return_value=DummyLoop()):
+            with _patch.object(
+                processor_module.asyncio, "get_running_loop", return_value=DummyLoop()
+            ):
                 asyncio.run(process_map_task(123))
 
         # Assert
@@ -699,7 +702,9 @@ class TestProcessMapTask:
             mock_exists.return_value = False
 
             # Act
-            with _patch.object(processor_module.asyncio, "get_running_loop", return_value=DummyLoop()):
+            with _patch.object(
+                processor_module.asyncio, "get_running_loop", return_value=DummyLoop()
+            ):
                 asyncio.run(process_map_task(123))
 
             # Assert
@@ -744,7 +749,9 @@ class TestProcessMapTask:
             mock_rmtree.side_effect = Exception("Permission denied")
 
             # Act
-            with _patch.object(processor_module.asyncio, "get_running_loop", return_value=DummyLoop()):
+            with _patch.object(
+                processor_module.asyncio, "get_running_loop", return_value=DummyLoop()
+            ):
                 asyncio.run(process_map_task(123))
 
             # Assert - cleanup should be attempted even if it fails
@@ -769,7 +776,9 @@ class TestProcessMapTask:
             mock_monitor_class.return_value = mock_monitor
 
             # Act
-            with _patch.object(processor_module.asyncio, "get_running_loop", return_value=DummyLoop()):
+            with _patch.object(
+                processor_module.asyncio, "get_running_loop", return_value=DummyLoop()
+            ):
                 asyncio.run(process_map_task(123))
 
             # Assert

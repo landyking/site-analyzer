@@ -11,11 +11,12 @@ from app.core.config import settings
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-
+# Security settings
 ALGORITHM = "HS256"
 
 
 def create_access_token(subject: int | Any, admin: bool, expires_delta: timedelta) -> str:
+    """Create a JWT access token."""
     expire = datetime.now(UTC) + expires_delta
     to_encode = {"exp": expire, "sub": str(subject), "admin": admin}
     encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=ALGORITHM)
@@ -23,14 +24,17 @@ def create_access_token(subject: int | Any, admin: bool, expires_delta: timedelt
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
+    """Verify a plain password against a hashed password."""
     return pwd_context.verify(plain_password, hashed_password)
 
 
 def get_password_hash(password: str) -> str:
+    """Get the hashed version of a password."""
     return pwd_context.hash(password)
 
 
 def gen_tile_signature(user: int, task: int, exp: int) -> str:
+    """Generate a tile access signature for a user and task that expires at a given time."""
     # Create a message string
     message = f"{user}:{task}:{exp}".encode()
     # Use SECRET_KEY as bytes

@@ -22,7 +22,9 @@ from app.gis.functions import (
     gen_bounding_box,
 )
 
-logging.basicConfig(format='%(asctime)s - %(name)s:%(process)d - %(levelname)s - %(message)s', level=logging.INFO)
+logging.basicConfig(
+    format="%(asctime)s - %(name)s:%(process)d - %(levelname)s - %(message)s", level=logging.INFO
+)
 logger = logging.getLogger(__name__)
 
 
@@ -192,12 +194,13 @@ class SiteSuitabilityEngine:
         ]
         apply_factors = []
 
+        # Select and configure factors based on provided configs
         for rfactor in configs.restricted_factors:
             config = next((f for f in all_factors if f["name"] == rfactor.kind), None)
             if config:
                 config["buffer_distance"] = rfactor.buffer_distance
                 apply_factors.append(config)
-
+        # Suitability factors
         for sfactor in configs.suitability_factors:
             config = next((f for f in all_factors if f["name"] == sfactor.kind), None)
             if config:

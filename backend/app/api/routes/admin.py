@@ -32,6 +32,9 @@ async def admin_get_user_list(
     keyword: str | None = None,
     status: int | None = None,
 ) -> User4AdminPageData:
+    """
+    Get a paginated list of users for admin, with optional filtering by keyword and status.
+    """
     # Query DB via CRUD with pagination and filters
     ps = max(1, int(page_size) if page_size else 20)
     cp = max(1, int(current_page) if current_page else 1)
@@ -70,6 +73,9 @@ async def admin_update_user_status(
     current_user: CurrentAdminUser,
     payload: AdminUpdateUserStatusRequest,
 ) -> BaseResp:
+    """
+    Update the status of a user (e.g., activate, deactivate) by admin.
+    """
     updated = crud.admin_update_user_status(
         session=session, target_user_id=payload.user_id, status=int(payload.status)
     )
@@ -90,6 +96,9 @@ async def admin_get_map_tasks(
     user_id: int | None = None,
     status: int | None = None,
 ) -> MapTask4AdminPageData:
+    """
+    Get a paginated list of map tasks for admin, with optional filtering by name, user ID, and status.
+    """
     ps = max(1, int(page_size) if page_size else 20)
     cp = max(1, int(current_page) if current_page else 1)
     rows, total, ps, cp = crud.admin_list_map_tasks(
@@ -120,6 +129,9 @@ async def admin_get_map_task(
     current_user: CurrentAdminUser,
     taskId: int,
 ) -> AdminMapTaskResp:
+    """
+    Get detailed information about a specific map task by ID for admin.
+    """
     data = crud.admin_get_map_task(session=session, task_id=taskId)
     if not data:
         raise HTTPException(status_code=404, detail="Task not found")
@@ -135,6 +147,9 @@ async def admin_get_map_task(
 async def admin_get_map_task_progress(
     session: SessionDep, current_user: CurrentAdminUser, taskId: int
 ):
+    """
+    Get the progress history of a specific map task by ID for admin.
+    """
     rows: list[MapTaskProgressDB] = crud.admin_get_map_task_progress(
         session=session, task_id=taskId
     )
@@ -151,6 +166,9 @@ async def admin_get_map_task_progress(
     summary="Initialize input directory for admin",
 )
 async def admin_initialize_input_directory(session: SessionDep, current_user: CurrentAdminUser):
+    """
+    Initialize the input directory from the storage bucket for admin.
+    """
     result = storage.initialize_input_dir_from_bucket()
     if result.get("error"):
         raise HTTPException(status_code=500, detail="Failed to initialize input directory")

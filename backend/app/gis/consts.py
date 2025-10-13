@@ -1,3 +1,4 @@
+# List of New Zealand districts with their codes
 districts = [
     ("063", "Ashburton District"),
     ("076", "Auckland"),
@@ -67,12 +68,16 @@ districts = [
     ("037", "Whanganui District"),
     ("002", "Whangarei District"),
 ]
+# Set of allowed district codes for quick validation
 ALLOWED_DISTRICT_CODES = {code for code, _ in districts}
+# List of constraint factors with their human-readable names
 constraint_factors = [
     ("rivers", "Rivers"),
     ("lakes", "Lakes"),
     ("coastlines", "Coastlines"),
     ("residential", "Residential areas"),
 ]
+# List of constraint factors with their human-readable names
 ALLOWED_CONSTRAINTS = [code for code, _ in constraint_factors]
+# List of suitability factors with their human-readable names
 ALLOWED_SUITABILITY = ["slope", "roads", "powerlines", "solar", "temperature"]

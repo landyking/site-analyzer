@@ -24,10 +24,14 @@ from app.gis.consts import (
 
 
 class BaseResp(BaseModel):
+    """Base response model."""
+
     error: int = 0
 
 
 class PageData(BaseModel):
+    """Pagination base model."""
+
     total: int | None = None
     current_page: int | None = None
     page_size: int | None = None
@@ -39,11 +43,15 @@ class PageData(BaseModel):
 
 
 class SelectOptionItem(BaseModel):
+    """An item in a select dropdown."""
+
     code: str
     label: str
 
 
 class SelectOptionListResp(BaseResp):
+    """Response model for a list of select options."""
+
     list: list[SelectOptionItem]
 
 
@@ -53,6 +61,8 @@ class SelectOptionListResp(BaseResp):
 
 
 class DistrictHistogram(BaseModel):
+    """A histogram representing district data."""
+
     frequency: list[int]
     edges: list[float]
     min: float
@@ -60,11 +70,15 @@ class DistrictHistogram(BaseModel):
 
 
 class DistrictHistogramItem(BaseModel):
+    """An item in a district histogram."""
+
     kind: str
     histogram: DistrictHistogram
 
 
 class DistrictHistogramsResp(BaseResp):
+    """Response model for district histograms."""
+
     list: builtins.list[DistrictHistogramItem] = []
 
 
@@ -74,24 +88,34 @@ class DistrictHistogramsResp(BaseResp):
 
 
 class LoginRequest(BaseModel):
+    """Request model for user login."""
+
     email: EmailStr
     password: str
 
 
 class RegisterRequest(BaseModel):
+    """Request model for user registration."""
+
     email: Annotated[EmailStr, Field(max_length=255)]
     password: Annotated[str, Field(min_length=8, max_length=40)]
 
 
 class OidcInfoResp(BaseModel):
+    """Response model for OIDC provider information."""
+
     login_url: str
 
 
 class OidcTokenRequest(BaseModel):
+    """Request model for OIDC token exchange."""
+
     code: str
 
 
 class LoginResult(BaseModel):
+    """Result model for login operations."""
+
     access_token: str | None = None
     expires_in: int | None = None
     refresh_token: str | None = None
@@ -99,6 +123,8 @@ class LoginResult(BaseModel):
 
 
 class PostLoginResp(BaseResp, LoginResult):
+    """Response model after login or registration."""
+
     pass
 
 
@@ -106,16 +132,22 @@ class PostLoginResp(BaseResp, LoginResult):
 # Map Task Schemas
 # ----------------------
 class MyMapTaskTileSignature(BaseModel):
+    """Signature for a map task tile."""
+
     exp: int
     task: int
     sig: str
 
 
 class MyMapTaskTileSignatureResp(BaseResp):
+    """Response model for a map task tile signature."""
+
     data: MyMapTaskTileSignature
 
 
 class MapTask(BaseModel):
+    """Basic information about a map task."""
+
     id: int
     name: str
     user_id: int
@@ -131,6 +163,8 @@ class MapTask(BaseModel):
 
 
 class MapTaskFile(BaseModel):
+    """Information about a file associated with a map task."""
+
     id: int
     map_task_id: int
     file_type: str
@@ -139,6 +173,8 @@ class MapTaskFile(BaseModel):
 
 
 class ConstraintFactor(BaseModel):
+    """A constraint factor for map tasks."""
+
     kind: str
     value: float
 
@@ -161,6 +197,8 @@ class ConstraintFactor(BaseModel):
 
 
 class SuitabilityFactor(BaseModel):
+    """A suitability factor for map tasks."""
+
     kind: str
     weight: float
     breakpoints: list[float]
@@ -200,24 +238,34 @@ class SuitabilityFactor(BaseModel):
 
 
 class MapTaskDetails(MapTask):
+    """Detailed information about a map task, including files and factors."""
+
     files: list[MapTaskFile] = []
     constraint_factors: list[ConstraintFactor] = []
     suitability_factors: list[SuitabilityFactor] = []
 
 
 class MyMapTaskListResp(BaseResp):
+    """Response model for a list of map tasks."""
+
     list: list[MapTaskDetails]
 
 
 class MyMapTaskResp(BaseResp):
+    """Response model for a single map task."""
+
     data: MapTaskDetails | None = None
 
 
 class AdminMapTaskResp(BaseResp):
+    """Response model for a single map task for admin."""
+
     data: MapTaskDetails | None = None
 
 
 class CreateMapTaskReq(BaseModel):
+    """Request model for creating a new map task."""
+
     name: str
     district_code: str
     constraint_factors: list[ConstraintFactor]
@@ -275,6 +323,8 @@ class CreateMapTaskReq(BaseModel):
 
 
 class User4Admin(BaseModel):
+    """User information for admin views."""
+
     id: int | None = None
     provider: str | None = None
     sub: str | None = None
@@ -288,30 +338,42 @@ class User4Admin(BaseModel):
 
 
 class User4AdminPageData(BaseResp, PageData):
+    """Page data for user list in admin views."""
+
     list: builtins.list[User4Admin] | None = None
 
 
 class MapTask4AdminPageData(BaseResp, PageData):
+    """Page data for map task list in admin views."""
+
     list: builtins.list[MapTask] | None = None
 
 
 class AdminUpdateUserStatusRequest(BaseModel):
+    """Request model for updating a user's status by admin."""
+
     user_id: int
     # Enforce allowed values using enum; FastAPI will 422 on invalid
     status: UserStatus
 
 
 class UserRole(IntEnum):
+    """User roles in the system."""
+
     ADMIN = 1
     USER = 2
 
 
 class UserStatus(IntEnum):
+    """User account statuses."""
+
     ACTIVE = 1
     LOCKED = 2
 
 
 class UserBase(SQLModel):
+    """Base model for user information."""
+
     email: str = Field(unique=True, index=True, max_length=255)
     role: int = Field(default=UserRole.USER)
     status: int = Field(default=UserStatus.LOCKED)
@@ -320,20 +382,28 @@ class UserBase(SQLModel):
 
 
 class UserCreate(UserBase):
+    """Model for creating a new user."""
+
     password: str = Field(min_length=8, max_length=40)
 
 
 class UserPublic(UserBase):
+    """Public user information."""
+
     id: int
 
 
 class Token(SQLModel):
+    """Model for JWT token response."""
+
     access_token: str
     token_type: str = "bearer"
 
 
 # Contents of JWT token
 class TokenPayload(SQLModel):
+    """Payload contained in JWT token."""
+
     sub: str
     admin: bool = False
 
@@ -344,6 +414,8 @@ class TokenPayload(SQLModel):
 
 
 class MapTaskProgress(BaseModel):
+    """Progress update for a map task."""
+
     id: int
     map_task_id: int
     percent: int
@@ -354,6 +426,8 @@ class MapTaskProgress(BaseModel):
 
 
 class MapTaskProgressListResp(BaseResp):
+    """Response model for a list of map task progress updates."""
+
     list: list[MapTaskProgress]
 
 
@@ -380,6 +454,8 @@ class UserDB(UserBase, table=True):
 
 
 class MapTaskStatus(IntEnum):
+    """Statuses for map tasks."""
+
     # status: 1 Pending, 2 Processing, 3 Success, 4 Failure, 5 Cancelled
     PENDING = 1
     PROCESSING = 2
@@ -389,6 +465,8 @@ class MapTaskStatus(IntEnum):
 
 
 class MapTaskBase(SQLModel):
+    """Base model for map task information."""
+
     user_id: int = Field(sa_type=BigInteger)
     name: str = Field(max_length=150)
     district: str = Field(max_length=10)

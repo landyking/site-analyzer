@@ -7,17 +7,23 @@ logger = logging.getLogger(__name__)
 
 
 class EngineRestrictedFactor(BaseModel):
+    """Configuration for a restricted factor in the GIS engine."""
+
     kind: str
     buffer_distance: int
 
 
 class EngineSuitabilityFactor(BaseModel):
+    """Configuration for a suitability factor in the GIS engine."""
+
     kind: str
     weight: float
     ranges: list[tuple[float, float, int]] | None = None
 
 
 class EngineConfigs(BaseModel):
+    """Overall configuration for the GIS engine."""
+
     restricted_factors: list[EngineRestrictedFactor]
     suitability_factors: list[EngineSuitabilityFactor]
 
@@ -51,6 +57,8 @@ class TaskMonitor(Protocol):
 
 
 class EmptyTaskMonitor:
+    """A no-op TaskMonitor implementation for cases where monitoring is not needed."""
+
     def is_cancelled(self) -> bool:
         return False
 

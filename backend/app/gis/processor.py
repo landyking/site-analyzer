@@ -23,7 +23,9 @@ from concurrent.futures import ProcessPoolExecutor
 import asyncio
 
 executor = ProcessPoolExecutor()
-logging.basicConfig(format='%(asctime)s - %(name)s:%(process)d - %(levelname)s - %(message)s', level=logging.INFO)
+logging.basicConfig(
+    format="%(asctime)s - %(name)s:%(process)d - %(levelname)s - %(message)s", level=logging.INFO
+)
 logger = logging.getLogger(__name__)
 
 
@@ -59,6 +61,7 @@ class MapTaskMonitor:
     def update_progress(
         self, percent: int, phase: str | None = None, description: str | None = None
     ) -> None:
+        """Insert a progress row."""
         p = self._clamp_percent(percent)
         ph = (phase or "").strip() or None
         desc = (description or "").strip() or None
@@ -85,6 +88,7 @@ class MapTaskMonitor:
         percent: int | None = None,
         description: str | None = None,
     ) -> None:
+        """Insert an error row."""
         ph = (phase or "").strip() or None
         desc = (description or "").strip() or None
         msg = (error_msg or "").strip() or "Error"
@@ -106,6 +110,7 @@ class MapTaskMonitor:
             logger.error("record_error failed for task %s: %s", self.task_id, e)
 
     def record_file(self, file_type: str, file_path: str) -> None:
+        """Record a generated file by copying to storage and inserting a DB row."""
         new_file_path = storage.save_task_file(file_path, self.user_id, self.task_id)
         try:
             with Session(db_engine) as session:
@@ -136,15 +141,21 @@ def _quick_update_task(task_id: int, **fields) -> None:
 
 
 def _load_task(task_id: int) -> MapTaskDB | None:
+    """Load a MapTaskDB row by ID."""
     with Session(db_engine) as session:
         stmt = select(MapTaskDB).where(MapTaskDB.id == task_id)
         return session.exec(stmt).first()
 
-def call_engine(data_dir: str, task_out: str, configs: dict, selected: list[str], monitor: MapTaskMonitor) -> dict:
+
+def call_engine(
+    data_dir: str, task_out: str, configs: dict, selected: list[str], monitor: MapTaskMonitor
+) -> dict:
+    """Call the GIS engine in a separate process."""
     engine = SiteSuitabilityEngine(str(data_dir), str(task_out), configs)
     monitor.update_progress(0, "init", "Starting")
     results = engine.run(selected_districts=selected, monitor=monitor)
     return results
+
 
 async def process_map_task(task_id: int) -> None:
     """Background job: run GIS engine for a map task.
@@ -237,11 +248,13 @@ async def process_map_task(task_id: int) -> None:
         task_out.mkdir(parents=True, exist_ok=True)
 
         # Run engine for the selected district code
-        
+
         monitor = MapTaskMonitor(task_id, user_id)
         selected = [task.district]
         loop = asyncio.get_running_loop()
-        await loop.run_in_executor(executor, call_engine, str(data_dir), str(task_out), configs, selected, monitor)
+        await loop.run_in_executor(
+            executor, call_engine, str(data_dir), str(task_out), configs, selected, monitor
+        )
         if not monitor.is_cancelled():
             monitor.update_progress(100, "success", "Completed")
 

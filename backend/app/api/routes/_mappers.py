@@ -21,10 +21,12 @@ _DISTRICT_CODE_TO_NAME = {code: name for code, name in districts}
 
 
 def _ensure_list(val):
+    """Ensure the value is a list, parsing from JSON if it's a string."""
     return json.loads(val) if isinstance(val, str) else val
 
 
 def as_aware_utc(dt: datetime | None) -> datetime | None:
+    """Convert a datetime to an aware UTC datetime, or None if input is None."""
     if dt is None:
         return None
     if dt.tzinfo is None:
@@ -33,6 +35,7 @@ def as_aware_utc(dt: datetime | None) -> datetime | None:
 
 
 def _status_desc(status: int) -> str | None:
+    """Get a human-readable description of the MapTask status."""
     try:
         return MapTaskStatus(status).name.title()
     except Exception:

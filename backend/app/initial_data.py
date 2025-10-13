@@ -10,6 +10,7 @@ logger = logging.getLogger(__name__)
 
 
 def init() -> None:
+    """Initialize the database with initial data."""
     with Session(engine) as session:
         init_db(session)
 

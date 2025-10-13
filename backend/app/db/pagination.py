@@ -65,10 +65,13 @@ def paginate(
 
     stmt = base_stmt
     if order_by is not None:
+        # Apply ordering if provided
         if isinstance(order_by, (list, tuple)):
             stmt = stmt.order_by(*order_by)
         else:
             stmt = stmt.order_by(order_by)
+    # Apply limit/offset
     stmt = stmt.offset(offset).limit(ps)
+    # Execute and fetch rows
     rows = list(session.exec(stmt).all())
     return rows, int(total), ps, cp

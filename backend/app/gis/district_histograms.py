@@ -1,3 +1,4 @@
+# Prepare histogram data for each district
 HISTOGRAMS = {
     "063": {
         "slope": {

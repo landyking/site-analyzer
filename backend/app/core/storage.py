@@ -29,6 +29,7 @@ logger.info("Connected to storage service at %s", settings.STORAGE_ENDPOINT)
 
 
 def get_bucket_meta_info() -> dict:
+    """Fetch basic meta-info about the configured bucket."""
     try:
         response = s3.head_bucket(Bucket=bucket_name)
         return {
@@ -43,6 +44,7 @@ def get_bucket_meta_info() -> dict:
 
 # define a function to logging basic meta-info of the bucket into console
 def log_bucket_meta_info() -> None:
+    """Log basic meta-info about the configured bucket."""
     meta_info = get_bucket_meta_info()
     logger.info("Bucket Name: %s", meta_info.get("Name", "Unknown"))
     logger.info("Creation Date: %s", meta_info.get("CreationDate", "Unknown"))
@@ -50,6 +52,7 @@ def log_bucket_meta_info() -> None:
 
 
 def save_file(src_path: str, dest_path: str) -> None:
+    """Upload a local file to the configured bucket at the specified destination path."""
     try:
         s3.upload_file(src_path, bucket_name, dest_path)
     except ClientError as e:
@@ -59,6 +62,7 @@ def save_file(src_path: str, dest_path: str) -> None:
 
 
 def save_task_file(src_path: str, user_id: int, task_id: int) -> str:
+    """Save a file related to a specific user's map task."""
     file_name = os.path.basename(src_path)
     dest_path = f"{bucket_outputs_dir}/{user_id}/{task_id}/{file_name}"
     save_file(src_path, dest_path)

@@ -48,11 +48,13 @@ async def user_login(
 
 @router.post("/user-info", response_model=UserPublic, summary="Get user information")
 def get_user_info(current_user: CurrentUser) -> Any:
+    """Get information about the current user."""
     return current_user
 
 
 @router.post("/user-register", response_model=UserPublic, summary="Register a new user")
 async def user_register(session: SessionDep, user_in: RegisterRequest):
+    """Register a new user with email and password."""
     user = crud.get_user_by_email(session=session, email=user_in.email)
     if user:
         raise HTTPException(
@@ -68,12 +70,14 @@ async def user_register(session: SessionDep, user_in: RegisterRequest):
 
 @router.get("/oidc-info", response_model=OidcInfoResp, summary="Get OIDC Information")
 async def get_oidc_info() -> OidcInfoResp:
+    """Get OIDC provider information (e.g., login URL)."""
     # Provide login URL for OIDC provider
     return OidcInfoResp(login_url="https://accounts.google.com/o/oauth2/v2/auth")
 
 
 @router.post("/oidc-token", response_model=PostLoginResp, summary="Use code to get OIDC token")
 async def get_oidc_token(session: SessionDep, payload: OidcTokenRequest) -> PostLoginResp:
+    """Exchange OIDC authorization code for tokens and log in / register the user."""
     if not payload.code:
         raise HTTPException(status_code=400, detail="Code required")
     # print(settings.GOOGLE_CLIENT_ID, settings.GOOGLE_CLIENT_SECRET)
@@ -98,6 +102,7 @@ async def get_oidc_token(session: SessionDep, payload: OidcTokenRequest) -> Post
         raise HTTPException(status_code=400, detail="Failed to exchange code")
 
     token_json = token_resp.json()
+    # 2) Decode ID token (JWT) to get user info
     id_token_str = token_json.get("id_token")
     if not id_token_str:
         raise HTTPException(status_code=400, detail="No id_token in response")
@@ -150,6 +155,7 @@ async def get_oidc_token(session: SessionDep, payload: OidcTokenRequest) -> Post
 
 @router.post("/user/token-refresh", response_model=PostLoginResp, summary="Refresh user token")
 async def user_token_refresh() -> PostLoginResp:
+    """Refresh the user's access token using a refresh token."""
     return PostLoginResp(
         access_token="refreshed",
         refresh_token="dummy",
@@ -161,4 +167,6 @@ async def user_token_refresh() -> PostLoginResp:
 
 @router.post("/user/logout", response_model=BaseResp, summary="Logout user")
 async def user_logout():
+    """Logout the current user (client-side token discard)."""
+    # For JWT, typically just discard the token on client side
     return BaseResp(error=0)

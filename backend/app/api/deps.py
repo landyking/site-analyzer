@@ -17,15 +17,20 @@ reusable_oauth2 = OAuth2PasswordBearer(tokenUrl=f"{settings.API_V1_STR}/user-log
 
 
 def get_db() -> Generator[Session]:
+    """Dependency that provides a SQLAlchemy session."""
     with Session(engine) as session:
         yield session
 
 
+# Dependency to get a DB session
 SessionDep = Annotated[Session, Depends(get_db)]
+
+# Dependency to get the current user based on the token
 TokenDep = Annotated[str, Depends(reusable_oauth2)]
 
 
 def get_current_user(session: SessionDep, token: TokenDep) -> UserDB:
+    """Get the current user from the token, ensuring they are active."""
     try:
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[security.ALGORITHM])
         token_data = TokenPayload(**payload)
@@ -42,13 +47,16 @@ def get_current_user(session: SessionDep, token: TokenDep) -> UserDB:
     return user
 
 
+# Dependency to get the current active user
 CurrentUser = Annotated[UserDB, Depends(get_current_user)]
 
 
 def get_current_active_admin(current_user: CurrentUser) -> UserDB:
+    """Get the current user and ensure they are an admin."""
     if not current_user.role == UserRole.ADMIN:
         raise HTTPException(status_code=403, detail="The user doesn't have enough privileges")
     return current_user
 
 
+# Dependency to get the current active admin user
 CurrentAdminUser = Annotated[UserDB, Depends(get_current_active_admin)]

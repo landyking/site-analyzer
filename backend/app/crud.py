@@ -38,6 +38,7 @@ def touch_last_login(*, session: Session, user: UserDB) -> UserDB:
 
 
 def create_user(*, session: Session, user_create: UserCreate) -> UserDB:
+    """Create a new user from UserCreate schema."""
     if settings.RELEASE_ALLOW_REGISTRATION is False:
         raise HTTPException(
             status_code=400,
@@ -67,6 +68,7 @@ def create_user(*, session: Session, user_create: UserCreate) -> UserDB:
 
 
 def get_user_by_email(*, session: Session, email: str) -> UserDB | None:
+    """Fetch a user by unique email."""
     statement = select(UserDB).where(UserDB.email == email)
     session_user = session.exec(statement).first()
     return session_user
@@ -99,6 +101,7 @@ def get_file_by_conditions(
 
 
 def authenticate(*, session: Session, email: str, password: str) -> UserDB | None:
+    """Authenticate a user by email and password."""
     db_user = get_user_by_email(session=session, email=email)
     # print("Authenticating user...", db_user)
     if not db_user:
@@ -129,6 +132,7 @@ def create_map_task(
     payload: CreateMapTaskReq,
     background_tasks: BackgroundTasks | None = None,
 ) -> MapTaskDB:
+    """Create a new map task for the given user and enqueue processing."""
     if settings.RELEASE_READ_ONLY:
         raise HTTPException(
             status_code=400,
